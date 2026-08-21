@@ -138,7 +138,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 生物制药排产系统 <span class="tag" id="verTag" title="页面版本：v2.5.7（生产计划角色需求列表通栏显示）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.5.7</span></h1>
+  <h1>🧬 生物制药排产系统 <span class="tag" id="verTag" title="页面版本：v2.5.8（CB均GMP批次·计划含需求人·转移日期必填校验）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.5.8</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -270,7 +270,7 @@
             <div class="f chk"><input type="checkbox" id="f_cond"><label for="f_cond">需要条件放行</label></div>
           </div>
           <div class="form-row">
-            <div class="f"><label>正式工艺转移完成日期（可选，之后1个月才可投产）</label><input id="f_transfer" type="date"></div>
+            <div class="f"><label>正式工艺转移完成日期 <span style="color:#dc2626;font-weight:400">（MCB建库必填；Mab/ADC DS/DP首次生产必填）</span>，之后1个月才可投产</label><input id="f_transfer" type="date"></div>
           </div>
           <div class="form-row" id="mcbDateRow">
             <div class="f"><label>同项目 MCB 完成日期（可选，不填则自动匹配已排 MCB）</label><input id="f_mcbdate" type="date"></div>
@@ -368,7 +368,7 @@
       <div class="scroll-tbl" style="max-height:520px">
         <table id="batchTable">
           <thead><tr>
-            <th class="plan-only" style="width:28px"><input type="checkbox" id="batchSelAll" title="全选/全不选（仅锁定批次）"></th><th>状态</th><th>类型</th><th>项目</th><th>批次号</th><th>产线</th><th>开始</th><th>完成</th><th>下罐/灌装</th><th>GMP</th><th>备注</th><th class="plan-only">操作</th>
+            <th class="plan-only" style="width:28px"><input type="checkbox" id="batchSelAll" title="全选/全不选（仅锁定批次）"></th><th>状态</th><th>类型</th><th>项目</th><th>需求人</th><th>批次号</th><th>产线</th><th>开始</th><th>完成</th><th>下罐/灌装</th><th>GMP</th><th>备注</th><th class="plan-only">操作</th>
           </tr></thead>
           <tbody></tbody>
         </table>
@@ -472,7 +472,7 @@
   </section>
 </main>
 
-<footer>生物制药排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.5.7（云端共享）</footer>
+<footer>生物制药排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.5.8（云端共享）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -527,9 +527,9 @@
 <div id="toast"></div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=257"></script>
-<script src="xlsx.full.min.js?v=257"></script>
-<script src="cloud.js?v=257"></script>
+<script src="cloudbase.full.js?v=258"></script>
+<script src="xlsx.full.min.js?v=258"></script>
+<script src="cloud.js?v=258"></script>
 <script src="scheduling.js"></script>
 <script src="history_data.js"></script>
 <script>
@@ -742,7 +742,7 @@
       henliusProject: $('f_henlius').value.trim(),
       batchCount: parseInt($('f_batchcount').value,10)||1,
       dueDate: $('f_due').value,
-      gmp: $('f_batchtype').value==='GMP生产',
+      gmp: t==='CB' || $('f_batchtype').value==='GMP生产', // 细胞库建库（MCB/WCB）均为 GMP 批次
       batchKind: t==='CB' ? '' : $('f_batchtype').value,
       spec: t==='CB' ? '' : $('f_spec').value.trim(),
       concentration: t==='DP' ? $('f_conc').value.trim() : '',
@@ -775,6 +775,9 @@
     if(!r.henliusProject) errs.push('Henlius项目号');
     if(!r.dueDate) errs.push('交期');
     if(!r.stage) errs.push(FNAMES.stage);
+    // 正式工艺转移完成日期：MCB 建库必填；Mab/ADC DS/DP 首次生产必填（WCB 无需填写）
+    if(r.type==='CB' && r.cbKind==='MCB' && !r.processTransferDate) errs.push('正式工艺转移完成日期');
+    if((r.type==='Mab'||r.type==='ADC DS'||r.type==='DP') && r.firstProduction && !r.processTransferDate) errs.push('正式工艺转移完成日期');
     if(r.type==='CB'){
       // CB：项目阶段 + 备注（排产逻辑.xlsx 需求录入说明1）
       if(!r.note) errs.push('备注');
@@ -1101,7 +1104,7 @@
         var cls = 'g-bar'+(b.locked?' locked':'')+(b.status==='预警'?' warn':'')+(isFinal(b)?' dead':'');
         var color = TYPE_COLOR[b.type] || '#a8a29e';
         var label = (b.project||'') + (b.type==='APS'?' APS':'');
-        html += '<div class="'+cls+'" data-id="'+b.id+'" style="left:'+l+'px;width:'+Math.max(w-1,10)+'px;background:'+color+'" title="'+esc(b.type+' '+b.project+' '+b.start+'~'+b.end+(b.warning?' [预警]':'')+(isFinal(b)?' ['+b.status+']':''))+'">'+esc(label)+'</div>';
+        html += '<div class="'+cls+'" data-id="'+b.id+'" style="left:'+l+'px;width:'+Math.max(w-1,10)+'px;background:'+color+'" title="'+esc(b.type+' '+b.project+' '+(b.requester?('需求人:'+b.requester+' '):'')+b.start+'~'+b.end+(b.warning?' [预警]':'')+(isFinal(b)?' ['+b.status+']':''))+'">'+esc(label)+'</div>';
       });
       html += '</div></div>';
     });
@@ -1170,6 +1173,7 @@
         '<td><span class="st '+(stCls[b.status]||'auto')+'">'+esc(b.status)+'</span></td>'+
         '<td><span class="badge '+(TYPE_BADGE[b.type]||'b-gray')+'">'+esc(b.type)+'</span></td>'+
         '<td><b>'+esc(b.project||'-')+'</b>'+(b.henlius?'<br><span style="color:var(--sub);font-size:11px">'+esc(b.henlius)+'</span>':'')+'</td>'+
+        '<td>'+esc(b.requester||'-')+'</td>'+
         '<td style="color:var(--sub)">'+esc(b.batchNo||'-')+'</td>'+
         '<td>'+esc(b.line||'-')+'</td>'+
         '<td>'+esc(b.start)+'</td><td>'+esc(b.end)+'</td>'+
@@ -1610,9 +1614,9 @@
   }
   function exportCSV(){
     if(typeof XLSX === 'undefined'){ toast('Excel 组件未加载，无法导出'); return; }
-    var rows = [['状态','类型','项目','批次号','产线','开始','完成','GMP','备注']];
+    var rows = [['状态','类型','项目','需求人','批次号','产线','开始','完成','GMP','备注']];
     state.batches.forEach(function(b){
-      rows.push([b.status, b.type, b.project, b.batchNo||'', b.line, b.start, b.end, b.gmp?'Y':'N', (b.warning||b.note||'').replace(/\n/g,' ')]);
+      rows.push([b.status, b.type, b.project, b.requester||'', b.batchNo||'', b.line, b.start, b.end, b.gmp?'Y':'N', (b.warning||b.note||'').replace(/\n/g,' ')]);
     });
     var wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '排产批次');
