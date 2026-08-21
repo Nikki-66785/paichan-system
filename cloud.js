@@ -94,7 +94,9 @@
     var app;
     try { app = window.cloudbase.init({ env: CFG.envId, region: CFG.region || 'ap-shanghai' }); }
     catch (e) { console.warn('[cloud] init 失败：', e); setStatus('⚠️ 云端连接失败', 'cloud-off'); return; }
-    app.auth().anonymousAuthProvider().signIn()
+    // persistence:'none'：登录态不落 localStorage，每次刷新都全新匿名登录，
+    // 避免复用已过期的本地凭证导致数据库访问返回 unauthenticated（401）
+    app.auth({ persistence: 'none' }).anonymousAuthProvider().signIn()
       .then(function () {
         db = app.database();
         ready = true;
@@ -104,7 +106,8 @@
       })
       .catch(function (e) {
         console.warn('[cloud] 匿名登录失败：请确认控制台已开启「匿名登录」', e);
-        setStatus('⚠️ 云端未连接（匿名登录未开启？）', 'cloud-off');
+        setStatus('⚠️ 云端未连接：' + shortErr(e), 'cloud-off');
+        if (statusEl) statusEl.title = '完整错误：' + shortErr(e, 300); // hover 看完整错误
       });
   }
 
