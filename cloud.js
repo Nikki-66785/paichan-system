@@ -42,12 +42,47 @@
     statusEl.textContent = txt;
     statusEl.className = cls || '';
   }
-  // 提取错误关键信息（errCode/errMsg/message），用于直接显示根因
-  function shortErr(e) {
-    if (!e) return '';
-    var m = e.errMsg || e.message || e.msg || String(e);
-    m = String(m).trim();
-    if (m.length > 46) m = m.slice(0, 46) + '…';
+  // 提取错误关键信息（兼容多层嵌套结构），用于直接显示根因
+  // maxLen：显示截断长度（默认 46，title 里传更大的值看完整错误）
+  function shortErr(e, maxLen) {
+    if (e == null) return '';
+    maxLen = maxLen || 46;
+    function pick(o, depth) {
+      if (o == null) return '';
+      if (typeof o === 'string') return o;
+      if (typeof o === 'number' || typeof o === 'boolean') return String(o);
+      if (typeof o !== 'object') return String(o);
+      if (depth > 4) return stringify(o);
+      // 优先检查常见错误字段（可能是对象，递归进入）
+      var keys = ['errMsg', 'message', 'msg', 'error', 'err', 'details', 'detail', 'reason', 'statusText', 'data'];
+      for (var i = 0; i < keys.length; i++) {
+        if (o[keys[i]] != null && o[keys[i]] !== '') {
+          var v = o[keys[i]];
+          // data 若为数组（查询结果等）直接序列化，不深入
+          if (keys[i] === 'data' && Array.isArray(v)) return stringify(o);
+          var s = pick(v, depth + 1);
+          if (s) return s;
+        }
+      }
+      // 无关键字段 → 序列化对象本身（如 {code:.., msg:..}）
+      return stringify(o);
+    }
+    function stringify(o) {
+      try {
+        var seen = [];
+        var j = JSON.stringify(o, function (k, v) {
+          if (typeof v === 'object' && v !== null) {
+            if (seen.indexOf(v) >= 0) return '[Circular]';
+            seen.push(v);
+          }
+          return v;
+        });
+        if (j && j !== '{}') return j;
+      } catch (x) { /* 忽略 */ }
+      return '[未知错误]';
+    }
+    var m = String(pick(e, 0)).trim();
+    if (m.length > maxLen) m = m.slice(0, maxLen) + '…';
     return m;
   }
 
@@ -118,7 +153,7 @@
     }).catch(function (e) {
       console.warn('[cloud] 拉取失败：', e);
       setStatus('⚠️ 同步失败：' + shortErr(e), 'cloud-off');
-      if (statusEl) statusEl.title = String((e && (e.errMsg || e.message)) || e || ''); // hover 看完整错误
+      if (statusEl) statusEl.title = '完整错误：' + shortErr(e, 300); // hover 看完整错误
     });
   }
 
