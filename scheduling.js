@@ -60,8 +60,9 @@
     processTransferGapDays: 30,                       // 正式工艺转移后1个月才可生产
     mab: { seedDays: 20, reactorDays: 15, purifyDays: 7, minStartGap: 8, harvestGap: 10, harvestOffset: 35 }, // 周期=种子培养20+反应器培养15+下游纯化7(合计42)；需求提报用默认，生产计划在人工干预时按项目调整；批间开始>=8天；下罐间隔>=10天；下罐=开始+种子+反应器(默认35)（同产线所有批硬约束）
     adcDs: { harvestAfterDays: 2, gmpMabDays: 14, nonGmpMabDays: 30 }, // 下罐后2天（建议）；GMP Mab完成后2周；Non-GMP Mab(PD来源)完成后1个月
-    dp: { clearGapC7: 2, clearGapSJ2: 4, diluteExtraDays: 1,
+    dp: { clearGapC7: 2, clearGapSJ2: 4, diluteExtraDays: 1, packDays: 10,
           // 周期五段 = 准备 + 灌装 + 冻干 + 清场 + 目检包装（人工干预可调；目检包装默认 10 天）
+          // 包装完成日期 = DP完成日期 + packDays（默认10天，规则页可调；仅正式 DP 批次）
           segs: {
             'SJ2 ADC DP': { 水针: [3,1,0,1,10], 冻干: [3,1,4,1,10] },
             'C7CM DP':    { 水针: [3,1,0,1,10], 冻干: [3,1,3,1,10] },
@@ -368,9 +369,14 @@
           dpSeg = dpSegs(line, dosage, req, R); // 周期五段（人工干预可调；放大测试需求不含目检）
           fill = f(add(pl.start, dpSeg.prep)); // 灌装日期自动=开始+准备天数
         }
+        // 包装完成日期 = DP完成日期 + packDays（默认10天，规则可调；仅正式 DP 批次，放大测试/APS 不含）
+        var packDate = null;
+        if (type === 'ADC DP' || type === 'CM DP') {
+          packDate = f(add(pl.end, R.dp.packDays != null ? R.dp.packDays : 10));
+        }
         var batch = {
           id: 'NB' + (ctx.seq++), reqId: req.id, seq: n, type: type, line: line, dosage: dosage,
-          start: f(pl.start), end: f(pl.end), harvestDate: harvest, fillDate: fill, mabPhases: mabPhases, project: req.atProject,
+          start: f(pl.start), end: f(pl.end), harvestDate: harvest, fillDate: fill, packDate: packDate, mabPhases: mabPhases, project: req.atProject,
           henlius: req.henliusProject, gmp: req.type==='CB' ? true : !!req.gmp, priority: req.priority, requester: req.requester || '',
           mabSeed: type === 'Mab' ? sg.seed : null, mabReactor: type === 'Mab' ? sg.reactor : null,
           mabPurify: type === 'Mab' ? sg.purify : null, dpSegs: dpSeg,
