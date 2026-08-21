@@ -42,6 +42,14 @@
     statusEl.textContent = txt;
     statusEl.className = cls || '';
   }
+  // 提取错误关键信息（errCode/errMsg/message），用于直接显示根因
+  function shortErr(e) {
+    if (!e) return '';
+    var m = e.errMsg || e.message || e.msg || String(e);
+    m = String(m).trim();
+    if (m.length > 46) m = m.slice(0, 46) + '…';
+    return m;
+  }
 
   // ---------- 连接：初始化 + 匿名登录 ----------
   function connect(h) {
@@ -109,7 +117,8 @@
       if (localOnly.length) toast('已同步云端需求 ' + cloudReqs.length + ' 条，并补传本地新增 ' + localOnly.length + ' 条');
     }).catch(function (e) {
       console.warn('[cloud] 拉取失败：', e);
-      setStatus('⚠️ 云端同步失败（刷新重试）', 'cloud-off');
+      setStatus('⚠️ 同步失败：' + shortErr(e), 'cloud-off');
+      if (statusEl) statusEl.title = String((e && (e.errMsg || e.message)) || e || ''); // hover 看完整错误
     });
   }
 
