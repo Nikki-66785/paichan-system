@@ -138,7 +138,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 生物制药排产系统 <span class="tag" id="verTag" title="页面版本：v2.5.8（CB均GMP批次·计划含需求人·转移日期必填校验）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.5.8</span></h1>
+  <h1>🧬 生物制药排产系统 <span class="tag" id="verTag" title="页面版本：v2.5.9（DP批次自动生成包装完成日期＝完成+包装天数，规则页可调）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.5.9</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -368,7 +368,7 @@
       <div class="scroll-tbl" style="max-height:520px">
         <table id="batchTable">
           <thead><tr>
-            <th class="plan-only" style="width:28px"><input type="checkbox" id="batchSelAll" title="全选/全不选（仅锁定批次）"></th><th>状态</th><th>类型</th><th>项目</th><th>需求人</th><th>批次号</th><th>产线</th><th>开始</th><th>完成</th><th>下罐/灌装</th><th>GMP</th><th>备注</th><th class="plan-only">操作</th>
+            <th class="plan-only" style="width:28px"><input type="checkbox" id="batchSelAll" title="全选/全不选（仅锁定批次）"></th><th>状态</th><th>类型</th><th>项目</th><th>需求人</th><th>批次号</th><th>产线</th><th>开始</th><th>完成</th><th>包装完成</th><th>下罐/灌装</th><th>GMP</th><th>备注</th><th class="plan-only">操作</th>
           </tr></thead>
           <tbody></tbody>
         </table>
@@ -472,7 +472,7 @@
   </section>
 </main>
 
-<footer>生物制药排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.5.8（云端共享）</footer>
+<footer>生物制药排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.5.9（云端共享）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -527,9 +527,9 @@
 <div id="toast"></div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=258"></script>
-<script src="xlsx.full.min.js?v=258"></script>
-<script src="cloud.js?v=258"></script>
+<script src="cloudbase.full.js?v=259"></script>
+<script src="xlsx.full.min.js?v=259"></script>
+<script src="cloud.js?v=259"></script>
 <script src="scheduling.js"></script>
 <script src="history_data.js"></script>
 <script>
@@ -542,6 +542,16 @@
   var LS_KEY = 'schedule_sys_v1';
   var Sched = window.Scheduling;
   var U = Sched.utils;
+  // 包装完成日期：仅正式 DP 批次（ADC DP / CM DP）＝ DP完成日期 + dp.packDays（默认10天，规则页可调）
+  // 旧批次未存 packDate 时按当前规则回算显示；放大测试/APS/其他类型返回空
+  function packDateOf(b){
+    if(b.type!=='ADC DP' && b.type!=='CM DP') return '';
+    if(b.packDate) return b.packDate;
+    if(!b.end) return '';
+    var R = state.rules || Sched.DEFAULTS;
+    var d = (R.dp && R.dp.packDays!=null) ? R.dp.packDays : 10;
+    return U.f(U.add(U.p(b.end), d));
+  }
   var TYPE_COLOR = {
     'MCB':'#3b82f6','WCB':'#60a5fa','Mab':'#8b5cf6','ADC DS':'#06b6d4','ADC DP':'#f59e0b',
     'CM DP':'#22c55e','冻干放大测试':'#94a3b8','APS':'#ec4899','参比品':'#a16207','贴签包装':'#a16207','包装':'#a16207','设备验证':'#a16207'
@@ -1104,7 +1114,7 @@
         var cls = 'g-bar'+(b.locked?' locked':'')+(b.status==='预警'?' warn':'')+(isFinal(b)?' dead':'');
         var color = TYPE_COLOR[b.type] || '#a8a29e';
         var label = (b.project||'') + (b.type==='APS'?' APS':'');
-        html += '<div class="'+cls+'" data-id="'+b.id+'" style="left:'+l+'px;width:'+Math.max(w-1,10)+'px;background:'+color+'" title="'+esc(b.type+' '+b.project+' '+(b.requester?('需求人:'+b.requester+' '):'')+b.start+'~'+b.end+(b.warning?' [预警]':'')+(isFinal(b)?' ['+b.status+']':''))+'">'+esc(label)+'</div>';
+        html += '<div class="'+cls+'" data-id="'+b.id+'" style="left:'+l+'px;width:'+Math.max(w-1,10)+'px;background:'+color+'" title="'+esc(b.type+' '+b.project+' '+(b.requester?('需求人:'+b.requester+' '):'')+b.start+'~'+b.end+(packDateOf(b)?(' [包装完成:'+packDateOf(b)+']'):'')+(b.warning?' [预警]':'')+(isFinal(b)?' ['+b.status+']':''))+'">'+esc(label)+'</div>';
       });
       html += '</div></div>';
     });
@@ -1177,6 +1187,7 @@
         '<td style="color:var(--sub)">'+esc(b.batchNo||'-')+'</td>'+
         '<td>'+esc(b.line||'-')+'</td>'+
         '<td>'+esc(b.start)+'</td><td>'+esc(b.end)+'</td>'+
+        '<td style="color:var(--sub)">'+esc(packDateOf(b)||'-')+'</td>'+
         '<td style="color:var(--sub)">'+(b.harvestDate?'下罐 '+esc(b.harvestDate):(b.fillDate?'灌装 '+esc(b.fillDate):'-'))+'</td>'+
         '<td>'+(b.gmp?'<span class="b-green">GMP</span>':'<span class="b-gray">非GMP</span>')+'</td>'+
         '<td style="max-width:220px;white-space:normal;color:var(--sub)">'+esc(b.warning||b.note||'')+'</td>'+
@@ -1199,6 +1210,7 @@
     $('editInfo').innerHTML = (b.reqId?'已关联需求':'自动生成/历史批次')+' ｜ 当前状态：'+b.status+
       (b.mabPhases?' ｜ 周期构成：'+b.mabPhases:'')+
       (b.dpSegs?' ｜ 周期构成：准备'+b.dpSegs.prep+'+灌装'+b.dpSegs.fill+'+冻干'+b.dpSegs.freeze+'+清场'+b.dpSegs.clear+'+目检包装'+b.dpSegs.inspect+'（合计'+b.dpSegs.total+'天）':'')+
+      (isDP?(packDateOf(b)?' ｜ 包装完成日期 '+packDateOf(b)+'（完成+'+(((state.rules||Sched.DEFAULTS).dp||{}).packDays!=null?((state.rules||Sched.DEFAULTS).dp||{}).packDays:10)+'天，可改规则调整）':''):'')+
       (isHist?' ｜ <b>历史锁定批次，仅可查看</b>':'');
     $('e_batchno').value = b.batchNo||'';
     $('e_start').value = b.start||'';
@@ -1301,6 +1313,11 @@
       $('e_end').value = e;
       b.dpSegs = { prep:dp[0], fill:dp[1], freeze:dp[2], clear:dp[3], inspect:dp[4], total:dsum };
       b.fillDate = U.f(U.add(U.p(s), dp[0])); // 灌装日期自动根据开始时间计算并更新
+      // 包装完成日期随完成日期+规则天数自动更新（仅正式 DP 批次）
+      if(b.type==='ADC DP'||b.type==='CM DP'){
+        var pd = (state.rules||Sched.DEFAULTS); var pkd = (pd.dp&&pd.dp.packDays!=null)?pd.dp.packDays:10;
+        b.packDate = U.f(U.add(U.p(e), pkd));
+      }
     }
     if(!e){ toast('请填写完成日期'); return; }
     if(U.p(e) < U.p(s)){ toast('完成日期不能早于开始日期'); return; }
@@ -1384,6 +1401,7 @@
     html += ruleField('C7CM DP 清场后间隔(天)','dp.clearGapC7',R.dp.clearGapC7);
     html += ruleField('SJ2 DP产线清场后间隔(天)','dp.clearGapSJ2',R.dp.clearGapSJ2);
     html += ruleField('二次稀配增加周期(天)','dp.diluteExtraDays',R.dp.diluteExtraDays);
+    html += ruleField('DP 包装周期(天)（包装完成=完成日期+此天数）','dp.packDays',R.dp.packDays!=null?R.dp.packDays:10);
     html += ruleField('ADC Non-GMP 与ADC DS间隔(天)','adcDp.nonGmpGapDays',R.adcDp.nonGmpGapDays);
     html += ruleField('ADC 其余与ADC DS间隔(天)','adcDp.otherGapDays',R.adcDp.otherGapDays);
     html += ruleField('冻干与放大测试间隔(天)','freezeDry.testGapDays',R.freezeDry.testGapDays);
@@ -1614,9 +1632,9 @@
   }
   function exportCSV(){
     if(typeof XLSX === 'undefined'){ toast('Excel 组件未加载，无法导出'); return; }
-    var rows = [['状态','类型','项目','需求人','批次号','产线','开始','完成','GMP','备注']];
+    var rows = [['状态','类型','项目','需求人','批次号','产线','开始','完成','包装完成','GMP','备注']];
     state.batches.forEach(function(b){
-      rows.push([b.status, b.type, b.project, b.requester||'', b.batchNo||'', b.line, b.start, b.end, b.gmp?'Y':'N', (b.warning||b.note||'').replace(/\n/g,' ')]);
+      rows.push([b.status, b.type, b.project, b.requester||'', b.batchNo||'', b.line, b.start, b.end, packDateOf(b)||'', b.gmp?'Y':'N', (b.warning||b.note||'').replace(/\n/g,' ')]);
     });
     var wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '排产批次');
