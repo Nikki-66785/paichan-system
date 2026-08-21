@@ -636,7 +636,7 @@
     (H.CB||[]).forEach(function(r){
       if(!r['计划开始日期']) return;
       out.push({ id:'H'+(seq++), type:r['种类']==='WCB'?'WCB':'MCB', line:'SJ2 CB', start:r['计划开始日期'], end:r['计划完成日期'],
-        project:r['AT项目号']||'', henlius:r['Henlius项目号']||'', batchNo:r['批次号']||'', gmp:false, priority:'中',
+        project:r['Henlius项目号']||'', henlius:'', batchNo:r['批次号']||'', gmp:false, priority:'中',
         locked:true, status:'锁定', source:'历史', note:r['备注']||'' });
     });
     (H.DS||[]).forEach(function(r){
@@ -644,7 +644,7 @@
       var t = r['种类']==='ADC' ? 'ADC DS' : (r['种类']==='Mab' ? 'Mab' : null);
       if(!t) return;
       out.push({ id:'H'+(seq++), type:t, line: t==='Mab'?'SJ1DS':'SJ2 ADC DS', start:r['计划开始日期'], end:r['计划完成日期'],
-        harvestDate:r['下罐日期']||null, project:r['AT项目号']||'', henlius:r['Henlius项目号']||'', batchNo:r['Aton批号']||'',
+        harvestDate:r['下罐日期']||null, project:r['Henlius项目号']||'', henlius:'', batchNo:r['Aton批号']||'',
         gmp:r['是否为GMP批次']==='Y', priority:'中', locked:true, status:'锁定', source:'历史', note:r['备注']||'' });
     });
     (H.DP||[]).forEach(function(r){
@@ -657,7 +657,7 @@
       else if(t==='参比品'||t==='贴签包装'||t==='包装'||t==='设备验证'){ type=t; line='其他'; }
       else { type=t||'其他'; line='其他'; }
       out.push({ id:'H'+(seq++), type:type, line:line, start:r['计划开始日期'], end:r['计划完成日期'],
-        fillDate:r['灌装日期']||null, project:r['AT项目号']||'', henlius:r['Henlius项目号']||'', batchNo:r['Aton批号']||'',
+        fillDate:r['灌装日期']||null, project:r['Henlius项目号']||'', henlius:'', batchNo:r['Aton批号']||'',
         gmp:r['是否为GMP批次']==='Y', priority:'中', locked:true, status:'锁定', source:'历史', note:r['备注']||'' });
     });
     return out;
