@@ -162,6 +162,8 @@
       if (localOnly.length) toast('已同步云端需求 ' + cloudReqs.length + ' 条，并补传本地新增 ' + localOnly.length + ' 条');
     } else if (newIds.length) {
       toast('📥 收到其他用户新需求 ' + newIds.length + ' 条');
+      // 主逻辑弹「一键排产」提示条（不自动重排，由人确认后触发）
+      if (hook.onRemoteReqs) hook.onRemoteReqs(newIds.length);
     }
   }
 
