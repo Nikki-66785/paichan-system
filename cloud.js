@@ -21,6 +21,7 @@
   var PLAN_ID = 'main';
 
   var db = null, ready = false;
+  var retriedLogin = false; // 凭证缺失自动重登标志（每次会话最多一次）
   var saveTimer = null;
   var hook = null;      // 主逻辑注入的读写回调
   var statusEl = null;
@@ -87,13 +88,23 @@
   }
 
   // ---------- 连接：初始化 + 匿名登录 ----------
+  var appRef = null; // 保留 app 引用供重登使用
+  function reSignIn() {
+    return appRef.auth({ persistence: 'none' }).anonymousAuthProvider().signIn();
+  }
   function connect(h) {
     hook = h || hook;
     statusEl = document.getElementById('cloudStatus');
     if (!enabled()) { setStatus('📴 本地模式', 'cloud-off'); return; }
+    // file:// 等非 http(s) 方式打开时 Origin 不在安全域名白名单，匿名登录必失败
+    if (window.location && window.location.protocol && window.location.protocol.indexOf('http') !== 0) {
+      setStatus('⚠️ 本地文件无法连云，请用线上地址访问', 'cloud-off');
+      if (statusEl) statusEl.title = '云端同步需要从 https://nikki-66785.github.io/paichan-system/ 打开页面';
+      return;
+    }
     var app;
     // v3 SDK 根据 envId 自动路由到正确地域（网关 host 不带 region），无需硬编码 region
-    try { app = window.cloudbase.init({ env: CFG.envId, region: CFG.region }); }
+    try { app = appRef = window.cloudbase.init({ env: CFG.envId, region: CFG.region }); }
     catch (e) { console.warn('[cloud] init 失败：', e); setStatus('⚠️ 云端连接失败', 'cloud-off'); return; }
     // persistence:'none'：登录态不落 localStorage，每次刷新都全新匿名登录，
     // 避免复用已过期的本地凭证导致数据库访问返回 unauthenticated（401）
@@ -155,9 +166,23 @@
       if ((!cloudPlan || !cloudPlan.data) && hook.getPlan) pushPlan();    // 云端无计划 → 初始化
       if (localOnly.length) toast('已同步云端需求 ' + cloudReqs.length + ' 条，并补传本地新增 ' + localOnly.length + ' 条');
     }).catch(function (e) {
+      var full = shortErr(e, 300);
       console.warn('[cloud] 拉取失败：', e);
+      // 凭证缺失（signIn 内部失败被 SDK 吞掉等）→ 重新匿名登录后重试一次
+      if (!retriedLogin && /unauthenticated|credentials not found|401/i.test(full)) {
+        retriedLogin = true;
+        console.warn('[cloud] 检测到凭证缺失，尝试重新匿名登录…');
+        reSignIn().then(function () {
+          db = appRef.database(); ready = true;
+          syncDown();
+        }).catch(function (e2) {
+          setStatus('⚠️ 云端未连接：' + shortErr(e2), 'cloud-off');
+          if (statusEl) statusEl.title = '完整错误：' + shortErr(e2, 300);
+        });
+        return;
+      }
       setStatus('⚠️ 同步失败：' + shortErr(e), 'cloud-off');
-      if (statusEl) statusEl.title = '完整错误：' + shortErr(e, 300); // hover 看完整错误
+      if (statusEl) statusEl.title = '完整错误：' + full; // hover 看完整错误
     });
   }
 
