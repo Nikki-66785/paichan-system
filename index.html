@@ -137,7 +137,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 生物制药排产系统 <span class="tag" id="verTag" title="页面版本：v2.5.4（云端共享：他人新需求到达时提示一键排产）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.5.4</span></h1>
+  <h1>🧬 生物制药排产系统 <span class="tag" id="verTag" title="页面版本：v2.5.5（导入导出均为 Excel .xlsx）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.5.5</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -288,7 +288,7 @@
         <div class="toolbar">
           <button class="btn ok req-only" id="btnSchedule">🚀 自动排产</button>
           <button class="btn req-only" id="btnClearPlan">↺ 清空排产结果（保留需求）</button>
-          <button class="btn sm" id="btnExportReq">⬇️ 导出需求清单 (Excel/CSV)</button>
+          <button class="btn sm" id="btnExportReq">⬇️ 导出需求清单 (Excel)</button>
           <span class="spacer"></span>
           <span class="hint req-only">排产方向：优先自动正排（最早可开工）；正排排不下时按交期倒排；交期无法满足时<b style="color:#b45309">标黄预警</b></span>
           <span class="hint plan-only">生产计划角色可在本页删除任意需求（每行「删除」按钮）；批次确认与调整在「📅 排产计划」页</span>
@@ -362,7 +362,7 @@
         </select>
         <input id="filtProject" placeholder="搜索项目号" style="width:160px">
         <span class="spacer" style="flex:1"></span>
-        <button class="btn sm" id="btnExportPlan">导出Excel格式(CSV)</button>
+        <button class="btn sm" id="btnExportPlan">导出Excel(.xlsx)</button>
       </div>
       <div class="scroll-tbl" style="max-height:520px">
         <table id="batchTable">
@@ -455,14 +455,14 @@
     <div class="card">
       <h2>数据管理</h2>
       <div class="toolbar">
-        <button class="btn" id="btnExport">⬇️ 导出全部数据 (JSON)</button>
-        <button class="btn" id="btnImport">⬆️ 导入数据 (JSON)</button>
-        <input type="file" id="importFile" accept=".json" style="display:none">
+        <button class="btn" id="btnExport">⬇️ 导出全部数据 (Excel)</button>
+        <button class="btn" id="btnImport">⬆️ 导入数据 (Excel/JSON)</button>
+        <input type="file" id="importFile" accept=".xlsx,.json" style="display:none">
         <button class="btn" id="btnReimportHist">📥 重新导入历史计划（锁定产能）</button>
         <button class="btn danger" id="btnClearAll">🗑 清空全部数据</button>
       </div>
       <div class="hint" style="margin-top:12px;line-height:2.2">
-        <p>· <b>导出</b>：将需求、排产批次、规则参数保存为 JSON 文件，可在其它电脑导入使用。</p>
+        <p>· <b>导出</b>：将需求、排产批次、规则参数保存为 Excel（.xlsx）文件，可在其它电脑导入使用（同时兼容旧版 JSON 文件导入）。</p>
         <p>· <b>重新导入历史计划</b>：从内置的 <code>CM排产计划_20260818.xlsx</code> 数据重建全部历史锁定批次（当前批次将被替换）。</p>
         <p>· <b>文件结构</b>：本系统共 3 个文件——<code>排产系统.html</code>（界面）、<code>scheduling.js</code>（排产引擎）、<code>history_data.js</code>（历史数据）。请放在同一目录，双击 HTML 即可使用。</p>
         <p>· <b>数据存储</b>：本地优先（localStorage）+ 可选云端共享（CloudBase）。配置环境 ID 后，多人提交的需求实时同步、排产计划云端备份；未配置或网络不可用时自动降级为单机模式。清空浏览器缓存会导致本地数据丢失，请定期导出备份。</p>
@@ -471,7 +471,7 @@
   </section>
 </main>
 
-<footer>生物制药排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.5.4（云端共享）</footer>
+<footer>生物制药排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.5.5（云端共享）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -526,8 +526,9 @@
 <div id="toast"></div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=254"></script>
-<script src="cloud.js?v=254"></script>
+<script src="cloudbase.full.js?v=255"></script>
+<script src="xlsx.full.min.js?v=255"></script>
+<script src="cloud.js?v=255"></script>
 <script src="scheduling.js"></script>
 <script src="history_data.js"></script>
 <script>
@@ -1513,20 +1514,85 @@
     });
     empty.style.display = keys.length ? 'none' : '';
   }
-  function exportData(){
-    var blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  // ---------- Excel 导入导出（SheetJS）----------
+  // 记录数组 ↔ sheet：首行=字段名（键并集），布尔保留类型，对象/数组 JSON 字符串编码，导入时自动还原
+  function toSheet(records){
+    var keys = [];
+    records.forEach(function(r){ Object.keys(r||{}).forEach(function(k){ if(keys.indexOf(k)<0) keys.push(k); }); });
+    var aoa = [keys];
+    records.forEach(function(r){
+      aoa.push(keys.map(function(k){
+        var v = (r||{})[k];
+        if(v != null && typeof v === 'object') return JSON.stringify(v);
+        return (v === undefined || v === null) ? '' : v;
+      }));
+    });
+    return XLSX.utils.aoa_to_sheet(aoa);
+  }
+  function fromSheet(ws){
+    var rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:''});
+    if(!rows.length) return [];
+    var keys = rows[0];
+    return rows.slice(1).filter(function(row){ return row.some(function(c){ return c !== '' && c != null; }); }).map(function(row){
+      var o = {};
+      keys.forEach(function(k, i){
+        var v = row[i];
+        if(v === '' || v == null) return;
+        if(typeof v === 'string' && (v.charAt(0)==='{' || v.charAt(0)==='[')){
+          try { v = JSON.parse(v); } catch(e){ /* 保留原字符串 */ }
+        }
+        o[k] = v;
+      });
+      return o;
+    });
+  }
+  function saveXlsx(wb, filename){
+    var u8 = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+    var blob = new Blob([u8], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = '排产系统数据_'+today()+'.json';
+    a.download = filename;
     a.click();
     setTimeout(function(){URL.revokeObjectURL(a.href);}, 1000);
-    toast('已导出数据文件');
+  }
+  function exportData(){
+    if(typeof XLSX === 'undefined'){ toast('Excel 组件未加载，无法导出'); return; }
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, toSheet(state.requirements), '需求');
+    XLSX.utils.book_append_sheet(wb, toSheet(state.batches), '排产批次');
+    var cfg = [['key','value'],
+      ['role', state.role||''], ['user', state.user||''],
+      ['ganttAxis', JSON.stringify(state.ganttAxis||{px:2.5,unit:'month'})],
+      ['ganttLines', state.ganttLines==null?'':JSON.stringify(state.ganttLines)],
+      ['rules', state.rules==null?'':JSON.stringify(state.rules)],
+      ['refData', state.refData==null?'':JSON.stringify(state.refData)]];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(cfg), '配置');
+    saveXlsx(wb, '排产系统数据_'+today()+'.xlsx');
+    toast('已导出 Excel 数据文件');
   }
   function importData(file){
+    var isJson = /\.json$/i.test(file.name||'');
     var reader = new FileReader();
     reader.onload = function(){
       try{
-        var d = JSON.parse(reader.result);
+        var d;
+        if(isJson){
+          d = JSON.parse(reader.result);
+        } else {
+          if(typeof XLSX === 'undefined') throw new Error('Excel 组件未加载');
+          var wb = XLSX.read(reader.result, {type:'array'});
+          var iReq = wb.SheetNames.indexOf('需求'), iBat = wb.SheetNames.indexOf('排产批次'), iCfg = wb.SheetNames.indexOf('配置');
+          if(iReq < 0 || iBat < 0) throw new Error('缺少「需求」或「排产批次」工作表');
+          d = { requirements: fromSheet(wb.Sheets[wb.SheetNames[iReq]]), batches: fromSheet(wb.Sheets[wb.SheetNames[iBat]]) };
+          if(iCfg >= 0){
+            XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[iCfg]], {header:1}).forEach(function(row){
+              if(!row || !row[0]) return;
+              var k = row[0], v = row[1];
+              if(k==='rules' || k==='ganttAxis' || k==='ganttLines' || k==='refData'){ try { d[k] = v ? JSON.parse(v) : null; } catch(e){ d[k] = null; } }
+              else d[k] = v;
+            });
+          }
+        }
         if(!d.requirements || !d.batches) throw new Error('格式不正确');
         state = d;
         if(!state.role) state.role='requester';
@@ -1539,23 +1605,21 @@
         toast('导入成功：需求 '+d.requirements.length+' 条，批次 '+d.batches.length+' 批');
       }catch(e){ toast('导入失败：'+e.message); }
     };
-    reader.readAsText(file);
+    if(isJson) reader.readAsText(file); else reader.readAsArrayBuffer(file);
   }
   function exportCSV(){
+    if(typeof XLSX === 'undefined'){ toast('Excel 组件未加载，无法导出'); return; }
     var rows = [['状态','类型','项目','批次号','产线','开始','完成','GMP','备注']];
     state.batches.forEach(function(b){
       rows.push([b.status, b.type, b.project, b.batchNo||'', b.line, b.start, b.end, b.gmp?'Y':'N', (b.warning||b.note||'').replace(/\n/g,' ')]);
     });
-    var csv = '\ufeff' + rows.map(function(r){ return r.map(function(x){ return '"'+String(x==null?'':x).replace(/"/g,'""')+'"'; }).join(','); }).join('\r\n');
-    var blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = '排产批次_'+today()+'.csv';
-    a.click();
-    setTimeout(function(){URL.revokeObjectURL(a.href);}, 1000);
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '排产批次');
+    saveXlsx(wb, '排产批次_'+today()+'.xlsx');
   }
   // 需求填报信息导出（Excel/CSV）
   function exportReqCSV(){
+    if(typeof XLSX === 'undefined'){ toast('Excel 组件未加载，无法导出'); return; }
     if(!state.requirements.length){ toast('暂无需求可导出'); return; }
     var rows = [['项目号','类型','批次类型','批次数','交期','优先级','需求人','状态','规格','项目阶段','预算','首次生产','Molecule Type','Target','Novelty','mAb subtype','Host Cell Line','二次稀配','注射瓶规格','Titer','制剂批量','备注','提交时间']];
     state.requirements.forEach(function(r){
@@ -1569,13 +1633,9 @@
         r.concentration||'', (r.note||'').replace(/\n/g,' '), (r.createdAt||'').slice(0,10)
       ]);
     });
-    var csv = '\ufeff' + rows.map(function(r){ return r.map(function(x){ return '"'+String(x==null?'':x).replace(/"/g,'""')+'"'; }).join(','); }).join('\r\n');
-    var blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = '需求清单_'+today()+'.csv';
-    a.click();
-    setTimeout(function(){URL.revokeObjectURL(a.href);}, 1000);
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '需求清单');
+    saveXlsx(wb, '需求清单_'+today()+'.xlsx');
     toast('已导出需求清单（'+state.requirements.length+' 条）');
   }
 
