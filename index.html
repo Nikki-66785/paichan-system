@@ -26,6 +26,8 @@
   header .stats{display:flex;gap:8px;margin-left:auto;font-size:12px;flex-wrap:wrap}
   header .stat{background:rgba(255,255,255,.16);border-radius:20px;padding:4px 12px}
   header .stat b{font-size:14px;margin-left:4px}
+  #cloudStatus.cloud-on{background:rgba(34,197,94,.4)}
+  #cloudStatus.cloud-off{background:rgba(245,158,11,.4)}
   nav{background:var(--card);border-bottom:1px solid var(--line);display:flex;padding:0 18px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow);flex-wrap:wrap}
   nav button{background:none;border:none;padding:12px 18px;font-size:14px;color:var(--sub);cursor:pointer;border-bottom:2.5px solid transparent;font-weight:600}
   nav button.on{color:var(--pri);border-bottom-color:var(--pri)}
@@ -133,7 +135,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 生物制药排产系统 <span class="tag" id="verTag" title="页面版本：v2.4（放大测试免目检、灌装日期自动计算、批量解锁与刷新自动排产、需求导出Excel）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.4</span></h1>
+  <h1>🧬 生物制药排产系统 <span class="tag" id="verTag" title="页面版本：v2.5（接入 CloudBase 云端共享：多人需求实时同步）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.5</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -144,6 +146,7 @@
     <input id="userName" placeholder="姓名（选填）">
   </div>
   <div class="stats">
+    <span class="stat" id="cloudStatus" title="云端连接状态：配置 CloudBase 环境后，多人提交的需求实时共享">☁️ 连接中…</span>
     <span class="stat">需求 <b id="stReq">0</b></span>
     <span class="stat">批次 <b id="stBatch">0</b></span>
     <span class="stat">锁定 <b id="stLock">0</b></span>
@@ -459,13 +462,13 @@
         <p>· <b>导出</b>：将需求、排产批次、规则参数保存为 JSON 文件，可在其它电脑导入使用。</p>
         <p>· <b>重新导入历史计划</b>：从内置的 <code>CM排产计划_20260818.xlsx</code> 数据重建全部历史锁定批次（当前批次将被替换）。</p>
         <p>· <b>文件结构</b>：本系统共 3 个文件——<code>排产系统.html</code>（界面）、<code>scheduling.js</code>（排产引擎）、<code>history_data.js</code>（历史数据）。请放在同一目录，双击 HTML 即可使用。</p>
-        <p>· <b>数据存储</b>：保存在浏览器本地（localStorage），单机使用；清空浏览器缓存会导致数据丢失，请定期导出备份。</p>
+        <p>· <b>数据存储</b>：本地优先（localStorage）+ 可选云端共享（CloudBase）。配置环境 ID 后，多人提交的需求实时同步、排产计划云端备份；未配置或网络不可用时自动降级为单机模式。清空浏览器缓存会导致本地数据丢失，请定期导出备份。</p>
       </div>
     </div>
   </section>
 </main>
 
-<footer>生物制药排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · 单机版 v2.4</footer>
+<footer>生物制药排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.5（云端共享）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -519,6 +522,9 @@
 
 <div id="toast"></div>
 
+<script>window.CLOUD_CONFIG = { envId: '' };</script>
+<script src="https://imgcache.qq.com/qcloud/cloudbase-js-sdk/2.6.0/cloudbase.full.js"></script>
+<script src="cloud.js"></script>
 <script src="scheduling.js"></script>
 <script src="history_data.js"></script>
 <script>
@@ -598,6 +604,7 @@
   function save(){
     try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
     catch(e){ toast('保存失败：'+e.message); }
+    if(window.CloudSync) window.CloudSync.onSaved(); // 云端计划同步（节流）
   }
   function load(){
     try{
@@ -798,6 +805,7 @@
     if(!r.requester && state.user) r.requester = state.user; // 需求人默认取当前用户
     state.requirements.push(r);
     save(); renderStats(); renderReq();
+    if(window.CloudSync) window.CloudSync.pushReq(r); // 需求同步云端
     toast('已添加需求，可点击「自动排产」');
     clearFormFields();
   }
@@ -812,6 +820,7 @@
     state.requirements = state.requirements.filter(function(r){return r.id!==id;});
     state.batches = state.batches.filter(function(b){return b.reqId!==id;});
     save(); renderAll();
+    if(window.CloudSync) window.CloudSync.delReqCloud(id); // 同步删除云端需求
   }
   function editReq(id){
     var r = state.requirements.find(function(x){return x.id===id;});
@@ -862,6 +871,7 @@
       $('btnAddReq').dataset.editId='';
       $('btnAddReq').textContent='➕ 添加需求';
       save(); renderAll();
+      if(window.CloudSync) window.CloudSync.pushReq(nr); // 需求修改同步云端
       toast('需求已更新，请重新自动排产');
     } else {
       addReq();
@@ -1713,6 +1723,23 @@
     renderRules();
     if(state.batches.some(function(b){return b.status==='预警';})){
       $('stWarn').style.color='#fca5a5';
+    }
+    // 连接云端（若已配置 envId）：拉取多人共享的需求与计划，合并后刷新
+    if(window.CloudSync){
+      window.CloudSync.connect({
+        getReqs: function(){ return state.requirements; },
+        getPlan: function(){ return { batches: state.batches, rules: state.rules, refData: state.refData, ganttAxis: state.ganttAxis, ganttLines: state.ganttLines }; },
+        applyReqs: function(reqs){ state.requirements = reqs; },
+        applyPlan: function(p){
+          if(!p) return;
+          state.batches = p.batches || state.batches;
+          state.rules = p.rules || null;
+          state.refData = p.refData || null;
+          if(p.ganttAxis) state.ganttAxis = p.ganttAxis;
+          if(p.ganttLines) state.ganttLines = p.ganttLines;
+        },
+        afterSync: function(){ save(); renderAll(); renderRules(); }
+      });
     }
   }
   init();
