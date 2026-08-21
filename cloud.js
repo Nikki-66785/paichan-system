@@ -137,7 +137,35 @@
     return page();
   }
 
-  // 云端拉取 → 合并 → 回调主逻辑
+  // 云端需求 → 合并 → 回调主逻辑（initial=首次同步：补传本地独有+应用计划；watch 触发时只做增量合并）
+  function applyCloudReqs(cloudReqs, cloudPlan, initial) {
+    var localReqs = (hook.getReqs && hook.getReqs()) || [];
+
+    // 需求合并：以本地顺序为基准；云端有 → 用云端版本（云端权威）；云端新增 → 追加末尾；本地独有（离线提交）→ 保留并补传云端
+    var cloudById = {}, localById = {};
+    cloudReqs.forEach(function (d) { if (d && d.data && d.data.id) cloudById[d.data.id] = d.data; });
+    localReqs.forEach(function (r) { localById[r.id] = r; });
+    var merged = localReqs.map(function (r) { return cloudById[r.id] || r; });
+    var newIds = [];
+    Object.keys(cloudById).forEach(function (id) {
+      if (!localById[id]) { merged.push(cloudById[id]); newIds.push(id); }
+    });
+    var localOnly = localReqs.filter(function (r) { return !cloudById[r.id]; });
+
+    if (hook.applyReqs) hook.applyReqs(merged);
+    if (initial && hook.applyPlan && cloudPlan && cloudPlan.data) hook.applyPlan(cloudPlan.data);
+    if (hook.afterSync) hook.afterSync();
+
+    if (initial) {
+      localOnly.forEach(function (r) { pushReq(r); });                  // 补传本地独有（幂等）
+      if ((!cloudPlan || !cloudPlan.data) && hook.getPlan) pushPlan();  // 云端无计划 → 初始化
+      if (localOnly.length) toast('已同步云端需求 ' + cloudReqs.length + ' 条，并补传本地新增 ' + localOnly.length + ' 条');
+    } else if (newIds.length) {
+      toast('📥 收到其他用户新需求 ' + newIds.length + ' 条');
+    }
+  }
+
+  // 打开页面时全量拉一次
   function syncDown() {
     if (!ready || !hook) return;
     Promise.all([
@@ -146,25 +174,8 @@
         .then(function (r) { return (r && r.data) || null; })
         .catch(function () { return null; })
     ]).then(function (res) {
-      var cloudReqs = res[0] || [];
-      var cloudPlan = res[1];
-      var localReqs = (hook.getReqs && hook.getReqs()) || [];
-
-      // 需求合并：以本地顺序为基准；云端有 → 用云端版本（云端权威）；云端新增 → 追加末尾；本地独有（离线提交）→ 保留并补传云端
-      var cloudById = {}, localById = {};
-      cloudReqs.forEach(function (d) { if (d && d.data && d.data.id) cloudById[d.data.id] = d.data; });
-      localReqs.forEach(function (r) { localById[r.id] = r; });
-      var merged = localReqs.map(function (r) { return cloudById[r.id] || r; });
-      Object.keys(cloudById).forEach(function (id) { if (!localById[id]) merged.push(cloudById[id]); });
-      var localOnly = localReqs.filter(function (r) { return !cloudById[r.id]; });
-
-      if (hook.applyReqs) hook.applyReqs(merged);
-      if (hook.applyPlan && cloudPlan && cloudPlan.data) hook.applyPlan(cloudPlan.data);
-      if (hook.afterSync) hook.afterSync();
-
-      localOnly.forEach(function (r) { pushReq(r); });                    // 补传本地独有（幂等）
-      if ((!cloudPlan || !cloudPlan.data) && hook.getPlan) pushPlan();    // 云端无计划 → 初始化
-      if (localOnly.length) toast('已同步云端需求 ' + cloudReqs.length + ' 条，并补传本地新增 ' + localOnly.length + ' 条');
+      applyCloudReqs(res[0] || [], res[1] || null, true);
+      startWatch(); // 首次同步成功后开启实时监听
     }).catch(function (e) {
       var full = shortErr(e, 300);
       console.warn('[cloud] 拉取失败：', e);
@@ -186,11 +197,64 @@
     });
   }
 
+  // ---------- 实时监听：其他人提交/修改需求，几秒内自动出现，无需刷新 ----------
+  var watchHandle = null, watchTimer = null;
+  function startWatch() {
+    if (!ready || watchHandle) return;
+    if (typeof WebSocket === 'undefined') {
+      console.warn('[cloud] 当前环境不支持 WebSocket，实时同步降级为打开页面时同步');
+      return;
+    }
+    try {
+      // v3 SDK 实时回调名为 onChange（v2 是 onSnapshot，两者都传以兼容）
+      // 注意：实时推送对范围条件（gt/lt 等）支持有限，这里用空条件监听集合全部文档
+      watchHandle = db.collection(REQ_COLL).where({}).watch({
+        onChange: function (snap) {
+          if (!snap || !snap.docs) return;
+          console.log('[cloud] watch 快照：云端需求 ' + snap.docs.length + ' 条');
+          // 防抖 300ms：自己写入也会触发快照，避免重复合并
+          clearTimeout(watchTimer);
+          watchTimer = setTimeout(function () { applyCloudReqs(snap.docs, null, false); }, 300);
+        },
+        onSnapshot: function (snap) {
+          if (!snap || !snap.docs) return;
+          console.log('[cloud] watch 快照：云端需求 ' + snap.docs.length + ' 条');
+          clearTimeout(watchTimer);
+          watchTimer = setTimeout(function () { applyCloudReqs(snap.docs, null, false); }, 300);
+        },
+        onError: function (err) {
+          console.warn('[cloud] 实时监听断开（刷新页面可重新同步）：', err);
+          watchHandle = null;
+        }
+      });
+    } catch (e) {
+      // watch 不可用（旧浏览器/网络限制）→ 静默降级为「打开页面时同步」，不影响主流程
+      console.warn('[cloud] 实时监听不可用，回退为打开页面时同步：', e);
+      watchHandle = null;
+    }
+  }
+
   // ---------- 写入 ----------
+  // v3 SDK 两个坑：
+  // ① set() payload 不能含 _id（INVALID_PARAM 且不 reject，静默失败）
+  // ② doc(id).set() 只能新建，文档已存在时报 E11000 duplicate key
+  // 因此统一用 upsert：先 update，updated===0（不存在）再 set 创建
+  function upsert(coll, id, payload, label) {
+    return db.collection(coll).doc(id).update(payload).then(function (res) {
+      if (res && res.code) { console.warn('[cloud] ' + label + '更新被拒：', res.code, res.message || ''); return false; }
+      if (res && res.updated > 0) return true;
+      return db.collection(coll).doc(id).set(payload).then(function (r2) {
+        if (r2 && r2.code) { console.warn('[cloud] ' + label + '写入被拒：', r2.code, r2.message || ''); return false; }
+        return true;
+      });
+    }).catch(function (e) {
+      console.warn('[cloud] ' + label + '写入失败：', e);
+      return false;
+    });
+  }
   function pushReq(r) {
     if (!ready || !r || !r.id) return;
-    db.collection(REQ_COLL).doc(r.id).set({ _id: r.id, data: r, updatedAt: Date.now() })
-      .catch(function (e) { console.warn('[cloud] 需求写入失败：', e); });
+    upsert(REQ_COLL, r.id, { data: r, updatedAt: Date.now() }, '需求');
   }
   function delReqCloud(id) {
     if (!ready || !id) return;
@@ -201,8 +265,7 @@
     if (!ready || !hook || !hook.getPlan) return;
     var p = hook.getPlan();
     if (!p || !p.batches) return;
-    db.collection(PLAN_COLL).doc(PLAN_ID).set({ _id: PLAN_ID, data: p, updatedAt: Date.now() })
-      .catch(function (e) { console.warn('[cloud] 计划写入失败：', e); });
+    upsert(PLAN_COLL, PLAN_ID, { data: p, updatedAt: Date.now() }, '计划');
   }
   // 主逻辑 save() 调用：节流推送计划（需求变更由 pushReq/delReqCloud 单独处理）
   function onSaved() {
