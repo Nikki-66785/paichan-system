@@ -92,7 +92,8 @@
     statusEl = document.getElementById('cloudStatus');
     if (!enabled()) { setStatus('📴 本地模式', 'cloud-off'); return; }
     var app;
-    try { app = window.cloudbase.init({ env: CFG.envId, region: CFG.region || 'ap-shanghai' }); }
+    // v3 SDK 根据 envId 自动路由到正确地域（网关 host 不带 region），无需硬编码 region
+    try { app = window.cloudbase.init({ env: CFG.envId, region: CFG.region }); }
     catch (e) { console.warn('[cloud] init 失败：', e); setStatus('⚠️ 云端连接失败', 'cloud-off'); return; }
     // persistence:'none'：登录态不落 localStorage，每次刷新都全新匿名登录，
     // 避免复用已过期的本地凭证导致数据库访问返回 unauthenticated（401）
