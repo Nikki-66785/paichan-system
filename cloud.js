@@ -4,6 +4,7 @@
  * 作用：让「需求填报」与「排产计划」在多人浏览器之间实时共享。
  *   · requests   集合：需求（每条需求一个文档，多人提交互不覆盖）
  *   · plan_state 集合：排产计划（单文档，管理员维护，大家加载）
+ * 两个集合均有实时监听（watch）：他人提交需求、调整/锁定排产，几秒内自动同步，无需刷新。
  * 未配置 envId / SDK 未加载 / 网络不可用 → 自动降级为纯本地模式（localStorage）。
  *
  * 接入步骤（详见「CloudBase 接入说明.md」）：
@@ -154,7 +155,10 @@
 
     if (hook.applyReqs) hook.applyReqs(merged);
     if (initial && hook.applyPlan && cloudPlan && cloudPlan.data) hook.applyPlan(cloudPlan.data);
+    // 云端同步引发的本地保存不回传计划（内容来自云端，回传是冗余写且可能引发推送风暴）
+    applyingRemotePlan = true;
     if (hook.afterSync) hook.afterSync();
+    applyingRemotePlan = false;
 
     if (initial) {
       localOnly.forEach(function (r) { pushReq(r); });                  // 补传本地独有（幂等）
@@ -177,7 +181,10 @@
         .catch(function () { return null; })
     ]).then(function (res) {
       applyCloudReqs(res[0] || [], res[1] || null, true);
-      startWatch(); // 首次同步成功后开启实时监听
+      // 登记云端计划版本：初次 watch 快照会立即推送当前文档，据此跳过（避免打开页面误报「计划已更新」）
+      if (res[1] && res[1].updatedAt) rememberPlanVersion(res[1].updatedAt);
+      startWatch();       // 需求实时监听
+      startPlanWatch();   // 计划实时监听
     }).catch(function (e) {
       var full = shortErr(e, 300);
       console.warn('[cloud] 拉取失败：', e);
@@ -236,6 +243,57 @@
     }
   }
 
+  // ---------- 实时监听：排产计划（他人调整/锁定后，本页几秒内自动更新） ----------
+  // planVersions：本会话「经手」的计划版本号（updatedAt）集合——自己推送/初次下载的都登记在册，
+  //   watch 收到在册版本 → 回声，跳过（用精确匹配而非大小比较，避免不同机器时钟偏差误判）
+  // applyingRemotePlan：正在应用云端同步数据（此时本地 save() 不回传云端，避免冗余写与推送风暴）
+  var planWatchHandle = null, planWatchTimer = null;
+  var planVersions = [], applyingRemotePlan = false;
+
+  function rememberPlanVersion(ts) {
+    if (!ts) return;
+    planVersions.push(ts);
+    if (planVersions.length > 20) planVersions.shift(); // 上限，防长期运行内存增长
+  }
+
+  function startPlanWatch() {
+    if (!ready || planWatchHandle) return;
+    if (typeof WebSocket === 'undefined') {
+      console.warn('[cloud] 当前环境不支持 WebSocket，计划实时同步降级为打开页面时同步');
+      return;
+    }
+    try {
+      planWatchHandle = db.collection(PLAN_COLL).where({}).watch({
+        onChange: onPlanSnap,
+        onSnapshot: onPlanSnap,
+        onError: function (err) {
+          console.warn('[cloud] 计划实时监听断开（刷新页面可重新同步）：', err);
+          planWatchHandle = null;
+        }
+      });
+    } catch (e) {
+      console.warn('[cloud] 计划实时监听不可用，回退为打开页面时同步：', e);
+      planWatchHandle = null;
+    }
+  }
+  function onPlanSnap(snap) {
+    var docs = (snap && snap.docs) || [];
+    var doc = null;
+    docs.forEach(function (d) { if (d && d._id === PLAN_ID && d.data) doc = d; });
+    if (!doc) { docs.forEach(function (d) { if (d && d.data && d.data.batches) doc = d; }); } // 兜底：取第一个含批次的文档
+    if (!doc || !doc.data || !doc.data.batches) return;
+    if (doc.updatedAt && planVersions.indexOf(doc.updatedAt) >= 0) return; // 自己推送/已下载的版本 → 回声，跳过
+    clearTimeout(planWatchTimer);
+    planWatchTimer = setTimeout(function () {
+      applyingRemotePlan = true;
+      rememberPlanVersion(doc.updatedAt); // 应用即登记，防止期间重复触发
+      if (hook.applyPlan) hook.applyPlan(doc.data);
+      if (hook.afterSync) hook.afterSync(); // 保存本地 + 重新渲染
+      applyingRemotePlan = false;
+      toast('📋 排产计划已更新（其他用户调整/锁定）');
+    }, 300);
+  }
+
   // ---------- 写入 ----------
   // v3 SDK 两个坑：
   // ① set() payload 不能含 _id（INVALID_PARAM 且不 reject，静默失败）
@@ -267,11 +325,14 @@
     if (!ready || !hook || !hook.getPlan) return;
     var p = hook.getPlan();
     if (!p || !p.batches) return;
-    upsert(PLAN_COLL, PLAN_ID, { data: p, updatedAt: Date.now() }, '计划');
+    var ts = Date.now();
+    rememberPlanVersion(ts); // 登记版本，抑制自己推送触发的 watch 回声
+    upsert(PLAN_COLL, PLAN_ID, { data: p, updatedAt: ts }, '计划');
   }
   // 主逻辑 save() 调用：节流推送计划（需求变更由 pushReq/delReqCloud 单独处理）
   function onSaved() {
     if (!ready) return;
+    if (applyingRemotePlan) return; // 远端计划刚应用到本地，不再回传
     clearTimeout(saveTimer);
     saveTimer = setTimeout(pushPlan, 800);
   }
