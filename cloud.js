@@ -57,9 +57,9 @@
     statusEl = document.getElementById('cloudStatus');
     if (!enabled()) { setStatus('📴 本地模式', 'cloud-off'); return; }
     var app;
-    try { app = window.cloudbase.init({ env: CFG.envId }); }
+    try { app = window.cloudbase.init({ env: CFG.envId, region: CFG.region || 'ap-shanghai' }); }
     catch (e) { console.warn('[cloud] init 失败：', e); setStatus('⚠️ 云端连接失败', 'cloud-off'); return; }
-    app.auth({ persistence: 'local' }).anonymousAuthProvider().signIn()
+    app.auth().anonymousAuthProvider().signIn()
       .then(function () {
         db = app.database();
         ready = true;
