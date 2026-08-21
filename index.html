@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生物制药排产系统</title>
+<style>
+  :root{
+    --bg:#f4f6fa; --card:#ffffff; --line:#e2e8f0; --text:#1e293b; --sub:#64748b;
+    --pri:#2563eb; --pri-2:#3b82f6; --warn-bg:#fef3c7; --warn-line:#f59e0b; --err:#dc2626;
+    --ok:#16a34a; --radius:10px; --shadow:0 1px 3px rgba(15,23,42,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:13.5px}
+  header{background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;padding:12px 22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  header h1{font-size:18px;font-weight:700;letter-spacing:.5px}
+  .role-switch{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.18);border-radius:20px;padding:3px 8px}
+  .role-switch .rs-label{font-size:11px;opacity:.85;margin-right:4px}
+  .role-switch button{background:none;border:none;color:#fff;opacity:.7;padding:4px 12px;border-radius:14px;font-size:12.5px;font-weight:600;cursor:pointer}
+  .role-switch button:hover{opacity:1}
+  .role-switch button.on{background:#fff;color:var(--pri);opacity:1}
+  .user-box{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px}
+  .user-box .rs-label{font-size:11px;opacity:.85}
+  .user-box input{width:110px;padding:3px 8px;border:none;border-radius:12px;font-size:12.5px;background:rgba(255,255,255,.9);color:var(--text);outline:none}
+  .user-box input::placeholder{color:#94a3b8}
+  header .stats{display:flex;gap:8px;margin-left:auto;font-size:12px;flex-wrap:wrap}
+  header .stat{background:rgba(255,255,255,.16);border-radius:20px;padding:4px 12px}
+  header .stat b{font-size:14px;margin-left:4px}
+  nav{background:var(--card);border-bottom:1px solid var(--line);display:flex;padding:0 18px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow);flex-wrap:wrap}
+  nav button{background:none;border:none;padding:12px 18px;font-size:14px;color:var(--sub);cursor:pointer;border-bottom:2.5px solid transparent;font-weight:600}
+  nav button.on{color:var(--pri);border-bottom-color:var(--pri)}
+  nav button:hover{color:var(--pri)}
+  main{padding:18px 22px;max-width:1500px;margin:0 auto}
+  section.tab{display:none}
+  section.tab.on{display:block}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:16px}
+  .card h2{font-size:15px;margin-bottom:12px;color:var(--text);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .card h2 .tag{font-size:11px;color:var(--sub);font-weight:400;background:#f1f5f9;border:1px solid var(--line);padding:1px 8px;border-radius:10px}
+  .grid2{display:grid;grid-template-columns:420px 1fr;gap:16px;align-items:start}
+  @media(max-width:1100px){.grid2{grid-template-columns:1fr}}
+  .form-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+  .form-row .f{flex:1;min-width:130px}
+  label{display:block;font-size:12px;color:var(--sub);margin-bottom:4px;font-weight:600}
+  input,select,textarea{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:7px;font-size:13px;background:#fff;color:var(--text);outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+  input[type=checkbox]{width:16px;height:16px;accent-color:var(--pri)}
+  input:disabled,select:disabled{background:#f1f5f9;color:var(--sub)}
+  .chk{display:flex;align-items:center;gap:6px}
+  .chk label{margin:0}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
+  .btn:hover{border-color:var(--pri);color:var(--pri)}
+  .btn.primary{background:var(--pri);border-color:var(--pri);color:#fff}
+  .btn.primary:hover{background:#1d4ed8}
+  .btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+  .btn.ok:hover{background:#15803d}
+  .btn.warn{background:var(--warn-bg);border-color:var(--warn-line);color:#92400e}
+  .btn.danger{background:#fee2e2;border-color:#f87171;color:var(--err)}
+  .btn.sm{padding:4px 10px;font-size:12px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+  th{color:var(--sub);font-weight:600;background:#f8fafc;position:sticky;top:0}
+  tbody tr:hover{background:#f8fafc}
+  .ref-tbl td{white-space:normal}
+  .ref-tbl input{width:100%;min-width:60px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;font-size:12px;box-sizing:border-box}
+  .ref-edit-btn{font-size:11px;margin-left:8px}
+  .ref-editing input{background:#fffbeb}
+  .pri{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700}
+  .pri.high{background:#fee2e2;color:#b91c1c}.pri.mid{background:#fef3c7;color:#92400e}.pri.low{background:#dcfce7;color:#166534}
+  .st{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700}
+  .st.lock{background:#e2e8f0;color:#334155}.st.auto{background:#dbeafe;color:#1d4ed8}.st.warn{background:#fef3c7;color:#b45309;border:1px solid var(--warn-line)}.st.manual{background:#ede9fe;color:#6d28d9}
+  .st.dead{background:#ffedd5;color:#c2410c;border:1px solid #fdba74}.st.fail{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5}.st.cancel{background:#e2e8f0;color:#64748b;border:1px solid #cbd5e1}
+  .badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700}
+  .b-blue{background:#dbeafe;color:#1d4ed8}.b-purple{background:#ede9fe;color:#6d28d9}.b-cyan{background:#cffafe;color:#0e7490}
+  .b-orange{background:#ffedd5;color:#c2410c}.b-green{background:#dcfce7;color:#166534}.b-gray{background:#f1f5f9;color:#475569}
+  .b-pink{background:#fce7f3;color:#be185d}.b-brown{background:#fef3c7;color:#92400e}
+  /* 流程步骤条 */
+  .flow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--sub)}
+  .flow .fs{background:#f8fafc;border:1px solid var(--line);border-radius:16px;padding:5px 14px}
+  .flow .fs b{color:var(--text)}
+  .flow .fa{color:#94a3b8;font-weight:700}
+  /* 角色可见性 */
+  body.role-requester .plan-only{display:none!important}
+  body.role-planner .req-only{display:none!important}
+  /* 甘特图 */
+  .gantt-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:#fff}
+  .gantt{position:relative;min-width:100%}
+  .g-line{position:relative;height:36px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center}
+  .g-label{position:sticky;left:0;z-index:5;width:150px;flex:none;background:#f8fafc;border-right:1px solid var(--line);padding:0 10px;font-size:12px;font-weight:700;color:#334155;height:36px;display:flex;align-items:center}
+  .g-body{position:relative;flex:1;height:36px}
+  .g-month{position:absolute;top:0;bottom:0;border-left:1px solid #eef2f7;font-size:10px;color:#94a3b8;padding-top:2px;padding-left:3px;overflow:hidden}
+  .g-week{position:absolute;top:0;bottom:0;border-left:1px solid #f1f5f9;font-size:10px;color:#cbd5e1;padding-top:2px;padding-left:2px;overflow:hidden}
+  .chk-group{display:inline-flex;flex-wrap:wrap;gap:2px 12px;align-items:center;font-size:12px}
+  .chk-group label{display:inline-flex;align-items:center;gap:4px;cursor:pointer;color:var(--sub)}
+  .chk-group label:hover{color:var(--text)}
+  .chk-group input{accent-color:#2563eb}
+  .g-bar{position:absolute;top:7px;height:22px;border-radius:4px;font-size:10.5px;color:#fff;display:flex;align-items:center;padding:0 5px;overflow:hidden;white-space:nowrap;cursor:pointer;border:1px solid rgba(0,0,0,.18);text-shadow:0 1px 1px rgba(0,0,0,.25)}
+  .g-bar.locked{outline:2px solid #475569;outline-offset:-2px}
+  .g-bar.warn{border:2px solid #dc2626;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.18) 0 6px,transparent 6px 12px)}
+  .g-bar.dead{opacity:.45;filter:grayscale(1);background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.3) 0 6px,transparent 6px 12px)!important;border:1px dashed #94a3b8}
+  .g-bar:hover{filter:brightness(1.08);z-index:10}
+  .g-head{display:flex}
+  .g-head .g-label{background:#f1f5f9}
+  .g-axis{position:relative;height:24px;border-bottom:1px solid var(--line)}
+  .g-axis .g-month{height:24px;padding-top:4px}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--sub)}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+  /* 弹窗 */
+  .mask{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:100}
+  .mask.on{display:flex}
+  .modal{background:#fff;border-radius:12px;padding:20px 22px;width:460px;max-width:92vw;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+  .modal h3{font-size:15px;margin-bottom:14px}
+  .modal .form-row{margin-bottom:10px}
+  .modal .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:200;display:none;max-width:80vw;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+  #toast.show{display:block}
+  .warn-banner{background:var(--warn-bg);border:1px solid var(--warn-line);color:#78350f;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12.5px;display:none}
+  .warn-banner.show{display:block}
+  .warn-banner ul{margin:6px 0 0 18px}
+  .hint{font-size:12px;color:var(--sub);line-height:1.8}
+  .rules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+  .rules-grid .f label{font-size:11.5px}
+  .empty{padding:30px;text-align:center;color:var(--sub);font-size:13px}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+  .toolbar .spacer{flex:1}
+  .filter-bar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+  .filter-bar select{width:auto}
+  .scroll-tbl{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+  .req-tbl{max-height:560px;overflow:auto}
+  footer{color:var(--sub);font-size:12px;text-align:center;padding:16px 0 30px}
+</style>
+</head>
+<body class="role-requester">
+
+<header>
+  <h1>🧬 生物制药排产系统 <span class="tag" id="verTag" title="页面版本：v2.4（放大测试免目检、灌装日期自动计算、批量解锁与刷新自动排产、需求导出Excel）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.4</span></h1>
+  <div class="role-switch" id="roleSwitch">
+    <span class="rs-label">当前角色</span>
+    <button data-role="requester" class="on">📋 需求方</button>
+    <button data-role="planner">🏭 生产计划</button>
+  </div>
+  <div class="user-box" title="用于「本人删除」权限校验：设置后仅可删除需求人为本人的需求">
+    <span class="rs-label">👤 当前用户</span>
+    <input id="userName" placeholder="姓名（选填）">
+  </div>
+  <div class="stats">
+    <span class="stat">需求 <b id="stReq">0</b></span>
+    <span class="stat">批次 <b id="stBatch">0</b></span>
+    <span class="stat">锁定 <b id="stLock">0</b></span>
+    <span class="stat">待确认 <b id="stPending">0</b></span>
+    <span class="stat">预警 <b id="stWarn" style="color:#fde68a">0</b></span>
+  </div>
+</header>
+
+<nav id="nav">
+  <button class="on" data-tab="req">📋 需求录入</button>
+  <button data-tab="plan">📅 排产计划</button>
+  <button data-tab="ref">📊 参考数据</button>
+  <button data-tab="rules">⚙️ 规则参数</button>
+  <button data-tab="data">💾 数据管理</button>
+</nav>
+
+<main>
+  <!-- ============ 需求录入 ============ -->
+  <section class="tab on" id="tab-req">
+    <div class="card" style="padding:10px 16px">
+      <div class="flow">
+        <span class="fs"><b>① 需求方</b>填写需求</span><span class="fa">→</span>
+        <span class="fs"><b>② 自动排产</b>生成草案批次</span><span class="fa">→</span>
+        <span class="fs"><b>③ 生产计划</b>确认可行性 · 人工调整</span><span class="fa">→</span>
+        <span class="fs"><b>④ 排产锁定</b>成为已占用产能</span>
+      </div>
+    </div>
+    <div id="warnBanner" class="warn-banner"></div>
+    <div class="grid2">
+      <div class="card req-only">
+        <h2>新增需求 <span class="tag">需求方填写</span></h2>
+        <form id="reqForm" autocomplete="off">
+          <div class="form-row">
+            <div class="f"><label>产品类型 *</label>
+              <select id="f_type">
+                <option value="CB">CB 细胞库（MCB/WCB）</option>
+                <option value="Mab">Mab DS 原液</option>
+                <option value="ADC DS">ADC DS 原液</option>
+                <option value="DP">DP 制剂</option>
+              </select>
+            </div>
+            <div class="f" id="f_cbkind_wrap"><label>CB 种类 *</label>
+              <select id="f_cbkind"><option value="MCB">MCB</option><option value="WCB">WCB</option></select>
+            </div>
+          </div>
+          <div class="form-row" id="dpRow" style="display:none">
+            <div class="f"><label>DP 种类 *</label>
+              <select id="f_dpkind">
+                <option value="CM">CM 制剂（Mab 来源）</option>
+                <option value="ADC">ADC 制剂</option>
+              </select>
+            </div>
+            <div class="f"><label>剂型 *</label>
+              <select id="f_dosage"><option value="水针">水针</option><option value="冻干">冻干</option></select>
+            </div>
+            <div class="f" id="f_dpline_wrap"><label>产线 *</label>
+              <select id="f_dpline">
+                <option value="C7CM DP">C7CM DP（C7车间）</option>
+                <option value="SJ2CM DP">SJ2CM DP（松江二厂）</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="f"><label>Henlius 项目号 *</label><input id="f_henlius" placeholder="如 HLX37"></div>
+          </div>
+          <div class="form-row">
+            <div class="f"><label>批次数 *</label><input id="f_batchcount" type="number" min="1" max="99" value="1"></div>
+            <div class="f"><label>期望完成日期（交期）*</label><input id="f_due" type="date"></div>
+          </div>
+          <div class="form-row">
+            <div class="f"><label>优先级 *</label>
+              <select id="f_priority">
+                <option value="中">中</option>
+                <option value="高">高</option>
+                <option value="低">低</option>
+              </select>
+            </div>
+            <div class="f"><label>需求人</label><input id="f_requester" placeholder="姓名"></div>
+          </div>
+          <div class="form-row" id="specRow" style="display:none">
+            <div class="f"><label>规格 * <span style="color:#94a3b8;font-weight:400">(生产规模)</span></label><input id="f_spec" list="specList" placeholder=""><datalist id="specList"></datalist></div>
+            <div class="f" id="titerWrap"><label>Titer <span style="color:#94a3b8;font-weight:400">(g/L，首次生产必填)</span></label><input id="f_titer" type="number" step="any" placeholder="如 2.5"></div>
+            <div class="f" id="concWrap" style="display:none"><label>制剂批量 *</label><input id="f_conc" placeholder="如 5L / 10000 瓶"></div>
+            <div class="f" id="lpWrap" style="display:none"><label>LP 放行完成日期 <span style="color:#94a3b8;font-weight:400">(可选)</span></label><input id="f_lp" type="date"></div>
+          </div>
+          <div class="hint" id="mabCycleRow" style="display:none;margin:-4px 0 4px">Mab 生产周期默认：种子培养 20 天 + 反应器培养 15 天 + 下游纯化 7 天（合计 42 天）。该天数由生产计划在人工干预时按项目调整，需求提报时无需填写。</div>
+          <div class="form-row">
+            <div class="f" id="f_batchtype_wrap" style="display:none"><label>批次类型 *</label>
+              <select id="f_batchtype"><option value="">请选择</option><option value="Non-GMP">Non-GMP</option><option value="GMP生产">GMP生产</option><option value="放大测试">放大测试（DP，无需包装目检）</option><option value="安慰剂">安慰剂（仅DP）</option></select>
+            </div>
+            <div class="f"><label>项目阶段 *</label>
+              <select id="f_stage"><option value="">请选择</option><option>临床前</option><option>临床I期</option><option>临床II期</option><option>临床III期</option><option>商业化</option><option>PD研究</option></select>
+            </div>
+            <div class="f" id="f_budget_wrap" style="display:none"><label>预算概况 *</label><input id="f_budget" placeholder="如 100万"></div>
+          </div>
+          <div class="form-row" id="vialRow" style="display:none">
+            <div class="f"><label>注射瓶规格 *</label><select id="f_vial"><option value="">请选择</option></select></div>
+            <div class="f chk" style="align-items:flex-end;padding-bottom:8px"><input type="checkbox" id="f_hypertonic"><label for="f_hypertonic">高浓度或高粘度制剂</label></div>
+            <div class="f chk" style="align-items:flex-end;padding-bottom:8px"><input type="checkbox" id="f_dilute"><label for="f_dilute">需要二次稀配</label></div>
+          </div>
+          <div class="form-row" id="scaleRow" style="display:none">
+            <div class="f chk"><input type="checkbox" id="f_scale" checked><label for="f_scale">需要冻干放大测试（自动排 1 批，正式批与其间隔 2 个月）</label></div>
+          </div>
+          <div class="form-row" id="firstRow" style="display:none">
+            <div class="f chk"><input type="checkbox" id="f_first"><label for="f_first">首次生产（需补充项目分子信息）</label></div>
+          </div>
+          <div class="form-row" id="molRow" style="display:none">
+            <div class="f"><label>Molecule Type *</label><input id="f_moltype" placeholder="如 IgG-like"></div>
+            <div class="f"><label>Target *</label><input id="f_target" placeholder="如 CD3"></div>
+          </div>
+          <div class="form-row" id="molRow2" style="display:none">
+            <div class="f"><label>Novelty *</label><input id="f_novelty" placeholder="如 Novel"></div>
+            <div class="f"><label>mAb subtype *</label><input id="f_subtype" placeholder="如 IgG1"></div>
+            <div class="f"><label>Host Cell Line *</label><input id="f_hostcell" placeholder="如 CHO-K1"></div>
+          </div>
+          <div class="form-row">
+            <div class="f chk"><input type="checkbox" id="f_cond"><label for="f_cond">需要条件放行</label></div>
+          </div>
+          <div class="form-row">
+            <div class="f"><label>正式工艺转移完成日期（可选，之后1个月才可投产）</label><input id="f_transfer" type="date"></div>
+          </div>
+          <div class="form-row" id="mcbDateRow">
+            <div class="f"><label>同项目 MCB 完成日期（可选，不填则自动匹配已排 MCB）</label><input id="f_mcbdate" type="date"></div>
+          </div>
+          <div class="form-row"><div class="f"><label>备注</label><input id="f_note" placeholder="如：临床III期样品、需优先等"></div></div>
+          <div class="form-row">
+            <button type="button" class="btn primary" id="btnAddReq">➕ 添加需求</button>
+            <button type="button" class="btn" id="btnClearForm">清空表单</button>
+          </div>
+        </form>
+        <div class="hint" style="margin-top:8px">提示：ADC DS 依赖同项目 Mab 批次、DP 依赖上游原液批次，系统会自动匹配同 Henlius 项目号（或历史批次的 AT 项目号）的已排批次。带 * 字段按「需求录入必要信息」矩阵条件显示。</div>
+      </div>
+
+      <div class="card">
+        <h2>需求列表 <span class="tag" id="reqCount">0 条</span></h2>
+        <div class="toolbar">
+          <button class="btn ok req-only" id="btnSchedule">🚀 自动排产</button>
+          <button class="btn req-only" id="btnClearPlan">↺ 清空排产结果（保留需求）</button>
+          <button class="btn sm" id="btnExportReq">⬇️ 导出需求清单 (Excel/CSV)</button>
+          <span class="spacer"></span>
+          <span class="hint req-only">排产方向：优先自动正排（最早可开工）；正排排不下时按交期倒排；交期无法满足时<b style="color:#b45309">标黄预警</b></span>
+          <span class="hint plan-only">生产计划角色可在本页删除任意需求（每行「删除」按钮）；批次确认与调整在「📅 排产计划」页</span>
+        </div>
+        <div class="req-tbl scroll-tbl">
+          <table id="reqTable">
+            <thead><tr><th>项目</th><th>类型</th><th>批次</th><th>交期</th><th>批次类型</th><th>优先级</th><th>需求人</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="empty" id="reqEmpty">暂无需求，请由需求方填写并添加</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 排产计划 ============ -->
+  <section class="tab" id="tab-plan">
+    <div class="card">
+      <h2>产线排产甘特图 <span class="tag plan-only">点击批次可人工调整（生产计划）</span><span class="tag req-only">只读视图，调整请切换生产计划角色</span></h2>
+      <div class="toolbar" style="margin-bottom:8px">
+        <span class="hint">产线（多选）：</span>
+        <span class="chk-group" id="ganttLineFilter">
+          <label><input type="checkbox" data-line="" checked>全部</label>
+          <label><input type="checkbox" data-line="SJ2 CB">SJ2 CB</label>
+          <label><input type="checkbox" data-line="SJ1DS">SJ1DS</label>
+          <label><input type="checkbox" data-line="SJ2 ADC DS">SJ2 ADC DS</label>
+          <label><input type="checkbox" data-line="SJ2 ADC DP">SJ2 ADC DP</label>
+          <label><input type="checkbox" data-line="C7CM DP">C7CM DP</label>
+          <label><input type="checkbox" data-line="SJ2CM DP">SJ2CM DP</label>
+          <label><input type="checkbox" data-line="其他">其他</label>
+        </span>
+        <span class="spacer" style="flex:1"></span>
+        <label class="hint">时间轴密度 <select id="ganttAxisPx" title="甘特图横向像素密度（像素/天）">
+          <option value="1.5">紧凑 (1.5px/天)</option>
+          <option value="2.5" selected>标准 (2.5px/天)</option>
+          <option value="4">宽松 (4px/天)</option>
+        </select></label>
+        <label class="hint">刻度 <select id="ganttAxisUnit" title="时间轴刻度单位">
+          <option value="month" selected>月</option>
+          <option value="week">周</option>
+        </select></label>
+        <span class="hint">甘特图按产线筛选（批次明细筛选不受影响）</span>
+      </div>
+      <div id="gantt"></div>
+      <div class="legend" id="ganttLegend"></div>
+    </div>
+    <div class="card">
+      <h2>批次明细 <span class="tag" id="batchCount">0</span></h2>
+      <div class="toolbar plan-only" style="margin-bottom:10px">
+        <button class="btn ok" id="btnLockPlan">🔒 排产锁定（确认全部待确认批次）</button>
+        <button class="btn" id="btnBatchUnlock">🔓 批量解锁（勾选批次）</button>
+        <button class="btn" id="btnRefreshSched">🔄 刷新自动排产（重排未锁定批次）</button>
+        <span class="hint">确认无误后锁定；锁定批次作为已占用产能，不参与下次自动重排。解锁后可「刷新自动排产」重排全部未锁定批次</span>
+      </div>
+      <div class="filter-bar">
+        <select id="filtType">
+          <option value="">全部类型</option>
+          <option value="MCB">MCB</option><option value="WCB">WCB</option><option value="Mab">Mab</option>
+          <option value="ADC DS">ADC DS</option><option value="ADC DP">ADC DP</option><option value="CM DP">CM DP</option>
+          <option value="冻干放大测试">冻干放大测试</option><option value="APS">APS</option>
+        </select>
+        <select id="filtLine">
+          <option value="">全部产线</option>
+          <option>SJ2 CB</option><option>SJ1DS</option><option>SJ2 ADC DS</option>
+          <option>SJ2 ADC DP</option><option>C7CM DP</option><option>SJ2CM DP</option><option>其他</option>
+        </select>
+        <select id="filtStatus">
+          <option value="">全部状态</option>
+          <option value="锁定">锁定</option><option value="自动">自动</option><option value="预警">预警</option><option value="人工">人工</option>
+          <option value="中止">中止</option><option value="失败">失败</option><option value="取消">取消</option>
+        </select>
+        <input id="filtProject" placeholder="搜索项目号" style="width:160px">
+        <span class="spacer" style="flex:1"></span>
+        <button class="btn sm" id="btnExportPlan">导出Excel格式(CSV)</button>
+      </div>
+      <div class="scroll-tbl" style="max-height:520px">
+        <table id="batchTable">
+          <thead><tr>
+            <th class="plan-only" style="width:28px"><input type="checkbox" id="batchSelAll" title="全选/全不选（仅锁定批次）"></th><th>状态</th><th>类型</th><th>项目</th><th>批次号</th><th>产线</th><th>开始</th><th>完成</th><th>下罐/灌装</th><th>GMP</th><th>备注</th><th class="plan-only">操作</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="empty" id="batchEmpty">暂无批次，请先在「需求录入」添加需求并自动排产</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 参考数据 ============ -->
+  <section class="tab" id="tab-ref">
+    <div class="card">
+      <h2>产线情况 <span class="tag">排产逻辑.xlsx · 产线情况</span><button class="btn sm ref-edit-btn" data-ref-edit="lines">✏️ 编辑</button><button class="btn sm ref-cancel-btn" data-ref-cancel="lines" style="display:none">取消</button></h2>
+      <table class="ref-tbl" id="refLines">
+        <thead><tr><th>#</th><th>产线名称</th><th>缩写</th><th>生产周期</th><th>周期的组成</th><th>生产规格</th><th>批次类型</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h2>制剂产能概况 <span class="tag">推荐最大生产批量/瓶</span><button class="btn sm ref-edit-btn" data-ref-edit="caps">✏️ 编辑</button><button class="btn sm ref-cancel-btn" data-ref-cancel="caps" style="display:none">取消</button></h2>
+      <table class="ref-tbl" id="refCap">
+        <thead><tr><th>生产线</th><th>剂型</th><th>2mL</th><th>6mL</th><th>10mL</th><th>20mL</th><th>50mL</th><th>工序得率</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h2>人员配置<button class="btn sm ref-edit-btn" data-ref-edit="staff">✏️ 编辑</button><button class="btn sm ref-cancel-btn" data-ref-cancel="staff" style="display:none">取消</button></h2>
+      <table class="ref-tbl" id="refStaff">
+        <thead><tr><th>产线缩写</th><th>人数</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h2>Mab 生产周期 <span class="tag">项目级：种子培养+反应器培养+下游纯化（生产计划在人工干预时调整）</span></h2>
+      <table class="ref-tbl" id="refMab">
+        <thead><tr><th>项目号</th><th>规格</th><th>种子培养(天)</th><th>反应器培养(天)</th><th>下游纯化(天)</th><th>合计(天)</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="hint" style="margin-top:8px" id="refMabEmpty">暂无 Mab 批次数据（排产后自动生成该表）</div>
+    </div>
+    <div class="card">
+      <h2>需求录入必要信息矩阵 <span class="tag">排产逻辑.xlsx · 需求录入的必要信息</span><button class="btn sm ref-edit-btn" data-ref-edit="fields">✏️ 编辑</button><button class="btn sm ref-cancel-btn" data-ref-cancel="fields" style="display:none">取消</button></h2>
+      <table class="ref-tbl" id="refFields">
+        <thead><tr><th>#</th><th>信息</th><th>CB 生产</th><th>Mab / ADC DS 生产</th><th>DP 生产</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="hint" style="margin-top:8px">注：Mab/ADC DS/DP 提交时需判断是否为首次生产，首次生产需额外填写 8-12 项分子信息（Mab 另需 Titer）；冻干 DP 需在需求中确认是否进行放大测试；选择二次稀配时制剂生产周期 +1 天（准备 3 天→4 天）。</div>
+    </div>
+  </section>
+
+  <!-- ============ 规则参数 ============ -->
+  <section class="tab" id="tab-rules">
+    <div class="card">
+      <h2>排产规则参数 <span class="tag">保存后需重新自动排产生效</span></h2>
+      <div class="rules-grid" id="rulesGrid"></div>
+      <div class="toolbar" style="margin-top:14px">
+        <button class="btn primary" id="btnSaveRules">💾 保存规则</button>
+        <button class="btn" id="btnResetRules">恢复默认</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>规则说明（依据 排产逻辑.xlsx）</h2>
+      <div class="hint">
+        <p>· <b>流程</b>：需求方填写需求 → 自动排产生成草案 → 生产计划确认可行性并可人工调整 → 确认无误后「排产锁定」（历史计划自动视为锁定产能）。</p>
+        <p>· <b>CB</b>：固定周二开工，生产周期 10 天，生产间隔 4 天（上批完成 → 下批开始）；同项目 MCB→WCB 间隔 1 个月（按完成日算）；先有 MCB 再有 WCB。</p>
+        <p>· <b>所有产品</b>：正式工艺转移 1 个月后才可开始生产。</p>
+        <p>· <b>Mab</b>：生产周期 = 种子培养 20 天 + 反应器培养 15 天 + 下游纯化 7 天（合计 42 天，需求提报用默认，各段天数由生产计划在人工干预时按项目调整）；批间开始 ≥8 天，下罐批间 ≥10 天（下罐=开始+种子培养+反应器培养），同产线所有批均为硬约束；同项目 MCB 生产后 1 个月才可开始。</p>
+        <p>· <b>ADC DS</b>：GMP Mab 完成后 2 周、Non-GMP Mab（来源 PD）完成后 1 个月才可生产；LP 放行完成后才可生产；建议在 Mab 下罐后 2 天开始。</p>
+        <p>· <b>DP</b>：制剂周期 = 准备 + 灌装 + 冻干 + 清场 + 目检包装（目检包装默认 10 天，默认水针 3+1+0+1+10=15 天、冻干 3+1+3~4+1+10=18~19 天，各段天数在人工干预时可调）；<b>放大测试批次（冻干放大测试及批次类型=放大测试的需求）不含包装目检时间（目检按 0 天计）</b>；<b>灌装日期自动计算 = 开始日期 + 准备天数，随开始日期/准备天数自动更新</b>；C7CM DP 同产线清场后 2 天、SJ2 ADC DP / SJ2CM DP 清场后 4 天开始下一批；ADC Non-GMP 与同项目 ADC DS 间隔 1 个月、其余间隔 2 周；需二次稀配时制剂准备 3 天→4 天（周期 +1 天）；冻干项目需在需求中确认是否安排放大测试，正式生产与测试批间隔 2 个月。</p>
+        <p>· <b>APS 模拟灌装</b>：占用 8 天、当月内任排。C7CM DP 每年 3/8/12 月、SJ2 ADC DP 每年 3/9 月、SJ2CM DP 每年 8/10 月各 1 批（产线当年有生产时自动生成）。</p>
+        <p>· <b>批次终态（生产计划人工标记）</b>：批次可标记为 <b>中止 / 失败 / 取消</b>。终态批次不再占用产能（槽位可复用），也不参与锁定/重排，仅保留记录便于追溯；可在人工调整中改回「人工」状态或删除。</p>
+        <p>· <b>批量解锁与刷新自动排产</b>：生产计划可在批次表首列勾选多个锁定批次「批量解锁」；「刷新自动排产」按当前需求重新排产所有未锁定批次（锁定批次与终态批次保持不变）。</p>
+        <p>· <b>需求导出</b>：需求列表可一键导出 Excel/CSV（项目、类型、批次类型、交期、状态、规格、阶段、预算、首次生产分子信息等全部填报字段）。</p>
+        <p>· <b>甘特图视图</b>：产线支持多选过滤；时间轴密度（px/天）与刻度单位（月/周）可调，设置保存在本地。</p>
+        <p>· <b>参考数据</b>：「产线情况 / 制剂产能 / 人员配置 / 需求字段矩阵」四张表可修订（生产计划角色），保存后本地持久化。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 数据管理 ============ -->
+  <section class="tab" id="tab-data">
+    <div class="card">
+      <h2>数据概览</h2>
+      <div class="hint" id="dataSummary"></div>
+    </div>
+    <div class="card">
+      <h2>数据管理</h2>
+      <div class="toolbar">
+        <button class="btn" id="btnExport">⬇️ 导出全部数据 (JSON)</button>
+        <button class="btn" id="btnImport">⬆️ 导入数据 (JSON)</button>
+        <input type="file" id="importFile" accept=".json" style="display:none">
+        <button class="btn" id="btnReimportHist">📥 重新导入历史计划（锁定产能）</button>
+        <button class="btn danger" id="btnClearAll">🗑 清空全部数据</button>
+      </div>
+      <div class="hint" style="margin-top:12px;line-height:2.2">
+        <p>· <b>导出</b>：将需求、排产批次、规则参数保存为 JSON 文件，可在其它电脑导入使用。</p>
+        <p>· <b>重新导入历史计划</b>：从内置的 <code>CM排产计划_20260818.xlsx</code> 数据重建全部历史锁定批次（当前批次将被替换）。</p>
+        <p>· <b>文件结构</b>：本系统共 3 个文件——<code>排产系统.html</code>（界面）、<code>scheduling.js</code>（排产引擎）、<code>history_data.js</code>（历史数据）。请放在同一目录，双击 HTML 即可使用。</p>
+        <p>· <b>数据存储</b>：保存在浏览器本地（localStorage），单机使用；清空浏览器缓存会导致数据丢失，请定期导出备份。</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>生物制药排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · 单机版 v2.4</footer>
+
+<!-- 批次编辑弹窗 -->
+<div class="mask" id="editMask">
+  <div class="modal">
+    <h3 id="editTitle">人工调整批次</h3>
+    <div id="editInfo" style="font-size:12px;color:var(--sub);margin-bottom:10px"></div>
+    <div class="form-row">
+      <div class="f"><label>批次号 <span style="color:#94a3b8;font-weight:400">(人工干预可修订)</span></label><input id="e_batchno" placeholder="如 MB-2026-001"></div>
+    </div>
+    <div class="form-row">
+      <div class="f"><label>开始日期 *</label><input type="date" id="e_start"></div>
+      <div class="f"><label>完成日期 *<span id="eEndHint" style="color:#94a3b8;font-weight:400;display:none">(按周期自动计算)</span></label><input type="date" id="e_end"></div>
+    </div>
+    <div class="form-row">
+      <div class="f"><label>产线 *</label><select id="e_line">
+        <option value="SJ2 CB">SJ2 CB</option><option value="SJ1DS">SJ1DS</option><option value="SJ2 ADC DS">SJ2 ADC DS</option>
+        <option value="SJ2 ADC DP">SJ2 ADC DP</option><option value="C7CM DP">C7CM DP</option><option value="SJ2CM DP">SJ2CM DP</option>
+        <option value="其他">其他</option>
+      </select></div>
+      <div class="f"><label>批次状态 <span style="color:#94a3b8;font-weight:400">(人工标记终态)</span></label><select id="e_status">
+        <option value="人工">人工</option>
+        <option value="中止">中止</option><option value="失败">失败</option><option value="取消">取消</option>
+      </select></div>
+      <div class="f chk" style="align-items:center;padding-top:20px"><input type="checkbox" id="e_lock"><label for="e_lock">锁定（已确认，不参与下次自动重排）</label></div>
+    </div>
+    <div class="form-row" id="editMabRow" style="display:none">
+      <div class="f"><label>种子培养(天)</label><input type="number" id="e_mabseed" min="1"></div>
+      <div class="f"><label>反应器培养(天)</label><input type="number" id="e_mabreactor" min="1"></div>
+      <div class="f"><label>下游纯化(天)</label><input type="number" id="e_mabpurify" min="1"><span id="e_mabtotal" style="font-size:11px;color:var(--sub)"></span></div>
+    </div>
+    <div class="form-row" id="editDpRow" style="display:none">
+      <div class="f"><label>准备(天)</label><input type="number" id="e_dprep" min="0"></div>
+      <div class="f"><label>灌装(天)</label><input type="number" id="e_dfill" min="0"></div>
+      <div class="f"><label>冻干(天)</label><input type="number" id="e_dfreeze" min="0"></div>
+    </div>
+    <div class="form-row" id="editDpRow2" style="display:none">
+      <div class="f"><label>清场(天)</label><input type="number" id="e_dclear" min="0"></div>
+      <div class="f"><label>目检包装(天)</label><input type="number" id="e_dinspect" min="0"></div>
+      <div class="f" style="justify-content:flex-end;padding-bottom:6px"><span id="e_dptotal" style="font-size:11px;color:var(--sub)"></span></div>
+    </div>
+    <div class="form-row"><div class="f"><label>备注</label><input id="e_note"></div></div>
+    <div id="editConflict" style="display:none;font-size:12px;color:var(--err);background:#fee2e2;padding:8px 10px;border-radius:6px;margin-bottom:8px"></div>
+    <div class="actions">
+      <button class="btn danger" id="btnDelBatch">删除批次</button>
+      <span style="flex:1"></span>
+      <button class="btn" id="btnEditCancel">取消</button>
+      <button class="btn primary" id="btnEditSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="scheduling.js"></script>
+<script src="history_data.js"></script>
+<script>
+/* =====================================================
+ * 生物制药排产系统 — 应用层 v2.0
+ * 流程：需求方填写需求 → 自动排产（草案）→ 生产计划确认/人工调整 → 排产锁定
+ * ===================================================== */
+(function () {
+  'use strict';
+  var LS_KEY = 'schedule_sys_v1';
+  var Sched = window.Scheduling;
+  var U = Sched.utils;
+  var TYPE_COLOR = {
+    'MCB':'#3b82f6','WCB':'#60a5fa','Mab':'#8b5cf6','ADC DS':'#06b6d4','ADC DP':'#f59e0b',
+    'CM DP':'#22c55e','冻干放大测试':'#94a3b8','APS':'#ec4899','参比品':'#a16207','贴签包装':'#a16207','包装':'#a16207','设备验证':'#a16207'
+  };
+  var TYPE_BADGE = {
+    'MCB':'b-blue','WCB':'b-blue','Mab':'b-purple','ADC DS':'b-cyan','ADC DP':'b-orange',
+    'CM DP':'b-green','冻干放大测试':'b-gray','APS':'b-pink'
+  };
+  var LINES_ORDER = ['SJ2 CB','SJ1DS','SJ2 ADC DS','SJ2 ADC DP','C7CM DP','SJ2CM DP','其他'];
+  var VIALS = { 'SJ2 ADC DP': ['6R','10R','20R'], 'C7CM DP': ['2R','6R','10R','20R'], 'SJ2CM DP': ['10R','20R'] };
+  var FNAMES = { spec:'规格', concentration:'制剂批量', titer:'Titer', batchKind:'批次类型', stage:'项目阶段',
+    budget:'预算概况', molType:'Molecule Type', target:'Target', novelty:'Novelty', mabSubtype:'mAb subtype',
+    hostCell:'Host Cell Line', vialSpec:'注射瓶规格' };
+  var FINAL_STATUS = { '中止':1, '失败':1, '取消':1 };
+  function isFinal(b){ return !!FINAL_STATUS[b.status]; }
+  // 参考数据默认值（可修订，保存后持久化到 state.refData）
+  var REF_DEFAULT = {
+    lines: [
+      ['1','松江二厂细胞库制备车间','SJ2 CB','10天','—','—','—'],
+      ['2','松江一厂临床生产原液车间','SJ1DS','42天','上游种子培养20天、反应器培养15天、下游纯化7天','200L或500L','—'],
+      ['3','松江二厂临床生产ADC原液车间','SJ2 ADC DS','7天','—','20L、50L、200L反应釜','Non-GMP、GMP生产'],
+      ['4','松江二厂临床生产ADC制剂车间','SJ2 ADC DP','水针15天 / 冻干19天','水针：准备3+灌装1+冻干0+清场1+目检包装10=15天；冻干：准备3+灌装1+冻干4+清场1+目检包装10=19天','6R、10R、20R','Non-GMP、放大测试、GMP生产、安慰剂'],
+      ['5','临床生产制剂车间（C7）','C7CM DP','水针15天 / 冻干18天','水针：准备3+灌装1+冻干0+清场1+目检包装10=15天；冻干：准备3+灌装1+冻干3+清场1+目检包装10=18天','2R、6R、10R、20R','Non-GMP、放大测试、GMP生产、安慰剂'],
+      ['6','松江二厂临床生产制剂车间','SJ2CM DP','水针15天 / 冻干19天','水针：准备3+灌装1+冻干0+清场1+目检包装10=15天；冻干：准备3+灌装1+冻干4+清场1+目检包装10=19天','10R、20R','Non-GMP、放大测试、GMP生产、安慰剂']
+    ],
+    caps: [
+      ['C7','水针','2500','2300','2300','1440','/','0.9'],
+      ['C7','冻干','/','2200','1800','1000','/','0.9'],
+      ['ADC','水针','/','15000','15000','15000','/','0.95'],
+      ['ADC','冻干','/','6700','6700','3600','/','0.95']
+    ],
+    staff: [
+      ['SJ2 CB','3'],['SJ1DS','28'],['SJ2 ADC DS','4'],['SJ2 ADC DP','5'],['C7CM DP','7'],['SJ2CM DP','12']
+    ],
+    fields: [
+      ['1','规格','—','✓','✓'],
+      ['2','制剂批量','—','—','✓'],
+      ['3','批次数','—（默认1）','✓','✓'],
+      ['4','Titer','—','首次生产(Mab)时 ✓','—'],
+      ['5','批次类型','—','✓','✓'],
+      ['6','项目阶段','✓','✓','✓'],
+      ['7','预算概况','—','✓','✓'],
+      ['8-12','Molecule Type / Target / Novelty / mAb subtype / Host Cell Line','—','首次生产时 ✓','首次生产时 ✓'],
+      ['13','高浓度或高粘度制剂','—','—','✓'],
+      ['14','制剂是否需要二次稀配','—','—','✓'],
+      ['15','备注','✓','✓','✓'],
+      ['16','注射瓶规格','—','—','✓']
+    ]
+  };
+
+  var state = { requirements: [], batches: [], rules: null, role: 'requester', user: '',
+    ganttAxis: { px: 2.5, unit: 'month' }, ganttLines: null, refData: null };
+  var editingId = null;
+  var refEditKey = null; // 正在编辑的参考数据表 key（lines/caps/staff/fields）
+
+  // ---------- 工具 ----------
+  function $(id){ return document.getElementById(id); }
+  function toast(msg, ms){ var t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(function(){t.classList.remove('show');}, ms||3200); }
+  function uid(){ return 'R'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+  function today(){ return U.f(new Date()); }
+  function esc(s){ return String(s||'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function isPlanner(){ return state.role==='planner'; }
+
+  // ---------- 存储 ----------
+  function save(){
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+    catch(e){ toast('保存失败：'+e.message); }
+  }
+  function load(){
+    try{
+      var raw = localStorage.getItem(LS_KEY);
+      if(raw){ state = JSON.parse(raw); if(!state.rules) state.rules=null; if(!state.role) state.role='requester'; if(state.user==null) state.user='';
+        if(!state.ganttAxis) state.ganttAxis={ px:2.5, unit:'month' };
+        if(state.ganttLines==null) state.ganttLines=null;
+        if(!state.refData) state.refData=null;
+        return true; }
+    }catch(e){ console.warn(e); }
+    return false;
+  }
+  function resetToHistory(){
+    var hist = window.HISTORY_BATCHES || {CB:[],DS:[],DP:[]};
+    var keep = { role: state.role||'requester', user: state.user||'', ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, refData: state.refData||null };
+    state = { requirements: [], batches: importHistory(hist), rules: null, role: keep.role, user: keep.user,
+      ganttAxis: keep.ganttAxis, ganttLines: keep.ganttLines, refData: keep.refData };
+    save(); renderAll(); renderRules();
+  }
+  // 历史遗留数据修复：批次 id 唯一化（旧版本跨次排产复用 NB1/NB2...，会导致人工调整命中错误批次）
+  function dedupeBatchIds(){
+    var seen = {}, n = 1000;
+    state.batches.forEach(function(b){
+      var id = b.id || '';
+      if(seen[id]){
+        while(seen['NB'+(n++)]) {}
+        b.id = 'NB'+(n-1);
+      }
+      seen[b.id] = true;
+    });
+  }
+
+  // 历史数据 → 批次
+  function importHistory(H){
+    var out = [], seq = 1;
+    (H.CB||[]).forEach(function(r){
+      if(!r['计划开始日期']) return;
+      out.push({ id:'H'+(seq++), type:r['种类']==='WCB'?'WCB':'MCB', line:'SJ2 CB', start:r['计划开始日期'], end:r['计划完成日期'],
+        project:r['AT项目号']||'', henlius:r['Henlius项目号']||'', batchNo:r['批次号']||'', gmp:false, priority:'中',
+        locked:true, status:'锁定', source:'历史', note:r['备注']||'' });
+    });
+    (H.DS||[]).forEach(function(r){
+      if(!r['计划开始日期']) return;
+      var t = r['种类']==='ADC' ? 'ADC DS' : (r['种类']==='Mab' ? 'Mab' : null);
+      if(!t) return;
+      out.push({ id:'H'+(seq++), type:t, line: t==='Mab'?'SJ1DS':'SJ2 ADC DS', start:r['计划开始日期'], end:r['计划完成日期'],
+        harvestDate:r['下罐日期']||null, project:r['AT项目号']||'', henlius:r['Henlius项目号']||'', batchNo:r['Aton批号']||'',
+        gmp:r['是否为GMP批次']==='Y', priority:'中', locked:true, status:'锁定', source:'历史', note:r['备注']||'' });
+    });
+    (H.DP||[]).forEach(function(r){
+      if(!r['计划开始日期']) return;
+      var t=r['种类'], type, line;
+      if(t==='ADC'){ type='ADC DP'; line='SJ2 ADC DP'; }
+      else if(t==='Mab'){ type='CM DP'; line = r['车间']==='SJ2' ? 'SJ2CM DP' : (r['车间']==='C7' ? 'C7CM DP' : '其他'); }
+      else if(t==='APS'){ type='APS'; line = r['车间']==='SJ2' ? 'SJ2CM DP' : (r['车间']==='C7' ? 'C7CM DP' : '其他'); }
+      else if(t==='放大测试'){ type='冻干放大测试'; line = r['车间']==='SJ2' ? 'SJ2CM DP' : (r['车间']==='C7' ? 'C7CM DP' : '其他'); }
+      else if(t==='参比品'||t==='贴签包装'||t==='包装'||t==='设备验证'){ type=t; line='其他'; }
+      else { type=t||'其他'; line='其他'; }
+      out.push({ id:'H'+(seq++), type:type, line:line, start:r['计划开始日期'], end:r['计划完成日期'],
+        fillDate:r['灌装日期']||null, project:r['AT项目号']||'', henlius:r['Henlius项目号']||'', batchNo:r['Aton批号']||'',
+        gmp:r['是否为GMP批次']==='Y', priority:'中', locked:true, status:'锁定', source:'历史', note:r['备注']||'' });
+    });
+    return out;
+  }
+
+  // ---------- 需求表单 ----------
+  function rebuildSpec(t){
+    var opts = [], ph = '';
+    if(t==='Mab'){ opts=['200L','500L']; ph='200L 或 500L'; }
+    else if(t==='ADC DS'){ opts=['20L反应釜','50L反应釜','200L反应釜']; ph='20L / 50L / 200L 反应釜'; }
+    else if(t==='DP'){ ph='生产规格/批量说明'; }
+    $('specList').innerHTML = opts.map(function(o){ return '<option value="'+o+'">'; }).join('');
+    $('f_spec').placeholder = ph;
+  }
+  function rebuildVials(){
+    var line = $('f_dpline').value;
+    var vs = VIALS[line] || [];
+    $('f_vial').innerHTML = '<option value="">请选择</option>' + vs.map(function(v){ return '<option>'+v+'</option>'; }).join('');
+  }
+  function updateScaleRow(){
+    $('scaleRow').style.display = ($('f_type').value==='DP' && $('f_dosage').value==='冻干') ? '' : 'none';
+  }
+  function updateMolRow(){
+    var show = ($('f_type').value!=='CB') && $('f_first').checked;
+    $('molRow').style.display = show ? '' : 'none';
+    $('molRow2').style.display = show ? '' : 'none';
+  }
+  function onTypeChange(){
+    var t = $('f_type').value;
+    var isCB = t==='CB', isDP = t==='DP', isDS = (t==='Mab'||t==='ADC DS');
+    $('f_cbkind_wrap').style.display = isCB ? '' : 'none';
+    $('dpRow').style.display = isDP ? '' : 'none';
+    $('specRow').style.display = isCB ? 'none' : '';
+    $('titerWrap').style.display = isDS ? '' : 'none';
+    $('concWrap').style.display = isDP ? '' : 'none';
+    $('lpWrap').style.display = (t==='ADC DS') ? '' : 'none';
+    $('mabCycleRow').style.display = (t==='Mab') ? '' : 'none';
+    $('f_batchtype_wrap').style.display = isCB ? 'none' : '';
+    $('f_budget_wrap').style.display = isCB ? 'none' : '';
+    $('vialRow').style.display = isDP ? '' : 'none';
+    $('firstRow').style.display = isCB ? 'none' : '';
+    $('mcbDateRow').style.display = (isDS||isDP) ? '' : 'none';
+    if(isDP){
+      $('f_dpkind').value='CM';
+      onDpKindChange();
+      updateScaleRow();
+    }
+    updateMolRow();
+    rebuildSpec(t);
+  }
+  function onDpKindChange(){
+    if($('f_dpkind').value==='ADC'){
+      $('f_dpline').innerHTML = '<option value="SJ2 ADC DP">SJ2 ADC DP（松江二厂）</option>';
+    } else {
+      $('f_dpline').innerHTML = '<option value="C7CM DP">C7CM DP（C7车间）</option><option value="SJ2CM DP">SJ2CM DP（松江二厂）</option>';
+    }
+    rebuildVials();
+  }
+  function readForm(){
+    var t = $('f_type').value;
+    var isDS = (t==='Mab'||t==='ADC DS');
+    var r = {
+      id: uid(),
+      type: t,
+      cbKind: t==='CB' ? $('f_cbkind').value : 'MCB',
+      dpKind: t==='DP' ? $('f_dpkind').value : 'CM',
+      dosage: t==='DP' ? $('f_dosage').value : '水针',
+      dpLine: t==='DP' ? $('f_dpline').value : '',
+      atProject: $('f_henlius').value.trim(), // AT项目号字段已移除，以 Henlius 项目号作为项目标识
+      henliusProject: $('f_henlius').value.trim(),
+      batchCount: parseInt($('f_batchcount').value,10)||1,
+      dueDate: $('f_due').value,
+      gmp: $('f_batchtype').value==='GMP生产',
+      batchKind: t==='CB' ? '' : $('f_batchtype').value,
+      spec: t==='CB' ? '' : $('f_spec').value.trim(),
+      concentration: t==='DP' ? $('f_conc').value.trim() : '',
+      titer: isDS ? $('f_titer').value : '',
+      stage: $('f_stage').value,
+      budget: t==='CB' ? '' : $('f_budget').value.trim(),
+      firstProduction: (isDS||t==='DP') ? $('f_first').checked : false,
+      molType: '', target: '', novelty: '', mabSubtype: '', hostCell: '',
+      hypertonic: t==='DP' && $('f_hypertonic').checked,
+      secondaryDilution: t==='DP' && $('f_dilute').checked,
+      vialSpec: t==='DP' ? $('f_vial').value : '',
+      scaleTest: t==='DP' ? $('f_scale').checked : true,
+      lpReleaseDate: t==='ADC DS' ? ($('f_lp').value||'') : '',
+      conditionalRelease: $('f_cond').checked,
+      processTransferDate: $('f_transfer').value || '',
+      mcbDate: $('f_mcbdate').value || '',
+      priority: $('f_priority').value,
+      requester: $('f_requester').value.trim(),
+      note: $('f_note').value.trim(),
+      createdAt: new Date().toISOString()
+    };
+    if(r.firstProduction){
+      r.molType=$('f_moltype').value.trim(); r.target=$('f_target').value.trim();
+      r.novelty=$('f_novelty').value.trim(); r.mabSubtype=$('f_subtype').value.trim(); r.hostCell=$('f_hostcell').value.trim();
+    }
+    return r;
+  }
+  function validateReq(r){
+    var errs=[];
+    if(!r.henliusProject) errs.push('Henlius项目号');
+    if(!r.dueDate) errs.push('交期');
+    if(!r.stage) errs.push(FNAMES.stage);
+    if(r.type==='CB'){
+      // CB：项目阶段 + 备注（排产逻辑.xlsx 需求录入说明1）
+      if(!r.note) errs.push('备注');
+    } else {
+      if(!r.spec) errs.push(FNAMES.spec);
+      if(!r.batchKind) errs.push(FNAMES.batchKind);
+      if(!r.budget) errs.push(FNAMES.budget);
+      if(r.type==='DP'){
+        if(!r.concentration) errs.push(FNAMES.concentration);
+        if(!r.vialSpec) errs.push(FNAMES.vialSpec);
+        if(r.dpKind==='CM' && !r.dpLine) errs.push('产线');
+      }
+      if(r.firstProduction){
+        ['molType','target','novelty','mabSubtype','hostCell'].forEach(function(k){ if(!r[k]) errs.push(FNAMES[k]); });
+        // 首次生产时 Mab 需额外填写 Titer（需求录入说明4/5）
+        if(r.type==='Mab' && (r.titer===''||r.titer==null)) errs.push(FNAMES.titer);
+      }
+    }
+    return errs;
+  }
+  function clearFormFields(){
+    ['f_due','f_transfer','f_mcbdate','f_note','f_spec','f_conc','f_titer','f_lp','f_budget',
+     'f_moltype','f_target','f_novelty','f_subtype','f_hostcell'].forEach(function(i){ $(i).value=''; });
+    $('f_batchcount').value='1'; $('f_batchtype').value=''; $('f_stage').value=''; $('f_vial').value='';
+    $('f_cond').checked=false; $('f_first').checked=false; $('f_hypertonic').checked=false;
+    $('f_dilute').checked=false; $('f_scale').checked=true;
+    updateMolRow();
+  }
+  function addReq(){
+    var r = readForm();
+    var bad = validateReq(r);
+    if(bad.length){ toast('请填写：'+bad.join('、')); return; }
+    if(!r.requester && state.user) r.requester = state.user; // 需求人默认取当前用户
+    state.requirements.push(r);
+    save(); renderStats(); renderReq();
+    toast('已添加需求，可点击「自动排产」');
+    clearFormFields();
+  }
+  // 本人校验：设置了当前用户时，仅需求人为本人的需求可删除（未设置则不限制）
+  function canDelReq(r){
+    return !state.user || !r.requester || r.requester===state.user;
+  }
+  function delReq(id){
+    var r = state.requirements.find(function(x){return x.id===id;});
+    if(r && !isPlanner() && !canDelReq(r)){ toast('该需求由「'+r.requester+'」提交，仅本人可删。解决：右上角「👤 当前用户」改为'+r.requester+'，或切换「🏭 生产计划」角色'); return; }
+    if(!confirm('删除该需求及其排产批次？')) return;
+    state.requirements = state.requirements.filter(function(r){return r.id!==id;});
+    state.batches = state.batches.filter(function(b){return b.reqId!==id;});
+    save(); renderAll();
+  }
+  function editReq(id){
+    var r = state.requirements.find(function(x){return x.id===id;});
+    if(!r) return;
+    $('f_type').value=r.type; onTypeChange();
+    if(r.type==='CB') $('f_cbkind').value=r.cbKind;
+    if(r.type==='DP'){
+      $('f_dpkind').value=r.dpKind||'CM'; onDpKindChange();
+      $('f_dosage').value=r.dosage||'水针'; updateScaleRow();
+      $('f_dpline').value=r.dpLine||'C7CM DP'; rebuildVials();
+      $('f_vial').value=r.vialSpec||'';
+      $('f_hypertonic').checked=!!r.hypertonic; $('f_dilute').checked=!!r.secondaryDilution;
+      $('f_scale').checked=r.scaleTest!==false;
+      $('f_conc').value=r.concentration||'';
+    }
+    if(r.type==='Mab'||r.type==='ADC DS'){ $('f_titer').value=(r.titer!=null?r.titer:''); }
+    if(r.type==='ADC DS'){ $('f_lp').value=r.lpReleaseDate||''; }
+    if(r.type!=='CB'){
+      $('f_spec').value=r.spec||''; $('f_batchtype').value=r.batchKind||''; $('f_budget').value=r.budget||'';
+      $('f_first').checked=!!r.firstProduction; updateMolRow();
+      $('f_moltype').value=r.molType||''; $('f_target').value=r.target||''; $('f_novelty').value=r.novelty||'';
+      $('f_subtype').value=r.mabSubtype||''; $('f_hostcell').value=r.hostCell||'';
+    }
+    $('f_stage').value=r.stage||'';
+    $('f_henlius').value=r.henliusProject||r.atProject||'';
+    $('f_batchcount').value=r.batchCount; $('f_due').value=r.dueDate;
+    $('f_cond').checked=!!r.conditionalRelease;
+    $('f_transfer').value=r.processTransferDate||''; $('f_mcbdate').value=r.mcbDate||'';
+    $('f_priority').value=r.priority; $('f_requester').value=r.requester||''; $('f_note').value=r.note||'';
+    // 进入编辑模式：换按钮
+    var btn=$('btnAddReq');
+    btn.dataset.editId=id;
+    btn.textContent='💾 保存修改';
+    window.scrollTo({top:0,behavior:'smooth'});
+    toast('正在编辑需求 '+r.atProject+'，修改后点「保存修改」');
+  }
+  function submitForm(){
+    var editId = $('btnAddReq').dataset.editId;
+    if(editId){
+      var idx = state.requirements.findIndex(function(x){return x.id===editId;});
+      if(idx<0) return;
+      var nr = readForm(); nr.id=editId; nr.createdAt=state.requirements[idx].createdAt;
+      var bad = validateReq(nr);
+      if(bad.length){ toast('请填写：'+bad.join('、')); return; }
+      state.requirements[idx]=nr;
+      // 该需求旧批次删除，重排时重新生成
+      state.batches = state.batches.filter(function(b){return b.reqId!==editId;});
+      $('btnAddReq').dataset.editId='';
+      $('btnAddReq').textContent='➕ 添加需求';
+      save(); renderAll();
+      toast('需求已更新，请重新自动排产');
+    } else {
+      addReq();
+    }
+  }
+
+  // ---------- 自动排产 ----------
+  function doSchedule(){
+    if(!state.requirements.length){ toast('请先添加需求'); return; }
+    if(!state.requirements.some(function(r){return r.dueDate;})){
+      toast('部分需求缺少交期，请补充'); return;
+    }
+    var locked = state.batches.filter(function(b){return b.locked || isFinal(b);}); // 锁定批次作为已占用产能；终态批次保留记录（引擎自动跳过其产能占用）
+    // 已锁定的正式批不再重复生成：按需求扣除已锁数量
+    var reqs2 = [];
+    state.requirements.forEach(function(r){
+      var lockedFormal = state.batches.filter(function(b){
+        return b.reqId===r.id && b.locked && b.type!=='冻干放大测试';
+      }).length;
+      var remain = (parseInt(r.batchCount,10)||1) - lockedFormal;
+      if(remain<=0) return;
+      var nr = Object.assign({}, r);
+      nr.batchCount = remain;
+      reqs2.push(nr);
+    });
+    if(!reqs2.length){ toast('所有需求的批次均已锁定，无需重新排产'); return; }
+    var sched = new Sched(state.rules);
+    // 批次 id 全局唯一：从当前最大 NB 编号后继续（引擎每次排产默认从 NB1 起，跨次排产会与已锁定批次 id 冲突）
+    var maxN = 0;
+    state.batches.forEach(function(b){ var m = /^NB(\d+)$/.exec(b.id||''); if(m) maxN = Math.max(maxN, parseInt(m[1],10)); });
+    var res = sched.schedule(reqs2, locked, maxN + 1);
+    state.batches = locked.concat(res.batches);
+    save(); renderAll();
+    // 告警横幅
+    var warnBanner = $('warnBanner');
+    if(res.warnings.length){
+      var msgs = {}, order = [];
+      res.warnings.forEach(function(w){ if(!(w.msg in msgs)){msgs[w.msg]=0;order.push(w.msg);} msgs[w.msg]++; });
+      warnBanner.innerHTML = '<b>⚠️ 排产提醒（'+res.warnings.length+' 条）：</b><ul>' +
+        order.map(function(m){return '<li>'+esc(m)+'（×'+msgs[m]+'）</li>';}).join('') + '</ul>';
+      warnBanner.classList.add('show');
+    } else {
+      warnBanner.classList.remove('show');
+    }
+    toast('排产完成：生成 '+res.batches.length+' 个草案批次，待生产计划确认');
+  }
+  function clearPlan(){
+    state.batches = state.batches.filter(function(b){return b.locked || isFinal(b);});
+    save(); renderAll(); toast('已清空自动排产草案（保留锁定批次、终态批次与需求）');
+  }
+
+  // ---------- 确认与锁定（生产计划） ----------
+  function lockPlan(){
+    var pend = state.batches.filter(function(b){ return !b.locked && !isFinal(b); });
+    if(!pend.length){ toast('没有待确认的批次'); return; }
+    if(!confirm('确认锁定 '+pend.length+' 个待确认批次？\n锁定后作为已占用产能，不再参与下次自动重排。')) return;
+    pend.forEach(function(b){ b.locked=true; b.status='锁定'; });
+    save(); renderAll();
+    toast('已锁定 '+pend.length+' 个批次，排产确认完成');
+  }
+  function confirmBatch(id){
+    var b = state.batches.find(function(x){return x.id===id;});
+    if(!b || b.locked || isFinal(b)) return;
+    b.locked=true; b.status='锁定';
+    save(); renderAll();
+    toast('批次已确认锁定');
+  }
+  function unlockBatch(id){
+    var b = state.batches.find(function(x){return x.id===id;});
+    if(!b || !b.locked || b.source==='历史') return;
+    if(!confirm('解锁后该批次将恢复为待确认状态，确定继续？')) return;
+    b.locked=false; b.status='人工';
+    save(); renderAll();
+    toast('已解锁，该批次恢复为待确认');
+  }
+  // 批量解锁：按批次表勾选框解锁多个锁定批次
+  function batchUnlockSelected(){
+    if(!isPlanner()){ toast('仅生产计划角色可解锁批次'); return; }
+    var boxes = document.querySelectorAll('#batchTable tbody input[data-sel]:checked');
+    var ids = Array.prototype.map.call(boxes, function(c){ return c.dataset.sel; });
+    if(!ids.length){ toast('请先勾选需要解锁的锁定批次（首列选择框）'); return; }
+    if(!confirm('解锁选中的 '+ids.length+' 个批次？\n解锁后恢复为待确认状态；可点击「刷新自动排产」按当前需求重新排产。')) return;
+    ids.forEach(function(id){
+      var b = state.batches.find(function(x){return x.id===id;});
+      if(b && b.locked && b.source!=='历史'){ b.locked=false; b.status='人工'; b.warning=''; }
+    });
+    save(); renderAll();
+    toast('已批量解锁 '+ids.length+' 个批次，恢复为待确认');
+  }
+  // 需求状态（派生）：待排产 / 待确认 / 已锁定（终态批次视为已定案，不阻塞需求）
+  function reqStatus(r){
+    var bs = state.batches.filter(function(b){ return b.reqId===r.id; });
+    if(!bs.length) return '待排产';
+    return bs.every(function(b){ return b.locked || isFinal(b); }) ? '已锁定' : '待确认';
+  }
+
+  // ---------- 渲染：统计 ----------
+  function renderStats(){
+    $('stReq').textContent = state.requirements.length;
+    $('stBatch').textContent = state.batches.length;
+    $('stLock').textContent = state.batches.filter(function(b){return b.locked;}).length;
+    $('stPending').textContent = state.batches.filter(function(b){return !b.locked && !isFinal(b);}).length;
+    $('stWarn').textContent = state.batches.filter(function(b){return b.status==='预警';}).length;
+  }
+
+  // ---------- 渲染：需求列表 ----------
+  function renderReq(){
+    $('reqCount').textContent = state.requirements.length+' 条';
+    var tb = $('reqTable').querySelector('tbody');
+    tb.innerHTML='';
+    $('reqEmpty').style.display = state.requirements.length ? 'none' : '';
+    state.requirements.slice().reverse().forEach(function(r){
+      var tr=document.createElement('tr');
+      var typeTxt = r.type==='CB' ? r.cbKind : (r.type==='DP' ? r.dpKind+' '+r.dosage : r.type);
+      var kindTxt = r.batchKind || (r.gmp?'GMP生产':'Non-GMP');
+      var st = reqStatus(r);
+      var stBadge = st==='已锁定' ? 'b-green' : (st==='待确认' ? 'b-orange' : 'b-gray');
+      var tip = '规格:'+(r.spec||'-')+' ｜ 阶段:'+(r.stage||'-')+' ｜ 批次类型:'+(kindTxt||'-')+
+        (r.type==='Mab'?' ｜ 周期:种子20+反应器15+纯化7天(默认,人工干预可调)':'')+
+        (r.titer!==''&&r.titer!=null?' ｜ Titer:'+r.titer:'')+(r.concentration?' ｜ 浓度:'+r.concentration:'')+
+        (r.vialSpec?' ｜ 瓶规格:'+r.vialSpec:'')+(r.budget?' ｜ 预算:'+r.budget:'')+
+        (r.firstProduction?' ｜ 首次生产'+
+          (r.molType?' ｜ Molecule Type:'+r.molType:'')+
+          (r.target?' ｜ Target:'+r.target:'')+
+          (r.novelty?' ｜ Novelty:'+r.novelty:'')+
+          (r.mabSubtype?' ｜ mAb subtype:'+r.mabSubtype:'')+
+          (r.hostCell?' ｜ Host Cell Line:'+r.hostCell:''):'')+(r.note?' ｜ 备注:'+r.note:'');
+      tr.innerHTML = '<td title="'+esc(tip)+'"><b>'+esc(r.henliusProject||r.atProject||'-')+'</b></td>'+
+        '<td>'+esc(typeTxt)+'</td>'+
+        '<td>'+r.batchCount+' 批</td>'+
+        '<td>'+esc(r.dueDate||'-')+'</td>'+
+        '<td>'+esc(kindTxt||'-')+'</td>'+
+        '<td><span class="pri '+(r.priority==='高'?'high':r.priority==='低'?'low':'mid')+'">'+esc(r.priority)+'</span></td>'+
+        '<td>'+esc(r.requester||'-')+'</td>'+
+        '<td><span class="badge '+stBadge+'">'+st+'</span></td>'+
+        '<td>'+(isPlanner()
+          ? '<button class="btn sm danger" data-act="del" data-id="'+r.id+'" title="生产计划角色可删除任意需求">删除</button>'
+          : '<button class="btn sm" data-act="edit" data-id="'+r.id+'">编辑</button> '+
+            (canDelReq(r)?'<button class="btn sm danger" data-act="del" data-id="'+r.id+'" title="仅需求人本人可删除">删除</button>'
+              :'<span class="hint" style="font-size:11px;cursor:help;border-bottom:1px dotted" data-act="delhint" data-id="'+r.id+'" title="删除方法：① 右上角「👤 当前用户」改为 '+esc(r.requester)+'；② 或切换到「🏭 生产计划」角色后可删除任意需求">🔒 仅'+esc(r.requester)+'可删</span>'))+'</td>';
+      tb.appendChild(tr);
+    });
+  }
+
+  // ---------- 渲染：甘特图 ----------
+  // 产线多选：ganttLines=null 表示全部；否则为选中产线数组
+  function ganttSelectedLines(){
+    if(state.ganttLines) return state.ganttLines;
+    return LINES_ORDER;
+  }
+  function syncGanttCheckboxes(){
+    var boxes = document.querySelectorAll('#ganttLineFilter input[data-line]');
+    var sel = ganttSelectedLines();
+    boxes.forEach(function(c){
+      var v = c.dataset.line;
+      c.checked = (v==='' && state.ganttLines===null) || (v!=='' && sel.indexOf(v)>=0);
+    });
+  }
+  function renderGantt(){
+    var wrap = $('gantt');
+    var sel = ganttSelectedLines();
+    var bs = state.batches.filter(function(b){ return sel.indexOf(b.line||'其他')>=0; });
+    if(!bs.length){ wrap.innerHTML='<div class="empty">暂无批次</div>'; renderLegend(); return; }
+    var minD=null, maxD=null;
+    bs.forEach(function(b){
+      var s=U.p(b.start), e=U.p(b.end);
+      if(!s||!e) return;
+      if(!minD||s<minD) minD=s;
+      if(!maxD||e>maxD) maxD=e;
+    });
+    if(!minD){ wrap.innerHTML='<div class="empty">暂无有效批次</div>'; return; }
+    minD = new Date(minD.getFullYear(), minD.getMonth(), 1);
+    maxD = U.add(maxD, 15);
+    var axis = state.ganttAxis || { px:2.5, unit:'month' };
+    var PX = axis.px, unit = axis.unit;
+    var total = U.diff(maxD, minD);
+    var ganttW = Math.max(total * PX, 200);
+    var html = '<div class="gantt-wrap"><div class="g-head"><div class="g-label">产线 \\'+(unit==='week'?'周':'月份')+'</div><div class="g-body" style="width:'+ganttW+'px">';
+    // 时间轴刻度（月/周）
+    if(unit==='week'){
+      var wk = new Date(minD);
+      while(wk <= maxD){
+        var wl = U.diff(wk, minD)*PX;
+        var ww = 7*PX;
+        html += '<div class="g-week" style="left:'+wl+'px;width:'+ww+'px">'+String(wk.getMonth()+1).padStart(2,'0')+'-'+String(wk.getDate()).padStart(2,'0')+'</div>';
+        wk = U.add(wk, 7);
+      }
+    } else {
+      var m = new Date(minD);
+      while(m <= maxD){
+        var l = U.diff(m, minD)*PX;
+        var w = (U.diff(new Date(m.getFullYear(), m.getMonth()+1, 1), m))*PX;
+        html += '<div class="g-month" style="left:'+l+'px;width:'+w+'px">'+m.getFullYear()+'-'+String(m.getMonth()+1).padStart(2,'0')+'</div>';
+        m = new Date(m.getFullYear(), m.getMonth()+1, 1);
+      }
+    }
+    html += '</div></div>';
+    // 每行（仅渲染选中产线；"其他"产线即使无批次也保留空行）
+    sel.forEach(function(line){
+      var lbs = bs.filter(function(b){ return (b.line||'其他')===line; });
+      if(!lbs.length && line!=='其他') return;
+      html += '<div class="g-line"><div class="g-label">'+line+'<span style="font-weight:400;color:var(--sub);margin-left:4px">'+lbs.length+'</span></div><div class="g-body" style="width:'+ganttW+'px">';
+      lbs.forEach(function(b){
+        var s=U.p(b.start), e=U.p(b.end);
+        if(!s||!e) return;
+        var l = U.diff(s, minD)*PX, w = (U.diff(e,s)+1)*PX;
+        var cls = 'g-bar'+(b.locked?' locked':'')+(b.status==='预警'?' warn':'')+(isFinal(b)?' dead':'');
+        var color = TYPE_COLOR[b.type] || '#a8a29e';
+        var label = (b.project||'') + (b.type==='APS'?' APS':'');
+        html += '<div class="'+cls+'" data-id="'+b.id+'" style="left:'+l+'px;width:'+Math.max(w-1,10)+'px;background:'+color+'" title="'+esc(b.type+' '+b.project+' '+b.start+'~'+b.end+(b.warning?' [预警]':'')+(isFinal(b)?' ['+b.status+']':''))+'">'+esc(label)+'</div>';
+      });
+      html += '</div></div>';
+    });
+    html += '<div style="height:10px"></div></div>';
+    wrap.innerHTML = html;
+    // 点击批次（仅生产计划角色可调整）
+    wrap.querySelectorAll('.g-bar').forEach(function(el){
+      el.addEventListener('click', function(){
+        if(!isPlanner()){ toast('请切换到「生产计划」角色进行人工调整'); return; }
+        openEdit(el.dataset.id);
+      });
+    });
+    renderLegend();
+  }
+  function renderLegend(){
+    var L = document.createElement('div');
+    var items = [['MCB','#3b82f6'],['WCB','#60a5fa'],['Mab','#8b5cf6'],['ADC DS','#06b6d4'],['ADC DP','#f59e0b'],['CM DP','#22c55e'],['冻干放大测试','#94a3b8'],['APS','#ec4899']];
+    var html = items.map(function(x){return '<span><i style="background:'+x[1]+'"></i>'+x[0]+'</span>';}).join('');
+    html += '<span><i style="background:#fff;border:2px solid #475569"></i>锁定批次</span>';
+    html += '<span><i style="background:#fff;border:2px solid #dc2626"></i>交期预警</span>';
+    html += '<span><i style="background:#94a3b8;border:1px dashed #64748b;opacity:.5"></i>终态(中止/失败/取消)</span>';
+    L.innerHTML = html;
+    $('ganttLegend').innerHTML = '';
+    $('ganttLegend').appendChild(L);
+  }
+
+  // ---------- 渲染：批次明细 ----------
+  function renderBatches(){
+    var tb = $('batchTable').querySelector('tbody');
+    tb.innerHTML='';
+    var ft = $('filtType').value, fl = $('filtLine').value, fs = $('filtStatus').value, fp = ($('filtProject').value||'').toLowerCase();
+    var list = state.batches.filter(function(b){
+      if(ft && b.type!==ft) return false;
+      if(fl && (b.line||'其他')!==fl) return false;
+      if(fs && b.status!==fs) return false;
+      if(fp && !(b.project||'').toLowerCase().includes(fp)) return false;
+      return true;
+    });
+    list.sort(function(a,b){ return U.p(a.start)-U.p(b.start); });
+    $('batchCount').textContent = list.length+' / '+state.batches.length;
+    $('batchEmpty').style.display = list.length ? 'none' : '';
+    var stCls = {'锁定':'lock','自动':'auto','预警':'warn','人工':'manual','中止':'dead','失败':'fail','取消':'cancel'};
+    list.forEach(function(b){
+      var tr=document.createElement('tr');
+      var ops = '—';
+      // 批量解锁选择框：仅生产计划角色、锁定中的非历史批次可选
+      var canSel = isPlanner() && b.locked && b.source!=='历史';
+      var selTd = '<td class="plan-only" style="text-align:center">'+(canSel?'<input type="checkbox" data-sel="'+b.id+'" title="勾选后可批量解锁">':'')+'</td>';
+      if(isPlanner()){
+        if(b.source==='历史'){
+          ops = '<span style="color:var(--sub)">历史锁定</span>';
+        } else if(isFinal(b)){
+          // 终态批次：可调整（改状态/日期）与删除，不再确认/解锁
+          ops = '<button class="btn sm plan-only" data-act="edit" data-id="'+b.id+'">调整</button> '+
+                '<button class="btn sm danger plan-only" data-act="del" data-id="'+b.id+'">删除</button>';
+        } else if(b.locked){
+          ops = '<button class="btn sm plan-only" data-act="edit" data-id="'+b.id+'">调整</button> '+
+                '<button class="btn sm plan-only" data-act="unlock" data-id="'+b.id+'">解锁</button>';
+        } else {
+          ops = '<button class="btn sm plan-only" data-act="edit" data-id="'+b.id+'">调整</button> '+
+                '<button class="btn sm ok plan-only" data-act="confirm" data-id="'+b.id+'">确认</button>';
+        }
+      }
+      tr.innerHTML =
+        selTd+
+        '<td><span class="st '+(stCls[b.status]||'auto')+'">'+esc(b.status)+'</span></td>'+
+        '<td><span class="badge '+(TYPE_BADGE[b.type]||'b-gray')+'">'+esc(b.type)+'</span></td>'+
+        '<td><b>'+esc(b.project||'-')+'</b>'+(b.henlius?'<br><span style="color:var(--sub);font-size:11px">'+esc(b.henlius)+'</span>':'')+'</td>'+
+        '<td style="color:var(--sub)">'+esc(b.batchNo||'-')+'</td>'+
+        '<td>'+esc(b.line||'-')+'</td>'+
+        '<td>'+esc(b.start)+'</td><td>'+esc(b.end)+'</td>'+
+        '<td style="color:var(--sub)">'+(b.harvestDate?'下罐 '+esc(b.harvestDate):(b.fillDate?'灌装 '+esc(b.fillDate):'-'))+'</td>'+
+        '<td>'+(b.gmp?'<span class="b-green">GMP</span>':'<span class="b-gray">非GMP</span>')+'</td>'+
+        '<td style="max-width:220px;white-space:normal;color:var(--sub)">'+esc(b.warning||b.note||'')+'</td>'+
+        '<td class="plan-only">'+ops+'</td>';
+      tb.appendChild(tr);
+    });
+  }
+
+  // ---------- 人工调整（编辑弹窗，生产计划角色） ----------
+  function openEdit(id){
+    if(!isPlanner()){ toast('请切换到「生产计划」角色进行人工调整'); return; }
+    var b = state.batches.find(function(x){return x.id===id;});
+    if(!b) return;
+    editingId = id;
+    var isHist = b.source==='历史';
+    var R = state.rules || JSON.parse(JSON.stringify(Sched.DEFAULTS));
+    var isMab = b.type==='Mab';
+    var isDP = (b.line==='SJ2 ADC DP'||b.line==='C7CM DP'||b.line==='SJ2CM DP');
+    $('editTitle').textContent = (isHist?'查看历史锁定批次：':'人工调整：')+b.type+' '+(b.project||'');
+    $('editInfo').innerHTML = (b.reqId?'已关联需求':'自动生成/历史批次')+' ｜ 当前状态：'+b.status+
+      (b.mabPhases?' ｜ 周期构成：'+b.mabPhases:'')+
+      (b.dpSegs?' ｜ 周期构成：准备'+b.dpSegs.prep+'+灌装'+b.dpSegs.fill+'+冻干'+b.dpSegs.freeze+'+清场'+b.dpSegs.clear+'+目检包装'+b.dpSegs.inspect+'（合计'+b.dpSegs.total+'天）':'')+
+      (isHist?' ｜ <b>历史锁定批次，仅可查看</b>':'');
+    $('e_batchno').value = b.batchNo||'';
+    $('e_start').value = b.start||'';
+    $('e_end').value = b.end||'';
+    $('e_line').value = b.line||'其他';
+    $('e_lock').checked = !!b.locked;
+    $('e_note').value = b.note||'';
+    // 状态下拉：保留当前状态（若为自动态）+ 人工 + 终态选项
+    var stSel = $('e_status');
+    var cur = b.status || '人工';
+    var opts = [];
+    ['锁定','自动','预警','人工','中止','失败','取消'].forEach(function(s){ if(s===cur || s==='人工' || s==='中止' || s==='失败' || s==='取消') opts.push(s); });
+    stSel.innerHTML = opts.map(function(s){ return '<option'+(s===cur?' selected':'')+'>'+s+'</option>'; }).join('');
+    if(isFinal(b)){
+      $('e_lock').disabled = true;
+      $('e_lock').checked = false; // 终态批次不锁定（不占产能）
+      $('e_start').disabled = true; $('e_line').disabled = true; // 终态仅可改状态/备注/删除
+    }
+    // 周期调整行（按批次类型显示）
+    $('editMabRow').style.display = isMab ? '' : 'none';
+    $('editDpRow').style.display = isDP ? '' : 'none';
+    $('editDpRow2').style.display = isDP ? '' : 'none';
+    $('eEndHint').style.display = (isMab||isDP) ? '' : 'none';
+    if(isMab){
+      $('e_mabseed').value = b.mabSeed!=null?b.mabSeed:((R.mab&&R.mab.seedDays!=null)?R.mab.seedDays:20);
+      $('e_mabreactor').value = b.mabReactor!=null?b.mabReactor:((R.mab&&R.mab.reactorDays!=null)?R.mab.reactorDays:15);
+      $('e_mabpurify').value = b.mabPurify!=null?b.mabPurify:((R.mab&&R.mab.purifyDays!=null)?R.mab.purifyDays:7);
+    }
+    if(isDP){
+      var sg = b.dpSegs || { prep:3, fill:1, freeze:(b.dosage==='冻干'?(b.line==='C7CM DP'?3:4):0), clear:1, inspect:0 };
+      $('e_dprep').value=sg.prep; $('e_dfill').value=sg.fill; $('e_dfreeze').value=sg.freeze;
+      $('e_dclear').value=sg.clear; $('e_dinspect').value=sg.inspect;
+    }
+    updateEditTotals();
+    ['e_batchno','e_start','e_line','e_note','e_lock'].forEach(function(i){ $(i).disabled = isHist; });
+    ['e_status'].forEach(function(i){ $(i).disabled = isHist; });
+    ['e_mabseed','e_mabreactor','e_mabpurify','e_dprep','e_dfill','e_dfreeze','e_dclear','e_dinspect'].forEach(function(i){ $(i).disabled = isHist; });
+    if(isFinal(b) && !isHist){ // 终态批次锁定相关字段保持禁用
+      $('e_lock').disabled = true;
+      $('e_start').disabled = true; $('e_line').disabled = true;
+      $('e_lock').checked = false;
+    }
+    // Mab/DP 完成日期由周期组成自动计算，不可手改
+    $('e_end').disabled = isHist || isMab || isDP;
+    $('btnEditSave').style.display = isHist ? 'none' : '';
+    $('btnDelBatch').style.display = isHist ? 'none' : '';
+    $('editConflict').style.display='none';
+    $('editMask').classList.add('on');
+  }
+  function nv(x){ var v = parseInt(x,10); return isNaN(v) ? 0 : v; }
+  function updateEditTotals(){
+    var ms = nv($('e_mabseed').value)+nv($('e_mabreactor').value)+nv($('e_mabpurify').value);
+    $('e_mabtotal').textContent = ms ? '合计 '+ms+' 天（下罐=开始+种子+反应器）' : '';
+    var ds = nv($('e_dprep').value)+nv($('e_dfill').value)+nv($('e_dfreeze').value)+nv($('e_dclear').value)+nv($('e_dinspect').value);
+    // 灌装日期自动计算 = 开始日期 + 准备天数（随开始/准备变化实时更新）
+    var fillTxt = '';
+    var sD = $('e_start').value, prep = nv($('e_dprep').value);
+    if(sD && prep>=0 && ds){
+      try{ fillTxt = ' ｜ 灌装日期 '+U.f(U.add(U.p(sD), prep)); }catch(e){}
+    }
+    $('e_dptotal').textContent = ds ? '合计 '+ds+' 天'+fillTxt : '';
+  }
+  function closeEdit(){ $('editMask').classList.remove('on'); editingId=null; }
+  function saveEdit(){
+    if(!isPlanner()){ toast('仅生产计划角色可调整批次'); return; }
+    var b = state.batches.find(function(x){return x.id===editingId;});
+    if(!b) return;
+    var s = $('e_start').value, e = $('e_end').value, line = $('e_line').value;
+    var newStatus = $('e_status').value;
+    var wasFinal = isFinal(b);
+    // 终态流转：
+    //  - 标记为终态（中止/失败/取消）：不占产能、不锁定，保存日期/备注即可，跳过冲突校验
+    //  - 终态恢复为人工：解除终态，重新走普通校验流程
+    if(newStatus==='中止'||newStatus==='失败'||newStatus==='取消'){
+      b.status = newStatus;
+      b.locked = false;
+      b.warning = '';
+      b.note = $('e_note').value;
+      save(); renderAll(); closeEdit();
+      toast('批次已标记为「'+newStatus+'」，不再占用产能（可删除或调整恢复）');
+      return;
+    }
+    if(!s){ toast('请填写开始日期'); return; }
+    var isMab = b.type==='Mab';
+    var isDP = (b.line==='SJ2 ADC DP'||b.line==='C7CM DP'||b.line==='SJ2CM DP');
+    // 周期重算：Mab=种子+反应器+纯化；DP=准备+灌装+冻干+清场+目检包装
+    if(isMab){
+      var seed = nv($('e_mabseed').value), reactor = nv($('e_mabreactor').value), purify = nv($('e_mabpurify').value);
+      if(!(seed>0&&reactor>0&&purify>0)){ toast('Mab 种子/反应器/纯化天数需均大于 0'); return; }
+      e = U.f(U.add(U.p(s), seed+reactor+purify-1));
+      $('e_end').value = e;
+      b.mabSeed=seed; b.mabReactor=reactor; b.mabPurify=purify;
+      b.mabPhases = '种子培养'+seed+'天 + 反应器培养'+reactor+'天 + 下游纯化'+purify+'天（合计'+(seed+reactor+purify)+'天）';
+      b.harvestDate = U.f(U.add(U.p(s), seed+reactor)); // 下罐=开始+种子+反应器
+    } else if(isDP){
+      var dp = [nv($('e_dprep').value), nv($('e_dfill').value), nv($('e_dfreeze').value), nv($('e_dclear').value), nv($('e_dinspect').value)];
+      var dsum = dp[0]+dp[1]+dp[2]+dp[3]+dp[4];
+      if(dsum<=0){ toast('制剂周期各段天数合计需大于 0'); return; }
+      e = U.f(U.add(U.p(s), dsum-1));
+      $('e_end').value = e;
+      b.dpSegs = { prep:dp[0], fill:dp[1], freeze:dp[2], clear:dp[3], inspect:dp[4], total:dsum };
+      b.fillDate = U.f(U.add(U.p(s), dp[0])); // 灌装日期自动根据开始时间计算并更新
+    }
+    if(!e){ toast('请填写完成日期'); return; }
+    if(U.p(e) < U.p(s)){ toast('完成日期不能早于开始日期'); return; }
+    // 批次号修订（唯一性校验）
+    var bn = $('e_batchno').value.trim();
+    if(bn){
+      var dup = state.batches.some(function(x){ return x.id!==editingId && x.batchNo && x.batchNo===bn; });
+      if(dup){ toast('批次号「'+bn+'」已存在，请更换'); return; }
+    }
+    // 校验冲突（排除自身）
+    var others = state.batches.filter(function(x){return x.id!==editingId;}).map(function(x){return {b:x};});
+    var sched = new Sched(state.rules);
+    var conflict = sched.conflicts(line, U.p(s), U.p(e), {occ:others});
+    var warnBox = $('editConflict');
+    if(conflict && !$('e_lock').checked){
+      warnBox.textContent = '⚠️ 该时段与其它批次冲突（产线占用/间隔约束），如仍要保存请勾选锁定并再次保存。';
+      warnBox.style.display='block';
+      return;
+    }
+    b.start=s; b.end=e; b.line=line;
+    b.batchNo = bn;
+    b.locked = $('e_lock').checked;
+    b.note = $('e_note').value;
+    // 状态下拉优先（人工/自动态），其次按锁定/冲突派生
+    if(newStatus==='人工' || newStatus==='自动' || newStatus==='预警' || wasFinal){
+      b.status = '人工';
+      if(!b.locked && conflict){ b.status='预警'; b.warning='人工调整后仍与其它批次冲突'; }
+      else if(b.locked){ b.status='锁定'; b.warning=''; }
+      else b.warning='';
+    } else if(!b.locked && conflict){ b.status='预警'; b.warning='人工调整后仍与其它批次冲突'; }
+    else if(b.locked){ b.status='锁定'; b.warning=''; }
+    else if(b.status==='锁定'){ b.status='人工'; }
+    else if(b.status==='自动'||b.status==='预警'){ b.status='人工'; }
+    save(); renderAll(); closeEdit();
+    toast('已保存调整'+(conflict?'（存在冲突，请关注）':''));
+  }
+  function delBatch(){
+    if(!isPlanner()){ toast('仅生产计划角色可删除批次'); return; }
+    if(!confirm('删除该批次？')) return;
+    state.batches = state.batches.filter(function(x){return x.id!==editingId;});
+    save(); renderAll(); closeEdit();
+    toast('批次已删除');
+  }
+  function delBatchDirect(id){
+    if(!isPlanner()){ toast('仅生产计划角色可删除批次'); return; }
+    var b = state.batches.find(function(x){return x.id===id;});
+    if(!b) return;
+    if(!confirm('删除该批次？'+(isFinal(b)?'（终态批次）':''))) return;
+    state.batches = state.batches.filter(function(x){return x.id!==id;});
+    save(); renderAll();
+    toast('批次已删除');
+  }
+
+  // ---------- 规则参数页 ----------
+  function ruleField(label, key, val, tip){
+    return '<div class="f"><label>'+label+(tip?' <span style="color:#94a3b8;font-weight:400">('+tip+')</span>':'')+'</label>'+
+      '<input type="number" data-rule="'+key+'" value="'+val+'" step="1"></div>';
+  }
+  function renderRules(){
+    var R = state.rules || JSON.parse(JSON.stringify(Sched.DEFAULTS));
+    var g = $('rulesGrid');
+    var html = '<div class="card" style="grid-column:1/-1;margin:0"><h2 style="font-size:13px">CB 细胞库</h2><div class="rules-grid">';
+    html += ruleField('开工星期(getDay，0=周日,2=周二)','cb.weekday',R.cb.weekday);
+    html += ruleField('生产周期(天)','cb.cycle',R.cb.cycle);
+    html += ruleField('生产间隔：上批完成→下批开始(天)','cb.gap',R.cb.gap);
+    html += ruleField('MCB→WCB间隔(天)','mcbWcbGapDays',R.mcbWcbGapDays);
+    html += '</div></div>';
+    html += '<div class="card" style="grid-column:1/-1;margin:0"><h2 style="font-size:13px">通用 / Mab / ADC DS</h2><div class="rules-grid">';
+    html += ruleField('工艺转移后间隔(天)','processTransferGapDays',R.processTransferGapDays);
+    html += ruleField('Mab 批间开始间隔(天)','mab.minStartGap',R.mab.minStartGap);
+    html += ruleField('Mab 种子培养(天)','mab.seedDays',R.mab.seedDays!=null?R.mab.seedDays:20);
+    html += ruleField('Mab 反应器培养(天)','mab.reactorDays',R.mab.reactorDays!=null?R.mab.reactorDays:15);
+    html += ruleField('Mab 下游纯化(天)','mab.purifyDays',R.mab.purifyDays!=null?R.mab.purifyDays:7);
+    html += ruleField('Mab 下罐间隔(天)','mab.harvestGap',R.mab.harvestGap);
+    html += ruleField('Mab 下罐偏移(开始后第几天,无下罐日的历史批兜底)','mab.harvestOffset',R.mab.harvestOffset);
+    html += ruleField('ADC DS 下罐后(天)','adcDs.harvestAfterDays',R.adcDs.harvestAfterDays);
+    html += ruleField('ADC DS GMP-Mab完成后(天)','adcDs.gmpMabDays',R.adcDs.gmpMabDays);
+    html += ruleField('ADC DS Non-GMP Mab完成后(天)','adcDs.nonGmpMabDays',R.adcDs.nonGmpMabDays);
+    html += '</div></div>';
+    html += '<div class="card" style="grid-column:1/-1;margin:0"><h2 style="font-size:13px">DP 制剂</h2><div class="rules-grid">';
+    html += ruleField('C7CM DP 清场后间隔(天)','dp.clearGapC7',R.dp.clearGapC7);
+    html += ruleField('SJ2 DP产线清场后间隔(天)','dp.clearGapSJ2',R.dp.clearGapSJ2);
+    html += ruleField('二次稀配增加周期(天)','dp.diluteExtraDays',R.dp.diluteExtraDays);
+    html += ruleField('ADC Non-GMP 与ADC DS间隔(天)','adcDp.nonGmpGapDays',R.adcDp.nonGmpGapDays);
+    html += ruleField('ADC 其余与ADC DS间隔(天)','adcDp.otherGapDays',R.adcDp.otherGapDays);
+    html += ruleField('冻干与放大测试间隔(天)','freezeDry.testGapDays',R.freezeDry.testGapDays);
+    html += ruleField('APS 占用(天)','aps.cycle',R.aps.cycle);
+    html += '</div></div>';
+    html += '<div class="card" style="grid-column:1/-1;margin:0"><h2 style="font-size:13px">APS 月份（各产线，用逗号分隔，如 3,8,12）</h2><div class="rules-grid">';
+    ['C7CM DP','SJ2 ADC DP','SJ2CM DP'].forEach(function(l){
+      html += '<div class="f"><label>'+l+' APS 月份</label><input data-rule="aps.months.'+l+'" value="'+((R.aps.months[l]||[]).join(','))+'" style="width:100%"></div>';
+    });
+    html += '</div></div>';
+    g.innerHTML = html;
+  }
+  function readRules(){
+    var R = JSON.parse(JSON.stringify(Sched.DEFAULTS));
+    document.querySelectorAll('[data-rule]').forEach(function(inp){
+      var key = inp.dataset.rule, v = inp.value.trim();
+      var parts = key.split('.');
+      var obj = R;
+      for(var i=0;i<parts.length-1;i++){ obj = obj[parts[i]]; }
+      obj[parts[parts.length-1]] = v==='' ? null : Number(v);
+      if(Number.isNaN(obj[parts[parts.length-1]])) obj[parts[parts.length-1]] = v;
+    });
+    // APS months 从字符串转数组
+    ['C7CM DP','SJ2 ADC DP','SJ2CM DP'].forEach(function(l){
+      var inp = document.querySelector('[data-rule="aps.months.'+l+'"]');
+      R.aps.months[l] = (inp.value||'').split(/[,，]/).map(function(x){return parseInt(x.trim(),10);}).filter(function(x){return x>=1&&x<=12;});
+    });
+    return R;
+  }
+  function saveRules(){
+    state.rules = readRules();
+    save();
+    toast('规则已保存，请重新「自动排产」生效');
+  }
+  function resetRules(){
+    state.rules = null; save(); renderRules(); toast('已恢复默认规则');
+  }
+
+  // ---------- 数据管理 ----------
+  function renderData(){
+    var lock = state.batches.filter(function(b){return b.locked;}).length;
+    var warn = state.batches.filter(function(b){return b.status==='预警';}).length;
+    var fin = state.batches.filter(isFinal).length;
+    $('dataSummary').innerHTML =
+      '需求：<b>'+state.requirements.length+'</b> 条 ｜ 批次：<b>'+state.batches.length+'</b> 批（锁定 '+lock+' ｜ 待确认 '+(state.batches.length-lock-fin)+' ｜ 预警 '+warn+' ｜ 终态(中止/失败/取消) '+fin+'）<br>'+
+      '规则：<b>'+(state.rules ? '自定义' : '默认（排产逻辑.xlsx）')+'</b> ｜ 甘特图：密度 '+((state.ganttAxis||{}).px||2.5)+'px/天 · 刻度 '+((state.ganttAxis||{}).unit||'month')+' ｜ 存储位置：浏览器 localStorage';
+  }
+  // 参考数据：4 张可修订表（产线情况/制剂产能/人员配置/需求矩阵），数据存 state.refData
+  var REF_TABLES = [
+    { key:'lines',  id:'refLines',  cols:7 },
+    { key:'caps',   id:'refCap',    cols:8 },
+    { key:'staff',  id:'refStaff',  cols:2 },
+    { key:'fields', id:'refFields', cols:5 }
+  ];
+  function refData(){ return state.refData || REF_DEFAULT; }
+  function renderRef(){
+    REF_TABLES.forEach(function(t){
+      var tb = $(t.id).querySelector('tbody');
+      var rows = refData()[t.key];
+      var editing = (refEditKey===t.key);
+      tb.innerHTML = rows.map(function(row){
+        var cells = '';
+        for(var i=0;i<t.cols;i++){
+          var v = row[i]==null ? '' : String(row[i]);
+          cells += editing
+            ? '<td><input data-cell="'+i+'" value="'+esc(v)+'"></td>'
+            : '<td>'+esc(v)+'</td>';
+        }
+        return '<tr>'+cells+'</tr>';
+      }).join('');
+      // 编辑按钮状态
+      var btn = document.querySelector('[data-ref-edit="'+t.key+'"]');
+      if(btn) btn.textContent = editing ? '💾 保存' : '✏️ 编辑';
+      var cancel = document.querySelector('[data-ref-cancel="'+t.key+'"]');
+      if(cancel) cancel.style.display = editing ? '' : 'none';
+      document.querySelector('#tab-ref #refLines'); // noop
+    });
+  }
+  function toggleRefEdit(key){
+    if(refEditKey===key){
+      // 保存：收集 input 值
+      var t = REF_TABLES.find(function(x){return x.key===key;});
+      var rows = [];
+      $(t.id).querySelectorAll('tbody tr').forEach(function(tr){
+        var row = [];
+        tr.querySelectorAll('input[data-cell]').forEach(function(inp){
+          row[parseInt(inp.dataset.cell,10)] = inp.value;
+        });
+        rows.push(row);
+      });
+      if(!state.refData) state.refData = JSON.parse(JSON.stringify(REF_DEFAULT));
+      state.refData[key] = rows;
+      refEditKey = null;
+      save(); renderRef();
+      toast('参考数据已保存');
+    } else {
+      if(!isPlanner()){ toast('请切换到「生产计划」角色进行修订'); return; }
+      refEditKey = key;
+      renderRef();
+    }
+  }
+  function cancelRefEdit(){
+    refEditKey = null;
+    renderRef();
+  }
+  // 参考数据：Mab 生产周期（项目号+规格+三段天数，来自 Mab 批次；人工调整后自动同步）
+  function renderRefMab(){
+    var tb = $('refMab').querySelector('tbody');
+    tb.innerHTML = '';
+    var empty = $('refMabEmpty');
+    var R = state.rules || JSON.parse(JSON.stringify(Sched.DEFAULTS));
+    var dSeed = (R.mab&&R.mab.seedDays!=null)?R.mab.seedDays:20;
+    var dReactor = (R.mab&&R.mab.reactorDays!=null)?R.mab.reactorDays:15;
+    var dPurify = (R.mab&&R.mab.purifyDays!=null)?R.mab.purifyDays:7;
+    var map = {};
+    state.batches.forEach(function(b){
+      if(b.type!=='Mab') return;
+      var req = b.reqId ? state.requirements.find(function(r){ return r.id===b.reqId; }) : null;
+      var proj = b.henlius || b.project || '';
+      var spec = (req && req.spec) ? req.spec : '';
+      var key = proj + '|' + spec;
+      if(!map[key]) map[key] = { proj: proj, spec: spec, seed: dSeed, reactor: dReactor, purify: dPurify };
+      if(b.mabSeed!=null) map[key].seed = b.mabSeed;
+      if(b.mabReactor!=null) map[key].reactor = b.mabReactor;
+      if(b.mabPurify!=null) map[key].purify = b.mabPurify;
+    });
+    var keys = Object.keys(map);
+    keys.forEach(function(k){
+      var r = map[k];
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td><b>'+esc(r.proj||'-')+'</b></td><td>'+esc(r.spec||'-')+'</td><td>'+r.seed+'</td><td>'+r.reactor+'</td><td>'+r.purify+'</td><td>'+(r.seed+r.reactor+r.purify)+'</td>';
+      tb.appendChild(tr);
+    });
+    empty.style.display = keys.length ? 'none' : '';
+  }
+  function exportData(){
+    var blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '排产系统数据_'+today()+'.json';
+    a.click();
+    setTimeout(function(){URL.revokeObjectURL(a.href);}, 1000);
+    toast('已导出数据文件');
+  }
+  function importData(file){
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{
+        var d = JSON.parse(reader.result);
+        if(!d.requirements || !d.batches) throw new Error('格式不正确');
+        state = d;
+        if(!state.role) state.role='requester';
+        if(state.user==null) state.user='';
+        if(!state.ganttAxis) state.ganttAxis={ px:2.5, unit:'month' };
+        if(state.ganttLines==null) state.ganttLines=null;
+        if(!state.refData) state.refData=null;
+        $('userName').value = state.user;
+        save(); applyRole(); renderAll();
+        toast('导入成功：需求 '+d.requirements.length+' 条，批次 '+d.batches.length+' 批');
+      }catch(e){ toast('导入失败：'+e.message); }
+    };
+    reader.readAsText(file);
+  }
+  function exportCSV(){
+    var rows = [['状态','类型','项目','批次号','产线','开始','完成','GMP','备注']];
+    state.batches.forEach(function(b){
+      rows.push([b.status, b.type, b.project, b.batchNo||'', b.line, b.start, b.end, b.gmp?'Y':'N', (b.warning||b.note||'').replace(/\n/g,' ')]);
+    });
+    var csv = '\ufeff' + rows.map(function(r){ return r.map(function(x){ return '"'+String(x==null?'':x).replace(/"/g,'""')+'"'; }).join(','); }).join('\r\n');
+    var blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '排产批次_'+today()+'.csv';
+    a.click();
+    setTimeout(function(){URL.revokeObjectURL(a.href);}, 1000);
+  }
+  // 需求填报信息导出（Excel/CSV）
+  function exportReqCSV(){
+    if(!state.requirements.length){ toast('暂无需求可导出'); return; }
+    var rows = [['项目号','类型','批次类型','批次数','交期','优先级','需求人','状态','规格','项目阶段','预算','首次生产','Molecule Type','Target','Novelty','mAb subtype','Host Cell Line','二次稀配','注射瓶规格','Titer','制剂批量','备注','提交时间']];
+    state.requirements.forEach(function(r){
+      var typeTxt = r.type==='CB' ? r.cbKind : (r.type==='DP' ? r.dpKind+' '+r.dosage : r.type);
+      rows.push([
+        r.henliusProject||r.atProject||'', typeTxt, r.batchKind||(r.gmp?'GMP生产':'Non-GMP'), r.batchCount,
+        r.dueDate||'', r.priority||'', r.requester||'', reqStatus(r),
+        r.spec||'', r.stage||'', r.budget||'', r.firstProduction?'是':'否',
+        r.molType||'', r.target||'', r.novelty||'', r.mabSubtype||'', r.hostCell||'',
+        r.secondaryDilution?'是':'否', r.vialSpec||'', (r.titer===''||r.titer==null)?'':r.titer,
+        r.concentration||'', (r.note||'').replace(/\n/g,' '), (r.createdAt||'').slice(0,10)
+      ]);
+    });
+    var csv = '\ufeff' + rows.map(function(r){ return r.map(function(x){ return '"'+String(x==null?'':x).replace(/"/g,'""')+'"'; }).join(','); }).join('\r\n');
+    var blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '需求清单_'+today()+'.csv';
+    a.click();
+    setTimeout(function(){URL.revokeObjectURL(a.href);}, 1000);
+    toast('已导出需求清单（'+state.requirements.length+' 条）');
+  }
+
+  // ---------- 角色切换 ----------
+  function applyRole(){
+    var role = state.role||'requester';
+    document.body.classList.toggle('role-requester', role==='requester');
+    document.body.classList.toggle('role-planner', role==='planner');
+    document.querySelectorAll('#roleSwitch button').forEach(function(b){
+      b.classList.toggle('on', b.dataset.role===role);
+    });
+    renderReq(); renderBatches();
+  }
+
+  // ---------- 总渲染 ----------
+  function renderAll(){
+    renderStats(); renderReq(); renderGantt(); renderBatches(); renderData(); renderRef(); renderRefMab();
+    syncGanttCheckboxes();
+  }
+
+  // ---------- 事件绑定 ----------
+  function bind(){
+    $('f_type').addEventListener('change', onTypeChange);
+    $('f_dpkind').addEventListener('change', onDpKindChange);
+    $('f_dosage').addEventListener('change', updateScaleRow);
+    $('f_first').addEventListener('change', updateMolRow);
+    $('f_dpline').addEventListener('change', rebuildVials);
+    $('btnAddReq').addEventListener('click', submitForm);
+    $('btnClearForm').addEventListener('click', function(){
+      clearFormFields();
+      ['f_henlius','f_requester'].forEach(function(i){$(i).value='';});
+      $('f_priority').value='中';
+      $('btnAddReq').dataset.editId=''; $('btnAddReq').textContent='➕ 添加需求';
+    });
+    $('reqTable').addEventListener('click', function(ev){
+      var btn = ev.target.closest('[data-act]');
+      if(!btn) return;
+      if(btn.dataset.act==='edit') editReq(btn.dataset.id);
+      else if(btn.dataset.act==='delhint'){
+        var rr = state.requirements.find(function(x){return x.id===btn.dataset.id;});
+        if(rr) toast('该需求由「'+(rr.requester||'-')+'」提交。删除方法：右上角「👤 当前用户」改为'+(rr.requester||'该需求人')+'，或切换到「🏭 生产计划」角色后可删除任意需求');
+      }
+      else delReq(btn.dataset.id);
+    });
+    $('btnSchedule').addEventListener('click', doSchedule);
+    $('btnClearPlan').addEventListener('click', clearPlan);
+    $('btnLockPlan').addEventListener('click', lockPlan);
+    $('btnBatchUnlock').addEventListener('click', batchUnlockSelected);
+    $('btnRefreshSched').addEventListener('click', function(){
+      if(!state.requirements.length){ toast('请先添加需求'); return; }
+      doSchedule(); // 刷新自动排产：按当前需求重新排产所有未锁定批次（锁定/终态批次保持不变）
+    });
+    $('btnExportReq').addEventListener('click', exportReqCSV);
+    $('btnExportPlan').addEventListener('click', exportCSV);
+    // 批次表全选（仅锁定批次）：控制所有可选勾选框
+    $('batchSelAll').addEventListener('change', function(){
+      var boxes = document.querySelectorAll('#batchTable tbody input[data-sel]');
+      Array.prototype.forEach.call(boxes, function(c){ c.checked = $('batchSelAll').checked; });
+    });
+    ['filtType','filtLine','filtStatus'].forEach(function(i){ $(i).addEventListener('change', renderBatches); });
+    $('filtProject').addEventListener('input', renderBatches);
+    $('batchTable').addEventListener('click', function(ev){
+      var btn = ev.target.closest('button[data-act]');
+      if(!btn) return;
+      if(btn.dataset.act==='edit') openEdit(btn.dataset.id);
+      else if(btn.dataset.act==='confirm') confirmBatch(btn.dataset.id);
+      else if(btn.dataset.act==='unlock') unlockBatch(btn.dataset.id);
+      else if(btn.dataset.act==='del') delBatchDirect(btn.dataset.id);
+    });
+    $('btnEditCancel').addEventListener('click', closeEdit);
+    $('btnEditSave').addEventListener('click', saveEdit);
+    $('btnDelBatch').addEventListener('click', delBatch);
+    ['e_mabseed','e_mabreactor','e_mabpurify','e_dprep','e_dfill','e_dfreeze','e_dclear','e_dinspect','e_start'].forEach(function(i){
+      $(i).addEventListener('input', updateEditTotals);
+    });
+    // 甘特图：产线多选（勾选「全部」=显示全部；勾选具体产线=仅显示这些产线）
+    document.querySelectorAll('#ganttLineFilter input[data-line]').forEach(function(c){
+      c.addEventListener('change', function(){
+        var all = document.querySelector('#ganttLineFilter input[data-line=""]');
+        var others = Array.prototype.slice.call(document.querySelectorAll('#ganttLineFilter input[data-line]')).filter(function(x){ return x.dataset.line!==''; });
+        if(this.dataset.line===''){
+          if(this.checked){ state.ganttLines = null; others.forEach(function(x){ x.checked = false; }); }
+          else { state.ganttLines = []; }
+        } else {
+          if(all.checked) all.checked = false;
+          state.ganttLines = others.filter(function(x){ return x.checked; }).map(function(x){ return x.dataset.line; });
+          if(!state.ganttLines.length) state.ganttLines = null; // 全部取消 → 视为全部
+        }
+        save(); renderGantt(); syncGanttCheckboxes();
+      });
+    });
+    $('ganttAxisPx').addEventListener('change', function(){
+      state.ganttAxis = state.ganttAxis || { px:2.5, unit:'month' };
+      state.ganttAxis.px = parseFloat(this.value) || 2.5;
+      save(); renderGantt();
+    });
+    $('ganttAxisUnit').addEventListener('change', function(){
+      state.ganttAxis = state.ganttAxis || { px:2.5, unit:'month' };
+      state.ganttAxis.unit = this.value;
+      save(); renderGantt();
+    });
+    // 参考数据：编辑/保存/取消
+    document.querySelectorAll('[data-ref-edit]').forEach(function(btn){
+      btn.addEventListener('click', function(){ toggleRefEdit(btn.dataset.refEdit); });
+    });
+    document.querySelectorAll('[data-ref-cancel]').forEach(function(btn){
+      btn.addEventListener('click', function(){ cancelRefEdit(); });
+    });
+    $('editMask').addEventListener('click', function(ev){ if(ev.target===this) closeEdit(); });
+    $('roleSwitch').addEventListener('click', function(ev){
+      var btn = ev.target.closest('button[data-role]');
+      if(!btn) return;
+      state.role = btn.dataset.role;
+      save(); applyRole();
+      toast(btn.dataset.role==='planner' ? '已切换到「生产计划」角色：可确认可行性、人工调整与排产锁定' : '已切换到「需求方」角色：可填写需求并自动排产');
+    });
+    $('userName').addEventListener('input', function(){
+      state.user = this.value.trim();
+      save(); renderReq(); // 删除按钮按「本人」权限刷新
+    });
+    $('btnSaveRules').addEventListener('click', saveRules);
+    $('btnResetRules').addEventListener('click', resetRules);
+    $('btnExport').addEventListener('click', exportData);
+    $('btnImport').addEventListener('click', function(){ $('importFile').click(); });
+    $('importFile').addEventListener('change', function(){ if(this.files[0]) importData(this.files[0]); this.value=''; });
+    $('btnReimportHist').addEventListener('click', function(){
+      if(confirm('重新导入历史计划将替换当前所有批次与需求，确定继续？')) resetToHistory();
+    });
+    $('btnClearAll').addEventListener('click', function(){
+      if(!confirm('⚠️ 清空全部数据（需求、批次、规则），此操作不可恢复！建议先导出备份。确定继续？')) return;
+      state = { requirements: [], batches: [], rules: null, role: state.role||'requester', user: state.user||'',
+        ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, refData: state.refData||null };
+      save(); renderAll(); renderRules(); toast('已清空全部数据');
+    });
+    // Tab 切换
+    $('nav').addEventListener('click', function(ev){
+      var btn = ev.target.closest('button[data-tab]');
+      if(!btn) return;
+      document.querySelectorAll('nav button').forEach(function(b){b.classList.remove('on');});
+      document.querySelectorAll('section.tab').forEach(function(s){s.classList.remove('on');});
+      btn.classList.add('on');
+      $('tab-'+btn.dataset.tab).classList.add('on');
+    });
+  }
+
+  // ---------- 启动 ----------
+  function init(){
+    if(!load()){
+      resetToHistory();
+    }
+    dedupeBatchIds(); save(); // 修复旧数据重复批次 id 并持久化
+    if(!state.role) state.role='requester';
+    if(state.user==null) state.user='';
+    $('userName').value = state.user;
+    // 甘特图时间轴控件与 state 同步（旧数据兜底）
+    state.ganttAxis = state.ganttAxis || { px:2.5, unit:'month' };
+    $('ganttAxisPx').value = String(state.ganttAxis.px || 2.5);
+    $('ganttAxisUnit').value = state.ganttAxis.unit || 'month';
+    bind();
+    onTypeChange();
+    applyRole();
+    renderAll();
+    renderRules();
+    if(state.batches.some(function(b){return b.status==='预警';})){
+      $('stWarn').style.color='#fca5a5';
+    }
+  }
+  init();
+})();
+</script>
+</body>
+</html>
