@@ -39,6 +39,7 @@
   .card h2{font-size:15px;margin-bottom:12px;color:var(--text);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .card h2 .tag{font-size:11px;color:var(--sub);font-weight:400;background:#f1f5f9;border:1px solid var(--line);padding:1px 8px;border-radius:10px}
   .grid2{display:grid;grid-template-columns:420px 1fr;gap:16px;align-items:start}
+  body.role-planner .grid2{grid-template-columns:1fr}
   @media(max-width:1100px){.grid2{grid-template-columns:1fr}}
   .form-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
   .form-row .f{flex:1;min-width:130px}
@@ -137,7 +138,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 生物制药排产系统 <span class="tag" id="verTag" title="页面版本：v2.5.6（排产计划实时同步）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.5.6</span></h1>
+  <h1>🧬 生物制药排产系统 <span class="tag" id="verTag" title="页面版本：v2.5.7（生产计划角色需求列表通栏显示）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.5.7</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -471,7 +472,7 @@
   </section>
 </main>
 
-<footer>生物制药排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.5.6（云端共享）</footer>
+<footer>生物制药排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.5.7（云端共享）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -526,9 +527,9 @@
 <div id="toast"></div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=256"></script>
-<script src="xlsx.full.min.js?v=256"></script>
-<script src="cloud.js?v=256"></script>
+<script src="cloudbase.full.js?v=257"></script>
+<script src="xlsx.full.min.js?v=257"></script>
+<script src="cloud.js?v=257"></script>
 <script src="scheduling.js"></script>
 <script src="history_data.js"></script>
 <script>
