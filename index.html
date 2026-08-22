@@ -138,7 +138,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 生物制药排产系统 <span class="tag" id="verTag" title="页面版本：v2.5.9（DP批次自动生成包装完成日期＝完成+包装天数，规则页可调）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.5.9</span></h1>
+  <h1>🧬 生物制药排产系统 <span class="tag" id="verTag" title="页面版本：v2.5.10（DP排产周期不含目检包装，完成日期=生产完成；包装完成=完成+包装天数）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.5.10</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -472,7 +472,7 @@
   </section>
 </main>
 
-<footer>生物制药排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.5.9（云端共享）</footer>
+<footer>生物制药排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.5.10（云端共享）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -510,7 +510,7 @@
     </div>
     <div class="form-row" id="editDpRow2" style="display:none">
       <div class="f"><label>清场(天)</label><input type="number" id="e_dclear" min="0"></div>
-      <div class="f"><label>目检包装(天)</label><input type="number" id="e_dinspect" min="0"></div>
+      <div class="f"><label>包装天数(天)</label><input type="number" id="e_dinspect" min="0" title="目检包装不计入排产周期（完成日期=生产完成）；包装完成日期=完成日期+此天数"></div>
       <div class="f" style="justify-content:flex-end;padding-bottom:6px"><span id="e_dptotal" style="font-size:11px;color:var(--sub)"></span></div>
     </div>
     <div class="form-row"><div class="f"><label>备注</label><input id="e_note"></div></div>
@@ -527,9 +527,9 @@
 <div id="toast"></div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=259"></script>
-<script src="xlsx.full.min.js?v=259"></script>
-<script src="cloud.js?v=259"></script>
+<script src="cloudbase.full.js?v=2510"></script>
+<script src="xlsx.full.min.js?v=2510"></script>
+<script src="cloud.js?v=2510"></script>
 <script src="scheduling.js"></script>
 <script src="history_data.js"></script>
 <script>
@@ -543,6 +543,7 @@
   var Sched = window.Scheduling;
   var U = Sched.utils;
   // 包装完成日期：仅正式 DP 批次（ADC DP / CM DP）＝ DP完成日期 + dp.packDays（默认10天，规则页可调）
+  // 排产周期不含目检包装（完成日期=生产完成），包装时间仅体现在此日期；
   // 旧批次未存 packDate 时按当前规则回算显示；放大测试/APS/其他类型返回空
   function packDateOf(b){
     if(b.type!=='ADC DP' && b.type!=='CM DP') return '';
@@ -1207,10 +1208,17 @@
     var isMab = b.type==='Mab';
     var isDP = (b.line==='SJ2 ADC DP'||b.line==='C7CM DP'||b.line==='SJ2CM DP');
     $('editTitle').textContent = (isHist?'查看历史锁定批次：':'人工调整：')+b.type+' '+(b.project||'');
+    var pkd = ((state.rules||Sched.DEFAULTS).dp||{}).packDays!=null?((state.rules||Sched.DEFAULTS).dp||{}).packDays:10;
+    var insp = (b.dpSegs && b.dpSegs.inspect>0) ? b.dpSegs.inspect : pkd; // 本批次包装天数（默认取规则值）
     $('editInfo').innerHTML = (b.reqId?'已关联需求':'自动生成/历史批次')+' ｜ 当前状态：'+b.status+
       (b.mabPhases?' ｜ 周期构成：'+b.mabPhases:'')+
-      (b.dpSegs?' ｜ 周期构成：准备'+b.dpSegs.prep+'+灌装'+b.dpSegs.fill+'+冻干'+b.dpSegs.freeze+'+清场'+b.dpSegs.clear+'+目检包装'+b.dpSegs.inspect+'（合计'+b.dpSegs.total+'天）':'')+
-      (isDP?(packDateOf(b)?' ｜ 包装完成日期 '+packDateOf(b)+'（完成+'+(((state.rules||Sched.DEFAULTS).dp||{}).packDays!=null?((state.rules||Sched.DEFAULTS).dp||{}).packDays:10)+'天，可改规则调整）':''):'')+
+      (b.dpSegs?(function(){
+        var sum4 = (b.dpSegs.prep||0)+(b.dpSegs.fill||0)+(b.dpSegs.freeze||0)+(b.dpSegs.clear||0);
+        // 新口径：周期=四段（不含目检包装）；旧数据 total 含包装时按旧口径展示
+        return ' ｜ 周期构成：准备'+b.dpSegs.prep+'+灌装'+b.dpSegs.fill+'+冻干'+b.dpSegs.freeze+'+清场'+b.dpSegs.clear+
+          (b.dpSegs.total===sum4?'（合计'+sum4+'天，不含目检包装）':'+目检包装'+b.dpSegs.inspect+'（合计'+b.dpSegs.total+'天，旧口径含包装）');
+      })():'')+
+      (isDP?(packDateOf(b)?' ｜ 包装完成日期 '+packDateOf(b)+'（完成+'+insp+'天，可改规则/本弹窗包装天数调整）':''):'')+
       (isHist?' ｜ <b>历史锁定批次，仅可查看</b>':'');
     $('e_batchno').value = b.batchNo||'';
     $('e_start').value = b.start||'';
@@ -1240,9 +1248,9 @@
       $('e_mabpurify').value = b.mabPurify!=null?b.mabPurify:((R.mab&&R.mab.purifyDays!=null)?R.mab.purifyDays:7);
     }
     if(isDP){
-      var sg = b.dpSegs || { prep:3, fill:1, freeze:(b.dosage==='冻干'?(b.line==='C7CM DP'?3:4):0), clear:1, inspect:0 };
+      var sg = b.dpSegs || { prep:3, fill:1, freeze:(b.dosage==='冻干'?(b.line==='C7CM DP'?3:4):0), clear:1, inspect:pkd };
       $('e_dprep').value=sg.prep; $('e_dfill').value=sg.fill; $('e_dfreeze').value=sg.freeze;
-      $('e_dclear').value=sg.clear; $('e_dinspect').value=sg.inspect;
+      $('e_dclear').value=sg.clear; $('e_dinspect').value=sg.inspect!=null?sg.inspect:pkd; // 包装天数（不进周期）
     }
     updateEditTotals();
     ['e_batchno','e_start','e_line','e_note','e_lock'].forEach(function(i){ $(i).disabled = isHist; });
@@ -1264,14 +1272,18 @@
   function updateEditTotals(){
     var ms = nv($('e_mabseed').value)+nv($('e_mabreactor').value)+nv($('e_mabpurify').value);
     $('e_mabtotal').textContent = ms ? '合计 '+ms+' 天（下罐=开始+种子+反应器）' : '';
-    var ds = nv($('e_dprep').value)+nv($('e_dfill').value)+nv($('e_dfreeze').value)+nv($('e_dclear').value)+nv($('e_dinspect').value);
-    // 灌装日期自动计算 = 开始日期 + 准备天数（随开始/准备变化实时更新）
-    var fillTxt = '';
+    // DP 周期=准备+灌装+冻干+清场（不含目检包装）；包装天数单独驱动包装完成日期
+    var p4 = nv($('e_dprep').value)+nv($('e_dfill').value)+nv($('e_dfreeze').value)+nv($('e_dclear').value);
+    var insp = nv($('e_dinspect').value);
+    var fillTxt = '', packTxt = '';
     var sD = $('e_start').value, prep = nv($('e_dprep').value);
-    if(sD && prep>=0 && ds){
-      try{ fillTxt = ' ｜ 灌装日期 '+U.f(U.add(U.p(sD), prep)); }catch(e){}
+    if(sD && prep>=0 && p4){
+      try{
+        fillTxt = ' ｜ 灌装日期 '+U.f(U.add(U.p(sD), prep));
+        if(insp>0) packTxt = ' ｜ 包装完成 '+U.f(U.add(U.add(U.p(sD), p4-1), insp)); // 完成=开始+周期-1，包装完成=完成+包装天数
+      }catch(e){}
     }
-    $('e_dptotal').textContent = ds ? '合计 '+ds+' 天'+fillTxt : '';
+    $('e_dptotal').textContent = p4 ? '周期合计 '+p4+' 天（不含包装）'+fillTxt+packTxt : '';
   }
   function closeEdit(){ $('editMask').classList.remove('on'); editingId=null; }
   function saveEdit(){
@@ -1296,7 +1308,7 @@
     if(!s){ toast('请填写开始日期'); return; }
     var isMab = b.type==='Mab';
     var isDP = (b.line==='SJ2 ADC DP'||b.line==='C7CM DP'||b.line==='SJ2CM DP');
-    // 周期重算：Mab=种子+反应器+纯化；DP=准备+灌装+冻干+清场+目检包装
+    // 周期重算：Mab=种子+反应器+纯化；DP=准备+灌装+冻干+清场（不含目检包装）
     if(isMab){
       var seed = nv($('e_mabseed').value), reactor = nv($('e_mabreactor').value), purify = nv($('e_mabpurify').value);
       if(!(seed>0&&reactor>0&&purify>0)){ toast('Mab 种子/反应器/纯化天数需均大于 0'); return; }
@@ -1306,17 +1318,19 @@
       b.mabPhases = '种子培养'+seed+'天 + 反应器培养'+reactor+'天 + 下游纯化'+purify+'天（合计'+(seed+reactor+purify)+'天）';
       b.harvestDate = U.f(U.add(U.p(s), seed+reactor)); // 下罐=开始+种子+反应器
     } else if(isDP){
-      var dp = [nv($('e_dprep').value), nv($('e_dfill').value), nv($('e_dfreeze').value), nv($('e_dclear').value), nv($('e_dinspect').value)];
-      var dsum = dp[0]+dp[1]+dp[2]+dp[3]+dp[4];
+      // DP 周期=准备+灌装+冻干+清场（不含目检包装）；包装天数单独驱动包装完成日期
+      var dp = [nv($('e_dprep').value), nv($('e_dfill').value), nv($('e_dfreeze').value), nv($('e_dclear').value)];
+      var insp = nv($('e_dinspect').value);
+      var dsum = dp[0]+dp[1]+dp[2]+dp[3];
       if(dsum<=0){ toast('制剂周期各段天数合计需大于 0'); return; }
       e = U.f(U.add(U.p(s), dsum-1));
       $('e_end').value = e;
-      b.dpSegs = { prep:dp[0], fill:dp[1], freeze:dp[2], clear:dp[3], inspect:dp[4], total:dsum };
+      b.dpSegs = { prep:dp[0], fill:dp[1], freeze:dp[2], clear:dp[3], inspect:insp, total:dsum };
       b.fillDate = U.f(U.add(U.p(s), dp[0])); // 灌装日期自动根据开始时间计算并更新
-      // 包装完成日期随完成日期+规则天数自动更新（仅正式 DP 批次）
+      // 包装完成日期 = 完成日期 + 本批次包装天数（仅正式 DP 批次；包装天数不进排产周期）
       if(b.type==='ADC DP'||b.type==='CM DP'){
-        var pd = (state.rules||Sched.DEFAULTS); var pkd = (pd.dp&&pd.dp.packDays!=null)?pd.dp.packDays:10;
-        b.packDate = U.f(U.add(U.p(e), pkd));
+        if(insp>0) b.packDate = U.f(U.add(U.p(e), insp));
+        else b.packDate = '';
       }
     }
     if(!e){ toast('请填写完成日期'); return; }
@@ -1401,7 +1415,7 @@
     html += ruleField('C7CM DP 清场后间隔(天)','dp.clearGapC7',R.dp.clearGapC7);
     html += ruleField('SJ2 DP产线清场后间隔(天)','dp.clearGapSJ2',R.dp.clearGapSJ2);
     html += ruleField('二次稀配增加周期(天)','dp.diluteExtraDays',R.dp.diluteExtraDays);
-    html += ruleField('DP 包装周期(天)（包装完成=完成日期+此天数）','dp.packDays',R.dp.packDays!=null?R.dp.packDays:10);
+    html += ruleField('DP 包装天数(天)（包装完成=完成日期+此天数，不计入排产周期）','dp.packDays',R.dp.packDays!=null?R.dp.packDays:10);
     html += ruleField('ADC Non-GMP 与ADC DS间隔(天)','adcDp.nonGmpGapDays',R.adcDp.nonGmpGapDays);
     html += ruleField('ADC 其余与ADC DS间隔(天)','adcDp.otherGapDays',R.adcDp.otherGapDays);
     html += ruleField('冻干与放大测试间隔(天)','freezeDry.testGapDays',R.freezeDry.testGapDays);
