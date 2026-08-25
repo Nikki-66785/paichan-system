@@ -85,11 +85,17 @@
   body.role-requester .plan-only{display:none!important}
   body.role-planner .req-only{display:none!important}
   /* 甘特图 */
-  .gantt-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:#fff}
+  .gantt-wrap{overflow-x:auto;overflow-y:hidden;border:1px solid var(--line);border-radius:8px;background:#fff;position:relative}
   .gantt{position:relative;min-width:100%}
   .g-line{position:relative;height:36px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center}
-  .g-label{position:sticky;left:0;z-index:5;width:150px;flex:none;background:#f8fafc;border-right:1px solid var(--line);padding:0 10px;font-size:12px;font-weight:700;color:#334155;height:36px;display:flex;align-items:center}
+  .g-line:nth-child(even){background:#fafbfc}
+  .g-label{position:sticky;left:0;z-index:5;width:170px;flex:none;background:#f8fafc;border-right:1px solid var(--line);padding:0 10px;font-size:12px;font-weight:700;color:#334155;height:36px;display:flex;align-items:center;box-shadow:3px 0 6px rgba(0,0,0,.06)}
   .g-body{position:relative;flex:1;height:36px}
+  .g-month{position:absolute;top:0;bottom:0;border-left:1px solid #eef2f7;font-size:10px;color:#94a3b8;padding-top:2px;padding-left:3px;overflow:hidden}
+  .g-week{position:absolute;top:0;bottom:0;border-left:1px solid #f1f5f9;font-size:10px;color:#cbd5e1;padding-top:2px;padding-left:2px;overflow:hidden}
+  .g-weekend{position:absolute;top:0;bottom:0;background:rgba(148,163,184,.08);pointer-events:none;z-index:0}
+  .g-today{position:absolute;top:0;bottom:0;width:2px;background:#dc2626;z-index:1;pointer-events:none}
+  .g-today::after{content:'今日';position:absolute;top:0;left:4px;font-size:9px;color:#dc2626;font-weight:600;white-space:nowrap}
   .g-month{position:absolute;top:0;bottom:0;border-left:1px solid #eef2f7;font-size:10px;color:#94a3b8;padding-top:2px;padding-left:3px;overflow:hidden}
   .g-week{position:absolute;top:0;bottom:0;border-left:1px solid #f1f5f9;font-size:10px;color:#cbd5e1;padding-top:2px;padding-left:2px;overflow:hidden}
   .chk-group{display:inline-flex;flex-wrap:wrap;gap:2px 12px;align-items:center;font-size:12px}
@@ -138,7 +144,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 生物制药排产系统 <span class="tag" id="verTag" title="页面版本：v2.5.10（DP排产周期不含目检包装，完成日期=生产完成；包装完成=完成+包装天数）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.5.10</span></h1>
+  <h1>🧬 生物制药排产系统 <span class="tag" id="verTag" title="页面版本：v2.6.0（列序调整·甘特图优化·排产分析模块·设备维护保养）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.6.0</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -161,6 +167,7 @@
 <nav id="nav">
   <button class="on" data-tab="req">📋 需求录入</button>
   <button data-tab="plan">📅 排产计划</button>
+  <button data-tab="analysis">📈 排产分析</button>
   <button data-tab="ref">📊 参考数据</button>
   <button data-tab="rules">⚙️ 规则参数</button>
   <button data-tab="data">💾 数据管理</button>
@@ -190,6 +197,7 @@
                 <option value="Mab">Mab DS 原液</option>
                 <option value="ADC DS">ADC DS 原液</option>
                 <option value="DP">DP 制剂</option>
+                <option value="EQP" class="plan-only">🔧 设备维护保养</option>
               </select>
             </div>
             <div class="f" id="f_cbkind_wrap"><label>CB 种类 *</label>
@@ -276,6 +284,32 @@
             <div class="f"><label>同项目 MCB 完成日期（可选，不填则自动匹配已排 MCB）</label><input id="f_mcbdate" type="date"></div>
           </div>
           <div class="form-row"><div class="f"><label>备注</label><input id="f_note" placeholder="如：临床III期样品、需优先等"></div></div>
+          <!-- 设备维护保养专属字段（仅生产计划角色、type=EQP 时可见） -->
+          <div class="form-row plan-only" id="eqpRow" style="display:none">
+            <div class="f"><label>维护产线 *</label>
+              <select id="f_eqpline">
+                <option value="SJ2 CB">SJ2 CB（细胞库）</option>
+                <option value="SJ1DS">SJ1DS（Mab原液）</option>
+                <option value="SJ2 ADC DS">SJ2 ADC DS</option>
+                <option value="SJ2 ADC DP">SJ2 ADC DP</option>
+                <option value="C7CM DP">C7CM DP</option>
+                <option value="SJ2CM DP">SJ2CM DP</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+            <div class="f"><label>维护类型 *</label>
+              <select id="f_eqpkind">
+                <option value="计划保养">计划保养</option>
+                <option value="临时维修">临时维修</option>
+                <option value="年度大修">年度大修</option>
+                <option value="校验验证">校验验证</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row plan-only" id="eqpDateRow" style="display:none">
+            <div class="f"><label>开始日期 *</label><input id="f_eqpstart" type="date"></div>
+            <div class="f"><label>结束日期 *</label><input id="f_eqpend" type="date"></div>
+          </div>
           <div class="form-row">
             <button type="button" class="btn primary" id="btnAddReq">➕ 添加需求</button>
             <button type="button" class="btn" id="btnClearForm">清空表单</button>
@@ -349,7 +383,7 @@
           <option value="">全部类型</option>
           <option value="MCB">MCB</option><option value="WCB">WCB</option><option value="Mab">Mab</option>
           <option value="ADC DS">ADC DS</option><option value="ADC DP">ADC DP</option><option value="CM DP">CM DP</option>
-          <option value="冻干放大测试">冻干放大测试</option><option value="APS">APS</option>
+          <option value="冻干放大测试">冻干放大测试</option><option value="APS">APS</option><option value="设备维护">设备维护</option>
         </select>
         <select id="filtLine">
           <option value="">全部产线</option>
@@ -368,11 +402,52 @@
       <div class="scroll-tbl" style="max-height:520px">
         <table id="batchTable">
           <thead><tr>
-            <th class="plan-only" style="width:28px"><input type="checkbox" id="batchSelAll" title="全选/全不选（仅锁定批次）"></th><th>状态</th><th>类型</th><th>项目</th><th>需求人</th><th>批次号</th><th>产线</th><th>开始</th><th>完成</th><th>包装完成</th><th>下罐/灌装</th><th>GMP</th><th>备注</th><th class="plan-only">操作</th>
+            <th class="plan-only" style="width:28px"><input type="checkbox" id="batchSelAll" title="全选/全不选（仅锁定批次）"></th><th>状态</th><th>类型</th><th>项目</th><th>需求人</th><th>批次号</th><th>产线</th><th>开始</th><th>完成</th><th>下罐/灌装</th><th>包装完成</th><th>GMP</th><th>备注</th><th class="plan-only">操作</th>
           </tr></thead>
           <tbody></tbody>
         </table>
         <div class="empty" id="batchEmpty">暂无批次，请先在「需求录入」添加需求并自动排产</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 排产分析 ============ -->
+  <section class="tab" id="tab-analysis">
+    <div class="card" style="padding:10px 16px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <h2 style="margin:0">📈 排产分析</h2>
+        <span class="hint">每次「自动排产」自动记录快照，可对比日期漂移与产线利用率</span>
+        <span class="spacer" style="flex:1"></span>
+        <button class="btn sm" id="btnClearSnap">🗑️ 清空快照</button>
+      </div>
+    </div>
+    <!-- 汇总卡片 -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px" id="analysisCards"></div>
+    <!-- 日期漂移对比表 -->
+    <div class="card">
+      <h2>批次日期漂移分析 <span class="tag" id="driftInfo">对比最近两次排产</span></h2>
+      <div class="hint" id="driftHint">每次排产后自动记录快照，以下为最近两次排产中同一需求批次日期的变动情况。</div>
+      <div class="scroll-tbl" style="max-height:320px">
+        <table class="tbl" id="driftTable">
+          <thead><tr><th>类型</th><th>项目</th><th>产线</th><th>上次排产</th><th>本次排产</th><th>漂移(天)</th><th>状态</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="empty" id="driftEmpty" style="display:none">暂无漂移数据（需至少两次排产）</div>
+    </div>
+    <!-- 产线利用率 -->
+    <div class="card">
+      <h2>产线利用率 <span class="tag">当前排产批次占用情况</span></h2>
+      <div id="utilChart"></div>
+    </div>
+    <!-- 排产历史 -->
+    <div class="card">
+      <h2>排产历史记录</h2>
+      <div class="scroll-tbl" style="max-height:260px">
+        <table class="tbl" id="snapTable">
+          <thead><tr><th>序号</th><th>时间</th><th>需求数</th><th>批次数</th><th>预警数</th><th>准时率</th><th>操作</th></tr></thead>
+          <tbody></tbody>
+        </table>
       </div>
     </div>
   </section>
@@ -472,7 +547,7 @@
   </section>
 </main>
 
-<footer>生物制药排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.5.10（云端共享）</footer>
+<footer>生物制药排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.6.0（云端共享）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -527,10 +602,10 @@
 <div id="toast"></div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=2510"></script>
-<script src="xlsx.full.min.js?v=2510"></script>
-<script src="cloud.js?v=2510"></script>
-<script src="scheduling.js"></script>
+<script src="cloudbase.full.js?v=260"></script>
+<script src="xlsx.full.min.js?v=260"></script>
+<script src="cloud.js?v=260"></script>
+<script src="scheduling.js?v=260"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -555,11 +630,11 @@
   }
   var TYPE_COLOR = {
     'MCB':'#3b82f6','WCB':'#60a5fa','Mab':'#8b5cf6','ADC DS':'#06b6d4','ADC DP':'#f59e0b',
-    'CM DP':'#22c55e','冻干放大测试':'#94a3b8','APS':'#ec4899','参比品':'#a16207','贴签包装':'#a16207','包装':'#a16207','设备验证':'#a16207'
+    'CM DP':'#22c55e','冻干放大测试':'#94a3b8','APS':'#ec4899','参比品':'#a16207','贴签包装':'#a16207','包装':'#a16207','设备验证':'#a16207','设备维护':'#a16207'
   };
   var TYPE_BADGE = {
     'MCB':'b-blue','WCB':'b-blue','Mab':'b-purple','ADC DS':'b-cyan','ADC DP':'b-orange',
-    'CM DP':'b-green','冻干放大测试':'b-gray','APS':'b-pink'
+    'CM DP':'b-green','冻干放大测试':'b-gray','APS':'b-pink','设备维护':'b-brown'
   };
   var LINES_ORDER = ['SJ2 CB','SJ1DS','SJ2 ADC DS','SJ2 ADC DP','C7CM DP','SJ2CM DP','其他'];
   var VIALS = { 'SJ2 ADC DP': ['6R','10R','20R'], 'C7CM DP': ['2R','6R','10R','20R'], 'SJ2CM DP': ['10R','20R'] };
@@ -604,7 +679,7 @@
   };
 
   var state = { requirements: [], batches: [], rules: null, role: 'requester', user: '',
-    ganttAxis: { px: 2.5, unit: 'month' }, ganttLines: null, refData: null };
+    ganttAxis: { px: 2.5, unit: 'month' }, ganttLines: null, refData: null, snapshots: [] };
   var editingId = null;
   var refEditKey = null; // 正在编辑的参考数据表 key（lines/caps/staff/fields）
 
@@ -629,15 +704,16 @@
         if(!state.ganttAxis) state.ganttAxis={ px:2.5, unit:'month' };
         if(state.ganttLines==null) state.ganttLines=null;
         if(!state.refData) state.refData=null;
+        if(!state.snapshots) state.snapshots=[];
         return true; }
     }catch(e){ console.warn(e); }
     return false;
   }
   function resetToHistory(){
     var hist = window.HISTORY_BATCHES || {CB:[],DS:[],DP:[]};
-    var keep = { role: state.role||'requester', user: state.user||'', ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, refData: state.refData||null };
+    var keep = { role: state.role||'requester', user: state.user||'', ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, refData: state.refData||null, snapshots: state.snapshots||[] };
     state = { requirements: [], batches: importHistory(hist), rules: null, role: keep.role, user: keep.user,
-      ganttAxis: keep.ganttAxis, ganttLines: keep.ganttLines, refData: keep.refData };
+      ganttAxis: keep.ganttAxis, ganttLines: keep.ganttLines, refData: keep.refData, snapshots: keep.snapshots };
     save(); renderAll(); renderRules();
   }
   // 历史遗留数据修复：批次 id 唯一化（旧版本跨次排产复用 NB1/NB2...，会导致人工调整命中错误批次）
@@ -710,19 +786,33 @@
   }
   function onTypeChange(){
     var t = $('f_type').value;
-    var isCB = t==='CB', isDP = t==='DP', isDS = (t==='Mab'||t==='ADC DS');
+    var isCB = t==='CB', isDP = t==='DP', isDS = (t==='Mab'||t==='ADC DS'), isEQP = t==='EQP';
+    var isProduct = !isEQP; // 产品需求 vs 设备维护
     $('f_cbkind_wrap').style.display = isCB ? '' : 'none';
     $('dpRow').style.display = isDP ? '' : 'none';
-    $('specRow').style.display = isCB ? 'none' : '';
+    $('specRow').style.display = (isCB || isEQP) ? 'none' : '';
     $('titerWrap').style.display = isDS ? '' : 'none';
     $('concWrap').style.display = isDP ? '' : 'none';
     $('lpWrap').style.display = (t==='ADC DS') ? '' : 'none';
     $('mabCycleRow').style.display = (t==='Mab') ? '' : 'none';
-    $('f_batchtype_wrap').style.display = isCB ? 'none' : '';
-    $('f_budget_wrap').style.display = isCB ? 'none' : '';
+    $('f_batchtype_wrap').style.display = (isCB || isEQP) ? 'none' : '';
+    $('f_budget_wrap').style.display = (isCB || isEQP) ? 'none' : '';
     $('vialRow').style.display = isDP ? '' : 'none';
-    $('firstRow').style.display = isCB ? 'none' : '';
+    $('firstRow').style.display = (isCB || isEQP) ? 'none' : '';
     $('mcbDateRow').style.display = (isDS||isDP) ? '' : 'none';
+    $('eqpRow').style.display = isEQP ? '' : 'none';
+    $('eqpDateRow').style.display = isEQP ? '' : 'none';
+    // 设备维护时隐藏产品专属字段（Henlius项目号、批次数、交期、优先级、需求人保留但标签不同）
+    var henliusF = $('f_henlius').closest('.f');
+    if(henliusF) henliusF.style.display = isProduct ? '' : 'none';
+    var batchF = $('f_batchcount').closest('.f');
+    if(batchF) batchF.style.display = isProduct ? '' : 'none';
+    var dueF = $('f_due').closest('.f');
+    if(dueF){ dueF.querySelector('label').textContent = isEQP ? '期望完成日期' : '期望完成日期（交期）*'; }
+    var transferRow = $('f_transfer').closest('.form-row');
+    if(transferRow) transferRow.style.display = isProduct ? '' : 'none';
+    var mcbDateRowEl = $('f_mcbdate').closest('.form-row');
+    if(mcbDateRowEl && !isProduct) mcbDateRowEl.style.display = 'none';
     if(isDP){
       $('f_dpkind').value='CM';
       onDpKindChange();
@@ -742,6 +832,30 @@
   function readForm(){
     var t = $('f_type').value;
     var isDS = (t==='Mab'||t==='ADC DS');
+    // 设备维护保养：精简需求对象
+    if(t==='EQP'){
+      return {
+        id: uid(),
+        type: 'EQP',
+        maintLine: $('f_eqpline').value,
+        maintKind: $('f_eqpkind').value,
+        maintStart: $('f_eqpstart').value,
+        maintEnd: $('f_eqpend').value,
+        atProject: '设备维护',
+        henliusProject: '',
+        dueDate: $('f_eqpend').value, // 交期=结束日期（仅用于排序/显示）
+        batchCount: 1,
+        gmp: false, batchKind: '', spec: '', concentration: '', titer: '',
+        stage: '', budget: '', firstProduction: false,
+        molType: '', target: '', novelty: '', mabSubtype: '', hostCell: '',
+        hypertonic: false, secondaryDilution: false, vialSpec: '', scaleTest: true,
+        lpReleaseDate: '', conditionalRelease: false, processTransferDate: '', mcbDate: '',
+        priority: '中',
+        requester: $('f_requester').value.trim() || state.user || '',
+        note: $('f_note').value.trim() || $('f_eqpkind').value,
+        createdAt: new Date().toISOString()
+      };
+    }
     var r = {
       id: uid(),
       type: t,
@@ -783,6 +897,15 @@
   }
   function validateReq(r){
     var errs=[];
+    // 设备维护保养：仅需产线、开始/结束日期、维护类型
+    if(r.type==='EQP'){
+      if(!r.maintLine) errs.push('维护产线');
+      if(!r.maintStart) errs.push('开始日期');
+      if(!r.maintEnd) errs.push('结束日期');
+      if(r.maintStart && r.maintEnd && r.maintEnd < r.maintStart) errs.push('结束日期不能早于开始日期');
+      if(!r.maintKind) errs.push('维护类型');
+      return errs;
+    }
     if(!r.henliusProject) errs.push('Henlius项目号');
     if(!r.dueDate) errs.push('交期');
     if(!r.stage) errs.push(FNAMES.stage);
@@ -811,10 +934,11 @@
   }
   function clearFormFields(){
     ['f_due','f_transfer','f_mcbdate','f_note','f_spec','f_conc','f_titer','f_lp','f_budget',
-     'f_moltype','f_target','f_novelty','f_subtype','f_hostcell'].forEach(function(i){ $(i).value=''; });
+     'f_moltype','f_target','f_novelty','f_subtype','f_hostcell','f_eqpstart','f_eqpend'].forEach(function(i){ $(i).value=''; });
     $('f_batchcount').value='1'; $('f_batchtype').value=''; $('f_stage').value=''; $('f_vial').value='';
     $('f_cond').checked=false; $('f_first').checked=false; $('f_hypertonic').checked=false;
     $('f_dilute').checked=false; $('f_scale').checked=true;
+    $('f_eqpline').value='SJ2 CB'; $('f_eqpkind').value='计划保养';
     updateMolRow();
   }
   function addReq(){
@@ -845,6 +969,12 @@
     var r = state.requirements.find(function(x){return x.id===id;});
     if(!r) return;
     $('f_type').value=r.type; onTypeChange();
+    if(r.type==='EQP'){
+      $('f_eqpline').value=r.maintLine||'SJ2 CB';
+      $('f_eqpkind').value=r.maintKind||'计划保养';
+      $('f_eqpstart').value=r.maintStart||'';
+      $('f_eqpend').value=r.maintEnd||'';
+    }
     if(r.type==='CB') $('f_cbkind').value=r.cbKind;
     if(r.type==='DP'){
       $('f_dpkind').value=r.dpKind||'CM'; onDpKindChange();
@@ -938,6 +1068,20 @@
     state.batches.forEach(function(b){ var m = /^NB(\d+)$/.exec(b.id||''); if(m) maxN = Math.max(maxN, parseInt(m[1],10)); });
     var res = sched.schedule(reqs2, locked, maxN + 1);
     state.batches = locked.concat(res.batches);
+    // 保存排产快照（用于排产分析：日期漂移/利用率/历史记录）
+    if(!state.snapshots) state.snapshots = [];
+    state.snapshots.push({
+      id: 'snap'+Date.now(),
+      time: new Date().toISOString(),
+      reqCount: state.requirements.length,
+      warningCount: res.warnings.length,
+      batches: state.batches.map(function(b){
+        return { id:b.id, reqId:b.reqId, type:b.type, line:b.line||'其他', start:b.start, end:b.end,
+          project:b.project||'', status:b.status, dueDate: (state.requirements.find(function(r){return r.id===b.reqId;})||{}).dueDate||'' };
+      })
+    });
+    // 保留最多 20 条快照
+    if(state.snapshots.length > 20) state.snapshots = state.snapshots.slice(-20);
     save(); renderAll();
     // 告警横幅
     var warnBanner = $('warnBanner');
@@ -1019,21 +1163,24 @@
     $('reqEmpty').style.display = state.requirements.length ? 'none' : '';
     state.requirements.slice().reverse().forEach(function(r){
       var tr=document.createElement('tr');
-      var typeTxt = r.type==='CB' ? r.cbKind : (r.type==='DP' ? r.dpKind+' '+r.dosage : r.type);
-      var kindTxt = r.batchKind || (r.gmp?'GMP生产':'Non-GMP');
+      var isEQP = r.type==='EQP';
+      var typeTxt = isEQP ? '设备维护' : (r.type==='CB' ? r.cbKind : (r.type==='DP' ? r.dpKind+' '+r.dosage : r.type));
+      var kindTxt = isEQP ? (r.maintKind||'-') : (r.batchKind || (r.gmp?'GMP生产':'Non-GMP'));
       var st = reqStatus(r);
       var stBadge = st==='已锁定' ? 'b-green' : (st==='待确认' ? 'b-orange' : 'b-gray');
-      var tip = '规格:'+(r.spec||'-')+' ｜ 阶段:'+(r.stage||'-')+' ｜ 批次类型:'+(kindTxt||'-')+
-        (r.type==='Mab'?' ｜ 周期:种子20+反应器15+纯化7天(默认,人工干预可调)':'')+
-        (r.titer!==''&&r.titer!=null?' ｜ Titer:'+r.titer:'')+(r.concentration?' ｜ 浓度:'+r.concentration:'')+
-        (r.vialSpec?' ｜ 瓶规格:'+r.vialSpec:'')+(r.budget?' ｜ 预算:'+r.budget:'')+
-        (r.firstProduction?' ｜ 首次生产'+
-          (r.molType?' ｜ Molecule Type:'+r.molType:'')+
-          (r.target?' ｜ Target:'+r.target:'')+
-          (r.novelty?' ｜ Novelty:'+r.novelty:'')+
-          (r.mabSubtype?' ｜ mAb subtype:'+r.mabSubtype:'')+
-          (r.hostCell?' ｜ Host Cell Line:'+r.hostCell:''):'')+(r.note?' ｜ 备注:'+r.note:'');
-      tr.innerHTML = '<td title="'+esc(tip)+'"><b>'+esc(r.henliusProject||r.atProject||'-')+'</b></td>'+
+      var tip = isEQP
+        ? '维护产线:'+(r.maintLine||'-')+' ｜ 维护类型:'+(r.maintKind||'-')+' ｜ '+r.maintStart+'~'+r.maintEnd+(r.note?' ｜ 备注:'+r.note:'')
+        : '规格:'+(r.spec||'-')+' ｜ 阶段:'+(r.stage||'-')+' ｜ 批次类型:'+(kindTxt||'-')+
+          (r.type==='Mab'?' ｜ 周期:种子20+反应器15+纯化7天(默认,人工干预可调)':'')+
+          (r.titer!==''&&r.titer!=null?' ｜ Titer:'+r.titer:'')+(r.concentration?' ｜ 浓度:'+r.concentration:'')+
+          (r.vialSpec?' ｜ 瓶规格:'+r.vialSpec:'')+(r.budget?' ｜ 预算:'+r.budget:'')+
+          (r.firstProduction?' ｜ 首次生产'+
+            (r.molType?' ｜ Molecule Type:'+r.molType:'')+
+            (r.target?' ｜ Target:'+r.target:'')+
+            (r.novelty?' ｜ Novelty:'+r.novelty:'')+
+            (r.mabSubtype?' ｜ mAb subtype:'+r.mabSubtype:'')+
+            (r.hostCell?' ｜ Host Cell Line:'+r.hostCell:''):'')+(r.note?' ｜ 备注:'+r.note:'');
+      tr.innerHTML = '<td title="'+esc(tip)+'"><b>'+esc(isEQP ? (r.maintKind||'设备维护') : (r.henliusProject||r.atProject||'-'))+'</b></td>'+
         '<td>'+esc(typeTxt)+'</td>'+
         '<td>'+r.batchCount+' 批</td>'+
         '<td>'+esc(r.dueDate||'-')+'</td>'+
@@ -1102,19 +1249,44 @@
         m = new Date(m.getFullYear(), m.getMonth()+1, 1);
       }
     }
+    // 今日标线
+    var todayD = new Date();
+    if(todayD >= minD && todayD <= maxD){
+      html += '<div class="g-today" style="left:'+U.diff(todayD, minD)*PX+'px"></div>';
+    }
     html += '</div></div>';
+    // 周末底纹（仅月视图密度>=3px/天时渲染，避免过密）
+    var weekendHtml = '';
+    if(PX >= 3){
+      var wd = new Date(minD);
+      while(wd <= maxD){
+        if(wd.getDay()===0 || wd.getDay()===6){
+          weekendHtml += '<div class="g-weekend" style="left:'+U.diff(wd, minD)*PX+'px;width:'+PX+'px"></div>';
+        }
+        wd = U.add(wd, 1);
+      }
+    }
     // 每行（仅渲染选中产线；"其他"产线即使无批次也保留空行）
     sel.forEach(function(line){
       var lbs = bs.filter(function(b){ return (b.line||'其他')===line; });
       if(!lbs.length && line!=='其他') return;
-      html += '<div class="g-line"><div class="g-label">'+line+'<span style="font-weight:400;color:var(--sub);margin-left:4px">'+lbs.length+'</span></div><div class="g-body" style="width:'+ganttW+'px">';
+      // 产线利用率：占用天数 / 总跨度天数
+      var occDays = 0;
+      lbs.forEach(function(b){ if(!isFinal(b)){ occDays += U.diff(U.p(b.end), U.p(b.start))+1; } });
+      var utilPct = total > 0 ? Math.round(occDays/total*100) : 0;
+      var utilColor = utilPct >= 80 ? '#dc2626' : (utilPct >= 50 ? '#f59e0b' : '#22c55e');
+      html += '<div class="g-line"><div class="g-label">'+line+'<span style="font-weight:400;color:var(--sub);margin-left:4px">'+lbs.length+'批</span>'+
+        '<span style="margin-left:auto;font-size:10px;color:'+utilColor+'">'+utilPct+'%</span></div><div class="g-body" style="width:'+ganttW+'px">'+weekendHtml;
       lbs.forEach(function(b){
         var s=U.p(b.start), e=U.p(b.end);
         if(!s||!e) return;
         var l = U.diff(s, minD)*PX, w = (U.diff(e,s)+1)*PX;
         var cls = 'g-bar'+(b.locked?' locked':'')+(b.status==='预警'?' warn':'')+(isFinal(b)?' dead':'');
         var color = TYPE_COLOR[b.type] || '#a8a29e';
-        var label = (b.project||'') + (b.type==='APS'?' APS':'');
+        // bar 文字：项目号 + 类型缩写
+        var typeAbbr = {'MCB':'MCB','WCB':'WCB','Mab':'Mab','ADC DS':'ADS','ADC DP':'ADP','CM DP':'CDP','冻干放大测试':'TEST','APS':'APS','设备维护':'维护','参比品':'参比','贴签包装':'贴签','包装':'包装','设备验证':'验证'}[b.type] || b.type;
+        var label = (b.project||'') + (typeAbbr ? ' '+typeAbbr : '');
+        if(b.type==='APS') label = 'APS';
         html += '<div class="'+cls+'" data-id="'+b.id+'" style="left:'+l+'px;width:'+Math.max(w-1,10)+'px;background:'+color+'" title="'+esc(b.type+' '+b.project+' '+(b.requester?('需求人:'+b.requester+' '):'')+b.start+'~'+b.end+(packDateOf(b)?(' [包装完成:'+packDateOf(b)+']'):'')+(b.warning?' [预警]':'')+(isFinal(b)?' ['+b.status+']':''))+'">'+esc(label)+'</div>';
       });
       html += '</div></div>';
@@ -1132,14 +1304,144 @@
   }
   function renderLegend(){
     var L = document.createElement('div');
-    var items = [['MCB','#3b82f6'],['WCB','#60a5fa'],['Mab','#8b5cf6'],['ADC DS','#06b6d4'],['ADC DP','#f59e0b'],['CM DP','#22c55e'],['冻干放大测试','#94a3b8'],['APS','#ec4899']];
+    var items = [['MCB','#3b82f6'],['WCB','#60a5fa'],['Mab','#8b5cf6'],['ADC DS','#06b6d4'],['ADC DP','#f59e0b'],['CM DP','#22c55e'],['冻干放大测试','#94a3b8'],['APS','#ec4899'],['设备维护','#a16207']];
     var html = items.map(function(x){return '<span><i style="background:'+x[1]+'"></i>'+x[0]+'</span>';}).join('');
     html += '<span><i style="background:#fff;border:2px solid #475569"></i>锁定批次</span>';
     html += '<span><i style="background:#fff;border:2px solid #dc2626"></i>交期预警</span>';
     html += '<span><i style="background:#94a3b8;border:1px dashed #64748b;opacity:.5"></i>终态(中止/失败/取消)</span>';
+    html += '<span><i style="background:#dc2626;width:2px;height:14px"></i>今日</span>';
+    html += '<span><i style="background:rgba(148,163,184,.18)"></i>周末</span>';
     L.innerHTML = html;
     $('ganttLegend').innerHTML = '';
     $('ganttLegend').appendChild(L);
+  }
+
+  // ---------- 渲染：排产分析 ----------
+  function renderAnalysis(){
+    var snaps = state.snapshots || [];
+    var cardsEl = $('analysisCards'); if(!cardsEl) return;
+    var cur = snaps[snaps.length-1];
+    // 汇总卡片
+    var totalBatches = state.batches.length;
+    var lockCount = state.batches.filter(function(b){return b.locked;}).length;
+    var warnCount = state.batches.filter(function(b){return b.status==='预警';}).length;
+    // 准时率：完成日期 ≤ 对应需求交期
+    var onTime = 0, checked = 0;
+    state.batches.forEach(function(b){
+      if(!b.reqId || !b.start) return;
+      var req = state.requirements.find(function(r){return r.id===b.reqId;});
+      if(req && req.dueDate){
+        checked++;
+        if(U.p(b.end) <= U.p(req.dueDate)) onTime++;
+      }
+    });
+    var onTimePct = checked > 0 ? Math.round(onTime/checked*100) : 0;
+    cardsEl.innerHTML =
+      card('排产次数', snaps.length, '#3b82f6')+
+      card('当前批次数', totalBatches, '#8b5cf6')+
+      card('锁定批次', lockCount, '#22c55e')+
+      card('交期预警', warnCount, '#f59e0b')+
+      card('准时率', onTimePct+'%', onTimePct>=80?'#22c55e':'#dc2626')+
+      card('快照记录', snaps.length+' 条', '#06b6d4');
+    // 日期漂移：对比最近两次快照
+    var driftTb = $('driftTable').querySelector('tbody');
+    driftTb.innerHTML = '';
+    var driftEmpty = $('driftEmpty');
+    if(snaps.length < 2){
+      driftEmpty.style.display = '';
+      $('driftInfo').textContent = '需至少两次排产';
+    } else {
+      driftEmpty.style.display = 'none';
+      var prev = snaps[snaps.length-2], last = snaps[snaps.length-1];
+      $('driftInfo').textContent = U.f(U.p(prev.time))+' → '+U.f(U.p(last.time));
+      // 按 reqId+type+line 匹配，找日期漂移
+      var driftRows = [];
+      last.batches.forEach(function(nb){
+        if(!nb.reqId) return;
+        var match = prev.batches.find(function(pb){ return pb.reqId===nb.reqId && pb.type===nb.type && pb.line===nb.line; });
+        if(match){
+          var dStart = U.diff(U.p(nb.start), U.p(match.start));
+          var dEnd = U.diff(U.p(nb.end), U.p(match.end));
+          if(dStart !== 0 || dEnd !== 0){
+            driftRows.push({ nb:nb, match:match, dStart:dStart, dEnd:dEnd });
+          }
+        }
+      });
+      driftRows.sort(function(a,b){ return Math.abs(b.dStart)+Math.abs(b.dEnd) - Math.abs(a.dStart)-Math.abs(a.dEnd); });
+      driftRows.forEach(function(d){
+        var tr = document.createElement('tr');
+        var driftColor = (Math.abs(d.dStart)>=7 || Math.abs(d.dEnd)>=7) ? '#dc2626' : (Math.abs(d.dStart)>=1 ? '#f59e0b' : '#22c55e');
+        tr.innerHTML =
+          '<td><span class="badge '+(TYPE_BADGE[d.nb.type]||'b-gray')+'">'+esc(d.nb.type)+'</span></td>'+
+          '<td>'+esc(d.nb.project||'-')+'</td>'+
+          '<td>'+esc(d.nb.line)+'</td>'+
+          '<td style="color:var(--sub)">'+d.match.start+' ~ '+d.match.end+'</td>'+
+          '<td>'+d.nb.start+' ~ '+d.nb.end+'</td>'+
+          '<td style="color:'+driftColor+';font-weight:600">'+(d.dStart>0?'+':'')+d.dStart+' / '+(d.dEnd>0?'+':'')+d.dEnd+'</td>'+
+          '<td><span class="st '+(d.nb.status==='预警'?'warn':(d.nb.locked?'lock':'auto'))+'">'+esc(d.nb.status||'-')+'</span></td>';
+        driftTb.appendChild(tr);
+      });
+      if(!driftRows.length) driftEmpty.style.display = '';
+    }
+    // 产线利用率
+    var utilEl = $('utilChart'); if(!utilEl) return;
+    if(!state.batches.length){ utilEl.innerHTML = '<div class="empty">暂无批次</div>'; return; }
+    var lineStats = {};
+    LINES_ORDER.forEach(function(l){ lineStats[l] = { count:0, days:0 }; });
+    var allMin=null, allMax=null;
+    state.batches.forEach(function(b){
+      var line = b.line || '其他';
+      if(!lineStats[line]) lineStats[line] = { count:0, days:0 };
+      lineStats[line].count++;
+      var s = U.p(b.start), e = U.p(b.end);
+      if(s && e){
+        lineStats[line].days += U.diff(e, s)+1;
+        if(!allMin || s<allMin) allMin=s;
+        if(!allMax || e>allMax) allMax=e;
+      }
+    });
+    var totalSpan = (allMin && allMax) ? U.diff(allMax, allMin)+1 : 1;
+    var utilHtml = '<div style="display:flex;flex-direction:column;gap:8px">';
+    LINES_ORDER.forEach(function(line){
+      var st = lineStats[line]; if(!st || !st.count) return;
+      var pct = totalSpan > 0 ? Math.min(Math.round(st.days/totalSpan*100), 100) : 0;
+      var barColor = pct >= 80 ? '#dc2626' : (pct >= 50 ? '#f59e0b' : '#22c55e');
+      utilHtml += '<div style="display:flex;align-items:center;gap:8px">'+
+        '<span style="width:120px;font-size:12px;font-weight:600">'+esc(line)+'</span>'+
+        '<div style="flex:1;height:20px;background:#f1f5f9;border-radius:4px;overflow:hidden;position:relative">'+
+          '<div style="width:'+pct+'%;height:100%;background:'+barColor+';border-radius:4px;transition:width .3s"></div>'+
+          '<span style="position:absolute;left:8px;top:1px;font-size:11px;color:#334155;font-weight:600">'+st.count+'批 / '+st.days+'天</span>'+
+        '</div>'+
+        '<span style="width:40px;text-align:right;font-size:12px;color:'+barColor+';font-weight:700">'+pct+'%</span>'+
+      '</div>';
+    });
+    utilHtml += '</div>';
+    utilEl.innerHTML = utilHtml;
+    // 排产历史记录
+    var snapTb = $('snapTable').querySelector('tbody');
+    snapTb.innerHTML = '';
+    if(!snaps.length){ snapTb.innerHTML = '<tr><td colspan="7" class="empty">暂无排产记录</td></tr>'; return; }
+    snaps.slice().reverse().forEach(function(s, idx){
+      var seq = snaps.length - idx;
+      var sOnTime = 0, sChecked = 0;
+      s.batches.forEach(function(b){ if(b.dueDate){ sChecked++; if(U.p(b.end) <= U.p(b.dueDate)) sOnTime++; } });
+      var sPct = sChecked > 0 ? Math.round(sOnTime/sChecked*100) : 100;
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>#'+seq+'</td>'+
+        '<td>'+esc(s.time.replace('T',' ').slice(0,16))+'</td>'+
+        '<td>'+s.reqCount+'</td>'+
+        '<td>'+s.batches.length+'</td>'+
+        '<td style="color:'+(s.warningCount>0?'#dc2626':'var(--sub)')+'">'+s.warningCount+'</td>'+
+        '<td><span style="color:'+(sPct>=80?'#22c55e':'#f59e0b')+'">'+sPct+'%</span></td>'+
+        '<td>'+(seq===snaps.length?'<span class="tag">最新</span>':'')+'</td>';
+      snapTb.appendChild(tr);
+    });
+  }
+  function card(title, value, color){
+    return '<div class="card" style="padding:14px 16px;text-align:center">'+
+      '<div style="font-size:22px;font-weight:700;color:'+(color||'#3b82f6')+'">'+value+'</div>'+
+      '<div style="font-size:11px;color:var(--sub);margin-top:2px">'+title+'</div></div>';
   }
 
   // ---------- 渲染：批次明细 ----------
@@ -1188,8 +1490,8 @@
         '<td style="color:var(--sub)">'+esc(b.batchNo||'-')+'</td>'+
         '<td>'+esc(b.line||'-')+'</td>'+
         '<td>'+esc(b.start)+'</td><td>'+esc(b.end)+'</td>'+
-        '<td style="color:var(--sub)">'+esc(packDateOf(b)||'-')+'</td>'+
         '<td style="color:var(--sub)">'+(b.harvestDate?'下罐 '+esc(b.harvestDate):(b.fillDate?'灌装 '+esc(b.fillDate):'-'))+'</td>'+
+        '<td style="color:var(--sub)">'+esc(packDateOf(b)||'-')+'</td>'+
         '<td>'+(b.gmp?'<span class="b-green">GMP</span>':'<span class="b-gray">非GMP</span>')+'</td>'+
         '<td style="max-width:220px;white-space:normal;color:var(--sub)">'+esc(b.warning||b.note||'')+'</td>'+
         '<td class="plan-only">'+ops+'</td>';
@@ -1602,7 +1904,8 @@
       ['ganttAxis', JSON.stringify(state.ganttAxis||{px:2.5,unit:'month'})],
       ['ganttLines', state.ganttLines==null?'':JSON.stringify(state.ganttLines)],
       ['rules', state.rules==null?'':JSON.stringify(state.rules)],
-      ['refData', state.refData==null?'':JSON.stringify(state.refData)]];
+      ['refData', state.refData==null?'':JSON.stringify(state.refData)],
+      ['snapshots', JSON.stringify(state.snapshots||[])]];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(cfg), '配置');
     saveXlsx(wb, '排产系统数据_'+today()+'.xlsx');
     toast('已导出 Excel 数据文件');
@@ -1625,7 +1928,7 @@
             XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[iCfg]], {header:1}).forEach(function(row){
               if(!row || !row[0]) return;
               var k = row[0], v = row[1];
-              if(k==='rules' || k==='ganttAxis' || k==='ganttLines' || k==='refData'){ try { d[k] = v ? JSON.parse(v) : null; } catch(e){ d[k] = null; } }
+              if(k==='rules' || k==='ganttAxis' || k==='ganttLines' || k==='refData' || k==='snapshots'){ try { d[k] = v ? JSON.parse(v) : null; } catch(e){ d[k] = null; } }
               else d[k] = v;
             });
           }
@@ -1637,6 +1940,7 @@
         if(!state.ganttAxis) state.ganttAxis={ px:2.5, unit:'month' };
         if(state.ganttLines==null) state.ganttLines=null;
         if(!state.refData) state.refData=null;
+        if(!state.snapshots) state.snapshots=[];
         $('userName').value = state.user;
         save(); applyRole(); renderAll();
         toast('导入成功：需求 '+d.requirements.length+' 条，批次 '+d.batches.length+' 批');
@@ -1646,9 +1950,9 @@
   }
   function exportCSV(){
     if(typeof XLSX === 'undefined'){ toast('Excel 组件未加载，无法导出'); return; }
-    var rows = [['状态','类型','项目','需求人','批次号','产线','开始','完成','包装完成','GMP','备注']];
+    var rows = [['状态','类型','项目','需求人','批次号','产线','开始','完成','下罐/灌装','包装完成','GMP','备注']];
     state.batches.forEach(function(b){
-      rows.push([b.status, b.type, b.project, b.requester||'', b.batchNo||'', b.line, b.start, b.end, packDateOf(b)||'', b.gmp?'Y':'N', (b.warning||b.note||'').replace(/\n/g,' ')]);
+      rows.push([b.status, b.type, b.project, b.requester||'', b.batchNo||'', b.line, b.start, b.end, b.harvestDate||b.fillDate||'', packDateOf(b)||'', b.gmp?'Y':'N', (b.warning||b.note||'').replace(/\n/g,' ')]);
     });
     var wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '排产批次');
@@ -1660,11 +1964,15 @@
     if(!state.requirements.length){ toast('暂无需求可导出'); return; }
     var rows = [['项目号','类型','批次类型','批次数','交期','优先级','需求人','状态','规格','项目阶段','预算','首次生产','Molecule Type','Target','Novelty','mAb subtype','Host Cell Line','二次稀配','注射瓶规格','Titer','制剂批量','备注','提交时间']];
     state.requirements.forEach(function(r){
-      var typeTxt = r.type==='CB' ? r.cbKind : (r.type==='DP' ? r.dpKind+' '+r.dosage : r.type);
+      var isEQP = r.type==='EQP';
+      var typeTxt = isEQP ? '设备维护' : (r.type==='CB' ? r.cbKind : (r.type==='DP' ? r.dpKind+' '+r.dosage : r.type));
       rows.push([
-        r.henliusProject||r.atProject||'', typeTxt, r.batchKind||(r.gmp?'GMP生产':'Non-GMP'), r.batchCount,
-        r.dueDate||'', r.priority||'', r.requester||'', reqStatus(r),
-        r.spec||'', r.stage||'', r.budget||'', r.firstProduction?'是':'否',
+        isEQP ? (r.maintKind||'设备维护') : (r.henliusProject||r.atProject||''),
+        typeTxt, isEQP ? (r.maintKind||'-') : (r.batchKind||(r.gmp?'GMP生产':'Non-GMP')), r.batchCount,
+        isEQP ? (r.maintStart+'~'+r.maintEnd) : (r.dueDate||''),
+        r.priority||'', r.requester||'', reqStatus(r),
+        isEQP ? (r.maintLine||'') : (r.spec||''),
+        r.stage||'', r.budget||'', r.firstProduction?'是':'否',
         r.molType||'', r.target||'', r.novelty||'', r.mabSubtype||'', r.hostCell||'',
         r.secondaryDilution?'是':'否', r.vialSpec||'', (r.titer===''||r.titer==null)?'':r.titer,
         r.concentration||'', (r.note||'').replace(/\n/g,' '), (r.createdAt||'').slice(0,10)
@@ -1684,12 +1992,16 @@
     document.querySelectorAll('#roleSwitch button').forEach(function(b){
       b.classList.toggle('on', b.dataset.role===role);
     });
+    // 设备维护保养选项仅生产计划角色可选（部分浏览器 option CSS 隐藏不可靠，用 JS 兜底）
+    var eqpOpt = $('f_type').querySelector('option[value="EQP"]');
+    if(eqpOpt) eqpOpt.style.display = (role==='planner') ? '' : 'none';
+    if(role!=='planner' && $('f_type').value==='EQP'){ $('f_type').value='CB'; onTypeChange(); }
     renderReq(); renderBatches();
   }
 
   // ---------- 总渲染 ----------
   function renderAll(){
-    renderStats(); renderReq(); renderGantt(); renderBatches(); renderData(); renderRef(); renderRefMab();
+    renderStats(); renderReq(); renderGantt(); renderBatches(); renderData(); renderRef(); renderRefMab(); renderAnalysis();
     syncGanttCheckboxes();
   }
 
@@ -1804,8 +2116,13 @@
     $('btnClearAll').addEventListener('click', function(){
       if(!confirm('⚠️ 清空全部数据（需求、批次、规则），此操作不可恢复！建议先导出备份。确定继续？')) return;
       state = { requirements: [], batches: [], rules: null, role: state.role||'requester', user: state.user||'',
-        ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, refData: state.refData||null };
+        ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, refData: state.refData||null, snapshots: state.snapshots||[] };
       save(); renderAll(); renderRules(); toast('已清空全部数据');
+    });
+    // 清空快照
+    if($('btnClearSnap')) $('btnClearSnap').addEventListener('click', function(){
+      if(!confirm('清空全部排产快照记录？此操作不可恢复。')) return;
+      state.snapshots = []; save(); renderAnalysis(); toast('已清空排产快照');
     });
     // Tab 切换
     $('nav').addEventListener('click', function(ev){
@@ -1843,7 +2160,7 @@
     if(window.CloudSync){
       window.CloudSync.connect({
         getReqs: function(){ return state.requirements; },
-        getPlan: function(){ return { batches: state.batches, rules: state.rules, refData: state.refData, ganttAxis: state.ganttAxis, ganttLines: state.ganttLines }; },
+        getPlan: function(){ return { batches: state.batches, rules: state.rules, refData: state.refData, ganttAxis: state.ganttAxis, ganttLines: state.ganttLines, snapshots: state.snapshots }; },
         applyReqs: function(reqs){ state.requirements = reqs; },
         onRemoteReqs: function(n){ showNewReqBanner(n); },
         applyPlan: function(p){
@@ -1853,6 +2170,7 @@
           state.refData = p.refData || null;
           if(p.ganttAxis) state.ganttAxis = p.ganttAxis;
           if(p.ganttLines) state.ganttLines = p.ganttLines;
+          if(p.snapshots) state.snapshots = p.snapshots;
         },
         afterSync: function(){ save(); renderAll(); renderRules(); }
       });
