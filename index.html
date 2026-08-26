@@ -144,7 +144,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 生物制药排产系统 <span class="tag" id="verTag" title="页面版本：v2.7.0（月度批次趋势·周期快照漂移·甘特图时间范围·参数权限管控）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.7.0</span></h1>
+  <h1>🧬 生物制药排产系统 <span class="tag" id="verTag" title="页面版本：v2.8.0（数据管理权限管控）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.8.0</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -170,7 +170,7 @@
   <button data-tab="analysis">📈 排产分析</button>
   <button data-tab="ref" class="plan-only">📊 参考数据</button>
   <button data-tab="rules" class="plan-only">⚙️ 规则参数</button>
-  <button data-tab="data">💾 数据管理</button>
+  <button data-tab="data" class="plan-only">💾 数据管理</button>
 </nav>
 
 <main>
@@ -573,7 +573,7 @@
   </section>
 </main>
 
-<footer>生物制药排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.6.0（云端共享）</footer>
+<footer>生物制药排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.8.0（云端共享）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -628,10 +628,10 @@
 <div id="toast"></div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=270"></script>
-<script src="xlsx.full.min.js?v=270"></script>
-<script src="cloud.js?v=270"></script>
-<script src="scheduling.js?v=270"></script>
+<script src="cloudbase.full.js?v=280"></script>
+<script src="xlsx.full.min.js?v=280"></script>
+<script src="cloud.js?v=280"></script>
+<script src="scheduling.js?v=280"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -2104,15 +2104,15 @@
     var eqpOpt = $('f_type').querySelector('option[value="EQP"]');
     if(eqpOpt) eqpOpt.style.display = (role==='planner') ? '' : 'none';
     if(role!=='planner' && $('f_type').value==='EQP'){ $('f_type').value='CB'; onTypeChange(); }
-    // 「参考数据」「规则参数」仅生产计划角色可见（nav 按钮 JS 兜底）
-    ['ref','rules'].forEach(function(t){
+    // 「参考数据」「规则参数」「数据管理」仅生产计划角色可见（nav 按钮 JS 兜底）
+    ['ref','rules','data'].forEach(function(t){
       var nb = document.querySelector('nav button[data-tab="'+t+'"]');
       if(nb) nb.style.display = (role==='planner') ? '' : 'none';
     });
-    // 非生产计划角色若正停留在 ref/rules 页，跳回需求录入
+    // 非生产计划角色若正停留在 ref/rules/data 页，跳回需求录入
     if(role!=='planner'){
       var activeNav = document.querySelector('nav button.on');
-      if(activeNav && (activeNav.dataset.tab==='ref' || activeNav.dataset.tab==='rules')){
+      if(activeNav && (activeNav.dataset.tab==='ref' || activeNav.dataset.tab==='rules' || activeNav.dataset.tab==='data')){
         document.querySelectorAll('nav button').forEach(function(b){ b.classList.remove('on'); });
         document.querySelectorAll('section.tab').forEach(function(s){ s.classList.remove('on'); });
         var reqBtn = document.querySelector('nav button[data-tab="req"]');
