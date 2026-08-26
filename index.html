@@ -144,7 +144,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 生物制药排产系统 <span class="tag" id="verTag" title="页面版本：v2.8.0（数据管理权限管控）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.8.0</span></h1>
+  <h1>🧬 生物制药排产系统 <span class="tag" id="verTag" title="页面版本：v2.9.0（人工快照漂移分析）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.9.0</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -428,8 +428,9 @@
     <div class="card" style="padding:10px 16px">
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <h2 style="margin:0">📈 排产分析</h2>
-        <span class="hint">每次「自动排产」及每 2 周自动记录快照，可对比日期漂移与月度批次趋势</span>
+        <span class="hint">每次「自动排产」及每 2 周自动记录快照，也可手动保存人工快照，可对比日期漂移与月度批次趋势</span>
         <span class="spacer" style="flex:1"></span>
+        <button class="btn sm plan-only" id="btnManualSnap">📸 保存人工快照</button>
         <button class="btn sm" id="btnClearSnap">🗑️ 清空快照</button>
       </div>
     </div>
@@ -438,7 +439,7 @@
     <!-- 日期漂移对比表 -->
     <div class="card">
       <h2>批次日期漂移分析 <span class="tag" id="driftInfo">对比最近两次排产</span></h2>
-      <div class="hint" id="driftHint">每次排产后自动记录快照（自动排产），每 2 周定期保存一次快照（含人工调整结果），以下为最近两次快照中同一需求批次日期的变动情况。</div>
+      <div class="hint" id="driftHint">快照来源：自动排产（每次排产后）、定期快照（每 2 周自动保存，含人工调整结果）、人工快照（手动保存的关键节点版本），以下为最近两次快照中同一需求批次日期的变动情况。</div>
       <div class="scroll-tbl" style="max-height:320px">
         <table class="tbl" id="driftTable">
           <thead><tr><th>类型</th><th>项目</th><th>产线</th><th>上次排产</th><th>本次排产</th><th>漂移(天)</th><th>来源</th><th>状态</th></tr></thead>
@@ -573,7 +574,7 @@
   </section>
 </main>
 
-<footer>生物制药排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.8.0（云端共享）</footer>
+<footer>生物制药排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.9.0（云端共享）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -628,10 +629,10 @@
 <div id="toast"></div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=280"></script>
-<script src="xlsx.full.min.js?v=280"></script>
-<script src="cloud.js?v=280"></script>
-<script src="scheduling.js?v=280"></script>
+<script src="cloudbase.full.js?v=290"></script>
+<script src="xlsx.full.min.js?v=290"></script>
+<script src="cloud.js?v=290"></script>
+<script src="scheduling.js?v=290"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -1095,7 +1096,7 @@
     state.batches.forEach(function(b){ var m = /^NB(\d+)$/.exec(b.id||''); if(m) maxN = Math.max(maxN, parseInt(m[1],10)); });
     var res = sched.schedule(reqs2, locked, maxN + 1);
     state.batches = locked.concat(res.batches);
-    // 保存排产快照（用于排产分析：日期漂移/月度趋势/历史记录；source=auto 自动排产 / periodic 每2周定期）
+    // 保存排产快照（用于排产分析：日期漂移/月度趋势/历史记录；source=auto 自动排产 / periodic 每2周定期 / manual 人工保存）
     if(!state.snapshots) state.snapshots = [];
     state.snapshots.push({
       id: 'snap'+Date.now(),
@@ -1156,6 +1157,30 @@
     if(state.snapshots.length > 30) state.snapshots = state.snapshots.slice(-30);
     save();
     return true;
+  }
+  // 手动保存人工快照（source=manual）：关键节点版本存档（如人工调整后、会议确认后），参与漂移分析
+  function saveManualSnapshot(){
+    if(!state.batches.length){ toast('当前无批次数据，无法保存快照'); return; }
+    var input = prompt('人工快照备注（可选，50 字内，如：3月排产会议确认版）');
+    if(input === null) return; // 用户取消
+    var note = (input || '').trim().slice(0, 50);
+    if(!state.snapshots) state.snapshots = [];
+    var warnN = state.batches.filter(function(b){return b.status==='预警';}).length;
+    state.snapshots.push({
+      id: 'snap'+Date.now(),
+      time: new Date().toISOString(),
+      source: 'manual',
+      note: note,
+      reqCount: state.requirements.length,
+      warningCount: warnN,
+      batches: state.batches.map(function(b){
+        return { id:b.id, reqId:b.reqId, type:b.type, line:b.line||'其他', start:b.start, end:b.end,
+          project:b.project||'', status:b.status, dueDate: (state.requirements.find(function(r){return r.id===b.reqId;})||{}).dueDate||'' };
+      })
+    });
+    if(state.snapshots.length > 30) state.snapshots = state.snapshots.slice(-30);
+    save(); renderAnalysis();
+    toast('人工快照已保存' + (note ? '：'+note : ''));
   }
   function clearPlan(){
     state.batches = state.batches.filter(function(b){return b.locked || isFinal(b);});
@@ -1480,8 +1505,8 @@
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td>#'+seq+'</td>'+
-        '<td>'+esc(s.time.replace('T',' ').slice(0,16))+'</td>'+
-        '<td><span class="tag" style="'+(s.source==='periodic'?'background:#ecfdf5;color:#059669':'')+'">'+snapSrcName(s.source)+'</span></td>'+
+        '<td>'+esc(s.time.replace('T',' ').slice(0,16))+(s.note?'<div style="font-size:11px;color:var(--sub)">📝 '+esc(s.note)+'</div>':'')+'</td>'+
+        '<td><span class="tag" style="'+(s.source==='periodic'?'background:#ecfdf5;color:#059669':(s.source==='manual'?'background:#fff7ed;color:#c2410c':''))+'">'+snapSrcName(s.source)+'</span></td>'+
         '<td>'+s.reqCount+'</td>'+
         '<td>'+s.batches.length+'</td>'+
         '<td style="color:'+(s.warningCount>0?'#dc2626':'var(--sub)')+'">'+s.warningCount+'</td>'+
@@ -1492,6 +1517,7 @@
   }
   function snapSrcName(src){
     if(src === 'periodic') return '定期快照';
+    if(src === 'manual') return '人工快照';
     if(src === 'auto') return '自动排产';
     return '自动排产'; // 旧版快照（v2.6.0 及之前）均为排产触发
   }
@@ -2265,7 +2291,8 @@
         ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, ganttRange: state.ganttRange||{preset:'all',start:'',end:''}, refData: state.refData||null, snapshots: state.snapshots||[] };
       save(); renderAll(); renderRules(); toast('已清空全部数据');
     });
-    // 清空快照
+    // 保存人工快照 / 清空快照
+    if($('btnManualSnap')) $('btnManualSnap').addEventListener('click', saveManualSnapshot);
     if($('btnClearSnap')) $('btnClearSnap').addEventListener('click', function(){
       if(!confirm('清空全部排产快照记录？此操作不可恢复。')) return;
       state.snapshots = []; save(); renderAnalysis(); toast('已清空排产快照');
