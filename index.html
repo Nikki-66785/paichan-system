@@ -144,7 +144,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.9.2（修复 EQP 设备维护需求提交入口：表单两角色可见，EQP 选项仅生产计划可填）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.9.2</span></h1>
+  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.9.3（月度批次趋势新增时间范围筛选：全部/近1月/近3月/近6月/自定义，与甘特图窗口相互独立）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.9.3</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -460,6 +460,18 @@
           <label><input type="radio" name="trendCat" value="DP">DP 制剂</label>
         </span>
         <span class="spacer" style="flex:1"></span>
+        <label class="hint">时间范围 <select id="trendRange" title="月度批次趋势时间窗口（按批次开始日期月份统计，与甘特图窗口相互独立）">
+          <option value="all" selected>全部</option>
+          <option value="1m">近1个月</option>
+          <option value="3m">近3个月</option>
+          <option value="6m">近6个月</option>
+          <option value="custom">自定义</option>
+        </select></label>
+        <span id="trendRangeDates" style="display:none;align-items:center;gap:4px">
+          <input type="date" id="trendRangeStart" title="窗口开始日期" style="width:130px">
+          <span class="hint">~</span>
+          <input type="date" id="trendRangeEnd" title="窗口结束日期" style="width:130px">
+        </span>
         <span class="hint">Mab / ADC / 其他 按产品系列分色</span>
       </div>
       <div id="trendChart"></div>
@@ -574,7 +586,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.9.2（云端共享）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.9.3（云端共享）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -629,10 +641,10 @@
 <div id="toast"></div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=292"></script>
-<script src="xlsx.full.min.js?v=292"></script>
-<script src="cloud.js?v=292"></script>
-<script src="scheduling.js?v=292"></script>
+<script src="cloudbase.full.js?v=293"></script>
+<script src="xlsx.full.min.js?v=293"></script>
+<script src="cloud.js?v=293"></script>
+<script src="scheduling.js?v=293"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -706,7 +718,7 @@
   };
 
   var state = { requirements: [], batches: [], rules: null, role: 'requester', user: '',
-    ganttAxis: { px: 2.5, unit: 'month' }, ganttLines: null, ganttRange: { preset: 'all', start: '', end: '' }, refData: null, snapshots: [] };
+    ganttAxis: { px: 2.5, unit: 'month' }, ganttLines: null, ganttRange: { preset: 'all', start: '', end: '' }, trendRange: { preset: 'all', start: '', end: '' }, refData: null, snapshots: [] };
   var editingId = null;
   var refEditKey = null; // 正在编辑的参考数据表 key（lines/caps/staff/fields）
 
@@ -731,6 +743,7 @@
         if(!state.ganttAxis) state.ganttAxis={ px:2.5, unit:'month' };
         if(state.ganttLines==null) state.ganttLines=null;
         if(!state.ganttRange) state.ganttRange={ preset:'all', start:'', end:'' };
+        if(!state.trendRange) state.trendRange={ preset:'all', start:'', end:'' };
         if(!state.refData) state.refData=null;
         if(!state.snapshots) state.snapshots=[];
         return true; }
@@ -739,9 +752,9 @@
   }
   function resetToHistory(){
     var hist = window.HISTORY_BATCHES || {CB:[],DS:[],DP:[]};
-    var keep = { role: state.role||'requester', user: state.user||'', ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, ganttRange: state.ganttRange||{preset:'all',start:'',end:''}, refData: state.refData||null, snapshots: state.snapshots||[] };
+    var keep = { role: state.role||'requester', user: state.user||'', ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, ganttRange: state.ganttRange||{preset:'all',start:'',end:''}, trendRange: state.trendRange||{preset:'all',start:'',end:''}, refData: state.refData||null, snapshots: state.snapshots||[] };
     state = { requirements: [], batches: importHistory(hist), rules: null, role: keep.role, user: keep.user,
-      ganttAxis: keep.ganttAxis, ganttLines: keep.ganttLines, ganttRange: keep.ganttRange, refData: keep.refData, snapshots: keep.snapshots };
+      ganttAxis: keep.ganttAxis, ganttLines: keep.ganttLines, ganttRange: keep.ganttRange, trendRange: keep.trendRange, refData: keep.refData, snapshots: keep.snapshots };
     save(); renderAll(); renderRules();
   }
   // 历史遗留数据修复：批次 id 唯一化（旧版本跨次排产复用 NB1/NB2...，会导致人工调整命中错误批次）
@@ -1529,10 +1542,24 @@
     var SERIES = { Mab:['Mab','CM DP'], ADC:['ADC DS','ADC DP'] };      // 图例系列（产品系列分色）
     var CATS = { CB:['MCB','WCB'], DS:['Mab','ADC DS'], DP:['CM DP','ADC DP','APS','冻干放大测试'] }; // 工序筛选
     var COLORS = { Mab:'#8b5cf6', ADC:'#06b6d4', other:'#94a3b8' };
+    // 时间范围窗口（trendRange）：all=全部 / 1m/3m/6m=近N月 / custom=自定义起止（按批次开始日期所在月份过滤，与甘特图窗口相互独立）
+    var rg = state.trendRange || { preset:'all', start:'', end:'' };
+    var wStartK = '', wEndK = '';
+    if(rg.preset === '1m' || rg.preset === '3m' || rg.preset === '6m'){
+      var t0 = new Date(), backM = { '1m':1, '3m':3, '6m':6 }[rg.preset];
+      var wd = new Date(t0.getFullYear(), t0.getMonth()-backM, 1);
+      wStartK = wd.getFullYear()+'-'+String(wd.getMonth()+1).padStart(2,'0');
+    } else if(rg.preset === 'custom'){
+      if(rg.start) wStartK = String(rg.start).slice(0,7);
+      if(rg.end) wEndK = String(rg.end).slice(0,7);
+    }
     var bs = state.batches.filter(function(b){
       if(!b.start) return false;
-      if(cat === 'all') return true;
-      return (CATS[cat]||[]).indexOf(b.type) >= 0;
+      if(cat !== 'all' && (CATS[cat]||[]).indexOf(b.type) < 0) return false;
+      var k = b.start.slice(0,7);
+      if(wStartK && k < wStartK) return false;
+      if(wEndK && k > wEndK) return false;
+      return true;
     });
     if(!bs.length){ el.innerHTML = '<div class="empty">暂无批次（'+({CB:'CB 细胞库',DS:'DS 原液',DP:'DP 制剂'}[cat]||'当前筛选')+'）</div>'; return; }
     // 按月聚合
@@ -2036,6 +2063,7 @@
       ['ganttAxis', JSON.stringify(state.ganttAxis||{px:2.5,unit:'month'})],
       ['ganttLines', state.ganttLines==null?'':JSON.stringify(state.ganttLines)],
       ['ganttRange', JSON.stringify(state.ganttRange||{preset:'all',start:'',end:''})],
+      ['trendRange', JSON.stringify(state.trendRange||{preset:'all',start:'',end:''})],
       ['rules', state.rules==null?'':JSON.stringify(state.rules)],
       ['refData', state.refData==null?'':JSON.stringify(state.refData)],
       ['snapshots', JSON.stringify(state.snapshots||[])]];
@@ -2061,7 +2089,7 @@
             XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[iCfg]], {header:1}).forEach(function(row){
               if(!row || !row[0]) return;
               var k = row[0], v = row[1];
-              if(k==='rules' || k==='ganttAxis' || k==='ganttLines' || k==='ganttRange' || k==='refData' || k==='snapshots'){ try { d[k] = v ? JSON.parse(v) : null; } catch(e){ d[k] = null; } }
+              if(k==='rules' || k==='ganttAxis' || k==='ganttLines' || k==='ganttRange' || k==='trendRange' || k==='refData' || k==='snapshots'){ try { d[k] = v ? JSON.parse(v) : null; } catch(e){ d[k] = null; } }
               else d[k] = v;
             });
           }
@@ -2073,6 +2101,7 @@
         if(!state.ganttAxis) state.ganttAxis={ px:2.5, unit:'month' };
         if(state.ganttLines==null) state.ganttLines=null;
         if(!state.ganttRange) state.ganttRange={ preset:'all', start:'', end:'' };
+        if(!state.trendRange) state.trendRange={ preset:'all', start:'', end:'' };
         if(!state.refData) state.refData=null;
         if(!state.snapshots) state.snapshots=[];
         $('userName').value = state.user;
@@ -2258,6 +2287,24 @@
     document.querySelectorAll('#trendFilter input[name="trendCat"]').forEach(function(r){
       r.addEventListener('change', function(){ renderTrend(); });
     });
+    // 月度批次趋势：时间范围窗口
+    $('trendRange').addEventListener('change', function(){
+      state.trendRange = state.trendRange || { preset:'all', start:'', end:'' };
+      state.trendRange.preset = this.value;
+      if(this.value === 'custom'){ $('trendRangeDates').style.display = 'flex'; }
+      else { $('trendRangeDates').style.display = 'none'; }
+      save(); renderTrend();
+    });
+    $('trendRangeStart').addEventListener('change', function(){
+      state.trendRange = state.trendRange || { preset:'custom', start:'', end:'' };
+      state.trendRange.start = this.value;
+      save(); renderTrend();
+    });
+    $('trendRangeEnd').addEventListener('change', function(){
+      state.trendRange = state.trendRange || { preset:'custom', start:'', end:'' };
+      state.trendRange.end = this.value;
+      save(); renderTrend();
+    });
     // 参考数据：编辑/保存/取消
     document.querySelectorAll('[data-ref-edit]').forEach(function(btn){
       btn.addEventListener('click', function(){ toggleRefEdit(btn.dataset.refEdit); });
@@ -2288,7 +2335,7 @@
     $('btnClearAll').addEventListener('click', function(){
       if(!confirm('⚠️ 清空全部数据（需求、批次、规则），此操作不可恢复！建议先导出备份。确定继续？')) return;
       state = { requirements: [], batches: [], rules: null, role: state.role||'requester', user: state.user||'',
-        ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, ganttRange: state.ganttRange||{preset:'all',start:'',end:''}, refData: state.refData||null, snapshots: state.snapshots||[] };
+        ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, ganttRange: state.ganttRange||{preset:'all',start:'',end:''}, trendRange: state.trendRange||{preset:'all',start:'',end:''}, refData: state.refData||null, snapshots: state.snapshots||[] };
       save(); renderAll(); renderRules(); toast('已清空全部数据');
     });
     // 保存人工快照 / 清空快照
@@ -2327,6 +2374,12 @@
     if(state.ganttRange.preset === 'custom') $('ganttRangeDates').style.display = 'flex';
     $('ganttRangeStart').value = state.ganttRange.start || '';
     $('ganttRangeEnd').value = state.ganttRange.end || '';
+    // 月度批次趋势时间范围控件同步
+    state.trendRange = state.trendRange || { preset:'all', start:'', end:'' };
+    $('trendRange').value = state.trendRange.preset || 'all';
+    if(state.trendRange.preset === 'custom') $('trendRangeDates').style.display = 'flex';
+    $('trendRangeStart').value = state.trendRange.start || '';
+    $('trendRangeEnd').value = state.trendRange.end || '';
     bind();
     onTypeChange();
     applyRole();
@@ -2341,7 +2394,7 @@
     if(window.CloudSync){
       window.CloudSync.connect({
         getReqs: function(){ return state.requirements; },
-        getPlan: function(){ return { batches: state.batches, rules: state.rules, refData: state.refData, ganttAxis: state.ganttAxis, ganttLines: state.ganttLines, ganttRange: state.ganttRange, snapshots: state.snapshots }; },
+        getPlan: function(){ return { batches: state.batches, rules: state.rules, refData: state.refData, ganttAxis: state.ganttAxis, ganttLines: state.ganttLines, ganttRange: state.ganttRange, trendRange: state.trendRange, snapshots: state.snapshots }; },
         applyReqs: function(reqs){ state.requirements = reqs; },
         onRemoteReqs: function(n){ showNewReqBanner(n); },
         applyPlan: function(p){
@@ -2352,6 +2405,7 @@
           if(p.ganttAxis) state.ganttAxis = p.ganttAxis;
           if(p.ganttLines) state.ganttLines = p.ganttLines;
           if(p.ganttRange) state.ganttRange = p.ganttRange;
+          if(p.trendRange) state.trendRange = p.trendRange;
           if(p.snapshots) state.snapshots = p.snapshots;
         },
         afterSync: function(){ save(); renderAll(); renderRules(); }
