@@ -1,5 +1,5 @@
 /* =====================================================
- * cloud.js — CloudBase 云同步层（排产系统 v2.5）
+ * cloud.js — CloudBase 云同步层（排产系统 v2.5 → v2.9.7：计划推送冲突检测 + forcePushPlan 破坏性操作即时上云）
  *
  * 作用：让「需求填报」与「排产计划」在多人浏览器之间实时共享。
  *   · requests   集合：需求（每条需求一个文档，多人提交互不覆盖）
@@ -325,9 +325,42 @@
     if (!ready || !hook || !hook.getPlan) return;
     var p = hook.getPlan();
     if (!p || !p.batches) return;
+    // 冲突检测（v2.9.4）：推送前先读云端当前版本，
+    // 若云端存在本会话未见过、也未推送过的 updatedAt（其他用户在本地未同步期间写入了新版本），
+    // 提示用户选择覆盖或改为拉取云端，避免静默 last-write-wins 互相覆盖。
+    db.collection(PLAN_COLL).doc(PLAN_ID).get()
+      .then(function (r) {
+        var doc = (r && r.data) || null;
+        if (doc && doc.updatedAt && planVersions.indexOf(doc.updatedAt) < 0) {
+          if (typeof confirm === 'function' &&
+              !confirm('⚠️ 云端存在其他用户的更新版本（本页尚未同步）。\n\n确定用本页计划覆盖云端版本？\n「取消」将改为拉取云端最新版本到本页。')) {
+            // 不覆盖：应用云端版本（本地未同步的改动将被云端版本替换，与 watch 实时同步行为一致）
+            applyingRemotePlan = true;
+            rememberPlanVersion(doc.updatedAt);
+            if (hook.applyPlan && doc.data) hook.applyPlan(doc.data);
+            if (hook.afterSync) hook.afterSync();
+            applyingRemotePlan = false;
+            toast('已拉取云端最新计划（本页版本未覆盖云端）');
+            return;
+          }
+        }
+        doPushPlan(p);
+      })
+      .catch(function () { doPushPlan(p); }); // 云端读取失败（权限/网络）→ 按原逻辑直接推送
+  }
+  function doPushPlan(p) {
     var ts = Date.now();
     rememberPlanVersion(ts); // 登记版本，抑制自己推送触发的 watch 回声
     upsert(PLAN_COLL, PLAN_ID, { data: p, updatedAt: ts }, '计划');
+  }
+  // 破坏性本地操作（清空/删除快照等，用户已明确确认）需要立即云端生效：
+  // ①绕过 800ms 节流——避免用户在节流窗口内刷新/关闭导致推送未执行、云端旧数据下次打开时回填；
+  // ②跳过冲突检测弹窗——用户已确认的破坏性操作应直接覆盖云端，而不是因弹窗取消而半途而废。
+  function forcePushPlan() {
+    if (!ready || !hook || !hook.getPlan) return;
+    var p = hook.getPlan();
+    if (!p || !p.batches) return;
+    doPushPlan(p);
   }
   // 主逻辑 save() 调用：节流推送计划（需求变更由 pushReq/delReqCloud 单独处理）
   function onSaved() {
@@ -339,6 +372,6 @@
 
   window.CloudSync = {
     connect: connect, isReady: isReady, onSaved: onSaved,
-    pushReq: pushReq, delReqCloud: delReqCloud, pushPlan: pushPlan
+    pushReq: pushReq, delReqCloud: delReqCloud, pushPlan: pushPlan, forcePushPlan: forcePushPlan
   };
 })();
