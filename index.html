@@ -144,7 +144,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.9.6（①清空/重置前自动下载备份 ②快照分类限额 ③漂移分析可任选两次快照对比+汇总+新增/取消批次统计 ④云端同步冲突提示 ⑤人工快照备注改为内嵌输入框 ⑥趋势图可与甘特图联动 ⑦未排产需求提示 ⑧快照下载）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.9.6</span></h1>
+  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.9.7（①清空/重置前自动下载备份 ②快照分类限额 ③漂移分析可任选两次快照对比+汇总+新增/取消批次统计 ④云端同步冲突提示 ⑤人工快照备注改为内嵌输入框 ⑥趋势图可与甘特图联动 ⑦未排产需求提示 ⑧快照下载 ⑨快照多选删除，清空/删除后立即同步云端）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.9.7</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -491,10 +491,15 @@
     </div>
     <!-- 排产历史 -->
     <div class="card">
-      <h2>排产历史记录</h2>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+        <h2 style="margin:0">排产历史记录 <span class="tag">快照管理</span></h2>
+        <span class="hint">勾选快照可批量删除，删除前自动下载备份；清空/删除后立即同步云端，避免刷新后被旧快照回填</span>
+        <span class="spacer" style="flex:1"></span>
+        <button class="btn sm plan-only" id="btnDelSnaps" disabled>🗑️ 删除选中（0）</button>
+      </div>
       <div class="scroll-tbl" style="max-height:260px">
         <table class="tbl" id="snapTable">
-          <thead><tr><th>序号</th><th>时间</th><th>来源</th><th>需求数</th><th>批次数</th><th>预警数</th><th>准时率</th><th>操作</th></tr></thead>
+          <thead><tr><th style="width:30px"><input type="checkbox" id="snapSelAll" class="plan-only" title="全选/取消全选"></th><th>序号</th><th>时间</th><th>来源</th><th>需求数</th><th>批次数</th><th>预警数</th><th>准时率</th><th>操作</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -599,7 +604,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.9.6（云端共享）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.9.7（云端共享）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -654,10 +659,10 @@
 <div id="toast"></div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=296"></script>
-<script src="xlsx.full.min.js?v=296"></script>
-<script src="cloud.js?v=296"></script>
-<script src="scheduling.js?v=296"></script>
+<script src="cloudbase.full.js?v=297"></script>
+<script src="xlsx.full.min.js?v=297"></script>
+<script src="cloud.js?v=297"></script>
+<script src="scheduling.js?v=297"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -1628,7 +1633,7 @@
     // 排产历史记录
     var snapTb = $('snapTable').querySelector('tbody');
     snapTb.innerHTML = '';
-    if(!snaps.length){ snapTb.innerHTML = '<tr><td colspan="8" class="empty">暂无排产记录</td></tr>'; return; }
+    if(!snaps.length){ snapTb.innerHTML = '<tr><td colspan="9" class="empty">暂无排产记录</td></tr>'; return; }
     snaps.slice().reverse().forEach(function(s, idx){
       var seq = snaps.length - idx;
       var sOnTime = 0, sChecked = 0;
@@ -1636,6 +1641,7 @@
       var sPct = sChecked > 0 ? Math.round(sOnTime/sChecked*100) : 100;
       var tr = document.createElement('tr');
       tr.innerHTML =
+        '<td><input type="checkbox" class="snap-chk plan-only" data-id="'+esc(s.id)+'" title="选择此快照用于删除"></td>'+
         '<td>#'+seq+'</td>'+
         '<td>'+esc(s.time.replace('T',' ').slice(0,16))+(s.note?'<div style="font-size:11px;color:var(--sub)">📝 '+esc(s.note)+'</div>':'')+'</td>'+
         '<td><span class="tag" style="'+(s.source==='periodic'?'background:#ecfdf5;color:#059669':(s.source==='manual'?'background:#fff7ed;color:#c2410c':''))+'">'+snapSrcName(s.source)+'</span></td>'+
@@ -1646,6 +1652,29 @@
         '<td>'+(seq===snaps.length?'<span class="tag">最新</span>':'')+'</td>';
       snapTb.appendChild(tr);
     });
+    updateDelSnapsBtn(); // 重置删除按钮计数与禁用态（渲染后勾选全部清空）
+  }
+  // 快照多选删除：删除按钮计数/禁用态
+  function updateDelSnapsBtn(){
+    var btn = $('btnDelSnaps'); if(!btn) return;
+    var n = document.querySelectorAll('.snap-chk:checked').length;
+    btn.textContent = '🗑️ 删除选中（'+n+'）';
+    btn.disabled = n === 0;
+  }
+  // 删除选中的快照（多版本选择删除）：备份 → 移除 → 本地持久化 → 立即同步云端（防旧快照回填）
+  function deleteSnapshots(ids){
+    var snaps = state.snapshots || [];
+    if(!ids || !ids.length) return;
+    var idSet = {};
+    ids.forEach(function(id){ idSet[id] = 1; });
+    var kept = snaps.filter(function(s){ return !idSet[s.id]; });
+    var removed = snaps.length - kept.length;
+    if(!removed) return;
+    if(!autoBackup()) return; // 备份失败（Excel 组件缺失等）→ 中止，避免无备份删除
+    state.snapshots = kept; save();
+    if(window.CloudSync && window.CloudSync.forcePushPlan) window.CloudSync.forcePushPlan(); // 立即覆盖云端快照
+    renderAnalysis();
+    toast('已删除 '+removed+' 份快照');
   }
   function snapSrcName(src){
     if(src === 'periodic') return '定期快照';
@@ -2532,7 +2561,24 @@
     if($('btnClearSnap')) $('btnClearSnap').addEventListener('click', function(){
       if(!confirm('清空全部排产快照记录？此操作不可恢复，系统将先自动下载备份。')) return;
       if(!autoBackup()) return;
-      state.snapshots = []; save(); renderAnalysis(); toast('已清空排产快照');
+      state.snapshots = []; save();
+      if(window.CloudSync && window.CloudSync.forcePushPlan) window.CloudSync.forcePushPlan(); // 立即覆盖云端快照，防止刷新后被旧快照回填
+      renderAnalysis(); toast('已清空排产快照');
+    });
+    // 快照多选删除：全选 / 删除选中 / 勾选联动按钮
+    if($('btnDelSnaps')) $('btnDelSnaps').addEventListener('click', function(){
+      var ids = Array.prototype.map.call(document.querySelectorAll('.snap-chk:checked'), function(c){ return c.getAttribute('data-id'); });
+      if(!ids.length){ toast('请先勾选要删除的快照'); return; }
+      if(!confirm('删除选中的 '+ids.length+' 份快照？此操作不可恢复，系统将先自动下载备份。')) return;
+      deleteSnapshots(ids);
+    });
+    if($('snapSelAll')) $('snapSelAll').addEventListener('change', function(){
+      document.querySelectorAll('.snap-chk').forEach(function(c){ c.checked = $('snapSelAll').checked; });
+      updateDelSnapsBtn();
+    });
+    var snapTbEl = $('snapTable');
+    if(snapTbEl) snapTbEl.querySelector('tbody').addEventListener('change', function(ev){
+      if(ev.target && ev.target.classList && ev.target.classList.contains('snap-chk')) updateDelSnapsBtn();
     });
     // Tab 切换
     $('nav').addEventListener('click', function(ev){
