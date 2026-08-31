@@ -144,7 +144,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.9.5（①清空/重置前自动下载备份 ②快照分类限额 ③漂移分析可任选两次快照对比+汇总+新增/取消批次统计 ④云端同步冲突提示 ⑤人工快照备注改为内嵌输入框 ⑥趋势图可与甘特图联动）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.9.5</span></h1>
+  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.9.6（①清空/重置前自动下载备份 ②快照分类限额 ③漂移分析可任选两次快照对比+汇总+新增/取消批次统计 ④云端同步冲突提示 ⑤人工快照备注改为内嵌输入框 ⑥趋势图可与甘特图联动 ⑦未排产需求提示 ⑧快照下载）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.9.6</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -447,8 +447,11 @@
         <span class="hint">→</span>
         <select id="driftSelB" title="对比快照（较新版本）" style="max-width:280px"></select>
         <span class="hint" id="driftSummary"></span>
+        <span class="spacer" style="flex:1"></span>
+        <button class="btn sm" id="btnDownloadSnap" title="将全部快照导出为 Excel（快照列表 + 批次明细）">⬇ 下载快照</button>
       </div>
-      <div class="hint" id="driftHint">快照来源：自动排产（每次排产后）、定期快照（每 2 周自动保存，含人工调整结果）、人工快照（手动保存的关键节点版本）。默认对比最近两次快照，可在上方下拉任选基准与对比版本（含人工快照）。除日期漂移外，对比快照中「新增」的批次（基准无此批次）与「取消」的批次（基准有、对比已移除）也会在表中列出并计入汇总。</div>
+      <div class="hint" id="driftUnplanned" style="display:none;background:#fef3c7;color:#92400e;padding:6px 10px;border-radius:8px;margin-bottom:8px"></div>
+      <div class="hint" id="driftHint">快照来源：自动排产（每次排产后）、定期快照（每 2 周自动保存，含人工调整结果）、人工快照（手动保存的关键节点版本）。默认对比最近两次快照，可在上方下拉任选基准与对比版本（含人工快照）。除日期漂移外，对比快照中「新增」的批次（基准无此批次）与「取消」的批次（基准有、对比已移除）也会在表中列出并计入汇总。工具栏「下载快照」可将全部快照导出为 Excel。</div>
       <div class="scroll-tbl" style="max-height:320px">
         <table class="tbl" id="driftTable">
           <thead><tr><th>类型</th><th>项目</th><th>产线</th><th>上次排产</th><th>本次排产</th><th>漂移(天)</th><th>来源</th><th>状态</th></tr></thead>
@@ -596,7 +599,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.9.5（云端共享）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.9.6（云端共享）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -651,10 +654,10 @@
 <div id="toast"></div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=295"></script>
-<script src="xlsx.full.min.js?v=295"></script>
-<script src="cloud.js?v=295"></script>
-<script src="scheduling.js?v=295"></script>
+<script src="cloudbase.full.js?v=296"></script>
+<script src="xlsx.full.min.js?v=296"></script>
+<script src="cloud.js?v=296"></script>
+<script src="scheduling.js?v=296"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -1465,6 +1468,20 @@
 
   // ---------- 渲染：日期漂移（可任选两次快照对比，默认最近两次） ----------
   function renderDrift(){
+    // 未排产需求提示：需求列表中有、但批次表无对应批次（按 reqId 关联）的需求，尚未参与排产与快照对比
+    var upEl = $('driftUnplanned');
+    if(upEl){
+      var batReqIds = {};
+      (state.batches||[]).forEach(function(b){ if(b.reqId) batReqIds[b.reqId] = 1; });
+      var unplanned = (state.requirements||[]).filter(function(r){ return r.type!=='EQP' && !batReqIds[r.id]; });
+      if(unplanned.length){
+        var names = unplanned.slice(0,5).map(function(r){ return esc(r.henliusProject || r.project || r.id); }).join('、');
+        upEl.style.display = '';
+        upEl.innerHTML = '⚠️ 有 <b>'+unplanned.length+'</b> 个需求尚未排产（'+names+(unplanned.length>5?' 等':'')+'），未计入下方对比。请先「重新排产」生成批次后再查看。';
+      } else {
+        upEl.style.display = 'none';
+      }
+    }
     var snaps = state.snapshots || [];
     var driftTb = $('driftTable'), driftEmpty = $('driftEmpty');
     var selA = $('driftSelA'), selB = $('driftSelB');
@@ -2201,6 +2218,26 @@
     saveXlsx(buildWorkbook(), '排产系统数据_'+today()+'.xlsx');
     toast('已导出 Excel 数据文件');
   }
+  // 导出全部快照为 Excel：Sheet1 快照列表（时间/来源/备注/需求数/预警数/批次数）+ Sheet2 批次明细
+  function downloadSnapshots(){
+    if(typeof XLSX === 'undefined'){ toast('Excel 组件未加载，无法导出'); return; }
+    var snaps = state.snapshots || [];
+    if(!snaps.length){ toast('暂无快照可下载'); return; }
+    function srcName(s){ return s==='auto'?'自动排产':(s==='periodic'?'定期快照':(s==='manual'?'人工快照':(s||'未知'))); }
+    var list = [['序号','快照时间','来源','备注','需求数','预警数','批次数']];
+    var rows = [['快照时间','来源','备注','批次ID','需求ID','项目','工序','产线','开始','结束','状态','到期日']];
+    snaps.forEach(function(s, i){
+      list.push([i+1, (s.time||'').slice(0,16).replace('T',' '), srcName(s.source), s.note||'', s.reqCount||0, s.warningCount||0, (s.batches||[]).length]);
+      (s.batches||[]).forEach(function(b){
+        rows.push([(s.time||'').slice(0,16).replace('T',' '), srcName(s.source), s.note||'', b.id||'', b.reqId||'', b.project||'', b.type||'', b.line||'', b.start||'', b.end||'', b.status||'', b.dueDate||'']);
+      });
+    });
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(list), '快照列表');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '批次明细');
+    saveXlsx(wb, '排产快照_'+today()+'.xlsx');
+    toast('已下载快照数据（共 '+snaps.length+' 份快照）');
+  }
   function importData(file){
     var isJson = /\.json$/i.test(file.name||'');
     var reader = new FileReader();
@@ -2486,8 +2523,9 @@
         ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, ganttRange: state.ganttRange||{preset:'all',start:'',end:''}, trendRange: state.trendRange||{preset:'all',start:'',end:''}, trendLink: !!state.trendLink, refData: state.refData||null, snapshots: state.snapshots||[] };
       save(); renderAll(); renderRules(); toast('已清空全部数据');
     });
-    // 保存人工快照 / 清空快照
+    // 保存人工快照 / 清空快照 / 下载快照
     if($('btnManualSnap')) $('btnManualSnap').addEventListener('click', saveManualSnapshot);
+    if($('btnDownloadSnap')) $('btnDownloadSnap').addEventListener('click', downloadSnapshots);
     // 漂移分析：对比快照选择器
     if($('driftSelA')) $('driftSelA').addEventListener('change', renderDrift);
     if($('driftSelB')) $('driftSelB').addEventListener('change', renderDrift);
