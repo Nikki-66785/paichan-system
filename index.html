@@ -144,7 +144,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.9.4（①清空/重置前自动下载备份 ②快照分类限额 ③漂移分析可任选两次快照对比+汇总 ④云端同步冲突提示 ⑤人工快照备注改为内嵌输入框 ⑥趋势图可与甘特图联动）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.9.4</span></h1>
+  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.9.5（①清空/重置前自动下载备份 ②快照分类限额 ③漂移分析可任选两次快照对比+汇总+新增/取消批次统计 ④云端同步冲突提示 ⑤人工快照备注改为内嵌输入框 ⑥趋势图可与甘特图联动）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.9.5</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -448,7 +448,7 @@
         <select id="driftSelB" title="对比快照（较新版本）" style="max-width:280px"></select>
         <span class="hint" id="driftSummary"></span>
       </div>
-      <div class="hint" id="driftHint">快照来源：自动排产（每次排产后）、定期快照（每 2 周自动保存，含人工调整结果）、人工快照（手动保存的关键节点版本）。默认对比最近两次快照，可在上方下拉任选基准与对比版本（含人工快照）。</div>
+      <div class="hint" id="driftHint">快照来源：自动排产（每次排产后）、定期快照（每 2 周自动保存，含人工调整结果）、人工快照（手动保存的关键节点版本）。默认对比最近两次快照，可在上方下拉任选基准与对比版本（含人工快照）。除日期漂移外，对比快照中「新增」的批次（基准无此批次）与「取消」的批次（基准有、对比已移除）也会在表中列出并计入汇总。</div>
       <div class="scroll-tbl" style="max-height:320px">
         <table class="tbl" id="driftTable">
           <thead><tr><th>类型</th><th>项目</th><th>产线</th><th>上次排产</th><th>本次排产</th><th>漂移(天)</th><th>来源</th><th>状态</th></tr></thead>
@@ -596,7 +596,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.9.4（云端共享）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.9.5（云端共享）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -651,10 +651,10 @@
 <div id="toast"></div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=294"></script>
-<script src="xlsx.full.min.js?v=294"></script>
-<script src="cloud.js?v=294"></script>
-<script src="scheduling.js?v=294"></script>
+<script src="cloudbase.full.js?v=295"></script>
+<script src="xlsx.full.min.js?v=295"></script>
+<script src="cloud.js?v=295"></script>
+<script src="scheduling.js?v=295"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -1495,29 +1495,43 @@
     // 若反向选择（基准晚于对比），按时间自动交换，保证「上次 → 本次」方向正确
     if(new Date(prev.time).getTime() > new Date(last.time).getTime()){ var tmp = prev; prev = last; last = tmp; }
     $('driftInfo').textContent = (prev.time||'').slice(0,10)+' → '+(last.time||'').slice(0,10)+'（'+snapSrcName(prev.source)+' → '+snapSrcName(last.source)+'）';
-    // 按 reqId+type+line 匹配，找日期漂移
-    var driftRows = [];
+    // 按 reqId+type+line 匹配：找日期漂移、新增批次（对比有、基准无）、取消批次（基准有、对比无）
+    var driftRows = [], addedRows = [], removedRows = [];
+    var prevIdx = {};
+    (prev.batches||[]).forEach(function(pb){ if(pb.reqId) prevIdx[pb.reqId+'|'+pb.type+'|'+pb.line] = pb; });
     (last.batches||[]).forEach(function(nb){
       if(!nb.reqId) return;
-      var match = (prev.batches||[]).find(function(pb){ return pb.reqId===nb.reqId && pb.type===nb.type && pb.line===nb.line; });
-      if(match){
-        var dStart = U.diff(U.p(nb.start), U.p(match.start));
-        var dEnd = U.diff(U.p(nb.end), U.p(match.end));
-        if(dStart !== 0 || dEnd !== 0){
-          driftRows.push({ nb:nb, match:match, dStart:dStart, dEnd:dEnd });
-        }
+      var match = prevIdx[nb.reqId+'|'+nb.type+'|'+nb.line];
+      if(!match){ addedRows.push(nb); return; }
+      var dStart = U.diff(U.p(nb.start), U.p(match.start));
+      var dEnd = U.diff(U.p(nb.end), U.p(match.end));
+      if(dStart !== 0 || dEnd !== 0){
+        driftRows.push({ nb:nb, match:match, dStart:dStart, dEnd:dEnd });
+      }
+    });
+    (prev.batches||[]).forEach(function(pb){
+      if(!pb.reqId) return;
+      if(!(last.batches||[]).some(function(nb){ return nb.reqId===pb.reqId && nb.type===pb.type && nb.line===pb.line; })){
+        removedRows.push(pb);
       }
     });
     driftRows.sort(function(a,b){ return Math.abs(b.dStart)+Math.abs(b.dEnd) - Math.abs(a.dStart)-Math.abs(a.dEnd); });
-    // 汇总：变动批次数 / 平均漂移天数（开始与完成两端均值）/ 漂移≥7天批次数
+    function byStart(a, b){ return (new Date(a.start||0).getTime()) - (new Date(b.start||0).getTime()); }
+    addedRows.sort(byStart); removedRows.sort(byStart);
+    // 汇总：变动批次数 / 平均漂移天数（开始与完成两端均值）/ 漂移≥7天批次数 / 新增批次 / 取消批次
     var n = driftRows.length, sumDrift = 0, sev = 0;
     driftRows.forEach(function(x){
       sumDrift += Math.abs(x.dStart) + Math.abs(x.dEnd);
       if(Math.abs(x.dStart) >= 7 || Math.abs(x.dEnd) >= 7) sev++;
     });
-    $('driftSummary').innerHTML = n
+    var sumTxt = n
       ? ('变动 <b>'+n+'</b> 个批次 · 平均漂移 <b>'+(Math.round(sumDrift/(2*n)*10)/10)+'</b> 天 · 漂移≥7天 <b style="color:#dc2626">'+sev+'</b> 个')
-      : '两次快照批次日期无变化';
+      : '批次日期无变化';
+    if(addedRows.length) sumTxt += ' · 新增 <b style="color:#16a34a">'+addedRows.length+'</b> 个';
+    if(removedRows.length) sumTxt += ' · 取消 <b style="color:#c2410c">'+removedRows.length+'</b> 个';
+    $('driftSummary').innerHTML = sumTxt;
+    function srcChainTd(){ return '<td style="font-size:11px;color:var(--sub)">'+snapSrcName(prev.source)+' → '+snapSrcName(last.source)+'</td>'; }
+    function stTd(b){ return '<td><span class="st '+(b.status==='预警'?'warn':(b.locked?'lock':'auto'))+'">'+esc(b.status||'-')+'</span></td>'; }
     driftRows.forEach(function(x){
       var tr = document.createElement('tr');
       var driftColor = (Math.abs(x.dStart)>=7 || Math.abs(x.dEnd)>=7) ? '#dc2626' : (Math.abs(x.dStart)>=1 ? '#f59e0b' : '#22c55e');
@@ -1528,11 +1542,39 @@
         '<td style="color:var(--sub)">'+x.match.start+' ~ '+x.match.end+'</td>'+
         '<td>'+x.nb.start+' ~ '+x.nb.end+'</td>'+
         '<td style="color:'+driftColor+';font-weight:600">'+(x.dStart>0?'+':'')+x.dStart+' / '+(x.dEnd>0?'+':'')+x.dEnd+'</td>'+
-        '<td style="font-size:11px;color:var(--sub)">'+snapSrcName(prev.source)+' → '+snapSrcName(last.source)+'</td>'+
-        '<td><span class="st '+(x.nb.status==='预警'?'warn':(x.nb.locked?'lock':'auto'))+'">'+esc(x.nb.status||'-')+'</span></td>';
+        srcChainTd()+
+        stTd(x.nb);
       driftTb.querySelector('tbody').appendChild(tr);
     });
-    if(!driftRows.length) driftEmpty.style.display = '';
+    // 新增批次：对比快照新增（基准无此批次）
+    addedRows.forEach(function(nb){
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><span class="badge b-green">新增</span></td>'+
+        '<td>'+esc(nb.project||'-')+'</td>'+
+        '<td>'+esc(nb.line)+'</td>'+
+        '<td style="color:var(--sub)">—</td>'+
+        '<td>'+nb.start+' ~ '+nb.end+'</td>'+
+        '<td style="color:#16a34a;font-weight:600">新增</td>'+
+        srcChainTd()+
+        stTd(nb);
+      driftTb.querySelector('tbody').appendChild(tr);
+    });
+    // 取消批次：基准有、对比已移除
+    removedRows.forEach(function(pb){
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><span class="badge b-orange">取消</span></td>'+
+        '<td>'+esc(pb.project||'-')+'</td>'+
+        '<td>'+esc(pb.line)+'</td>'+
+        '<td>'+pb.start+' ~ '+pb.end+'</td>'+
+        '<td style="color:var(--sub)">—</td>'+
+        '<td style="color:#c2410c;font-weight:600">取消</td>'+
+        srcChainTd()+
+        stTd(pb);
+      driftTb.querySelector('tbody').appendChild(tr);
+    });
+    if(!driftRows.length && !addedRows.length && !removedRows.length) driftEmpty.style.display = '';
   }
 
   // ---------- 渲染：排产分析 ----------
