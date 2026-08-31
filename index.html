@@ -144,7 +144,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.9.1（系统更名：临床生产智能排产系统）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.9.1</span></h1>
+  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.9.2（修复 EQP 设备维护需求提交入口：表单两角色可见，EQP 选项仅生产计划可填）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.9.2</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -187,8 +187,8 @@
     <div id="warnBanner" class="warn-banner"></div>
     <div id="newReqBanner" class="newreq-banner"></div>
     <div class="grid2">
-      <div class="card req-only">
-        <h2>新增需求 <span class="tag">需求方填写</span></h2>
+      <div class="card">
+        <h2>新增需求 <span class="tag">需求方填写 · 生产计划可填设备维护</span></h2>
         <form id="reqForm" autocomplete="off">
           <div class="form-row">
             <div class="f"><label>产品类型 *</label>
@@ -574,7 +574,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.9.1（云端共享）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.9.2（云端共享）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -629,10 +629,10 @@
 <div id="toast"></div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=291"></script>
-<script src="xlsx.full.min.js?v=291"></script>
-<script src="cloud.js?v=291"></script>
-<script src="scheduling.js?v=291"></script>
+<script src="cloudbase.full.js?v=292"></script>
+<script src="xlsx.full.min.js?v=292"></script>
+<script src="cloud.js?v=292"></script>
+<script src="scheduling.js?v=292"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
