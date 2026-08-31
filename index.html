@@ -144,7 +144,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.9.3（月度批次趋势新增时间范围筛选：全部/近1月/近3月/近6月/自定义，与甘特图窗口相互独立）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.9.3</span></h1>
+  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.9.4（①清空/重置前自动下载备份 ②快照分类限额 ③漂移分析可任选两次快照对比+汇总 ④云端同步冲突提示 ⑤人工快照备注改为内嵌输入框 ⑥趋势图可与甘特图联动）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.9.4</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -431,6 +431,7 @@
         <span class="hint">每次「自动排产」及每 2 周自动记录快照，也可手动保存人工快照，可对比日期漂移与月度批次趋势</span>
         <span class="spacer" style="flex:1"></span>
         <button class="btn sm plan-only" id="btnManualSnap">📸 保存人工快照</button>
+        <input id="manualSnapNote" class="plan-only" placeholder="快照备注（可选，50字内，如：3月排产会议确认版）" title="人工快照备注，点击「保存人工快照」时随快照记录" style="width:230px;padding:4px 10px;border:1px solid rgba(100,116,139,.35);border-radius:8px;font-size:12px;background:rgba(255,255,255,.85);color:#0f172a;outline:none">
         <button class="btn sm" id="btnClearSnap">🗑️ 清空快照</button>
       </div>
     </div>
@@ -439,7 +440,15 @@
     <!-- 日期漂移对比表 -->
     <div class="card">
       <h2>批次日期漂移分析 <span class="tag" id="driftInfo">对比最近两次排产</span></h2>
-      <div class="hint" id="driftHint">快照来源：自动排产（每次排产后）、定期快照（每 2 周自动保存，含人工调整结果）、人工快照（手动保存的关键节点版本），以下为最近两次快照中同一需求批次日期的变动情况。</div>
+      <div class="toolbar" style="margin-bottom:8px">
+        <label class="hint">对比快照
+          <select id="driftSelA" title="基准快照（较早版本）" style="max-width:280px"></select>
+        </label>
+        <span class="hint">→</span>
+        <select id="driftSelB" title="对比快照（较新版本）" style="max-width:280px"></select>
+        <span class="hint" id="driftSummary"></span>
+      </div>
+      <div class="hint" id="driftHint">快照来源：自动排产（每次排产后）、定期快照（每 2 周自动保存，含人工调整结果）、人工快照（手动保存的关键节点版本）。默认对比最近两次快照，可在上方下拉任选基准与对比版本（含人工快照）。</div>
       <div class="scroll-tbl" style="max-height:320px">
         <table class="tbl" id="driftTable">
           <thead><tr><th>类型</th><th>项目</th><th>产线</th><th>上次排产</th><th>本次排产</th><th>漂移(天)</th><th>来源</th><th>状态</th></tr></thead>
@@ -460,7 +469,8 @@
           <label><input type="radio" name="trendCat" value="DP">DP 制剂</label>
         </span>
         <span class="spacer" style="flex:1"></span>
-        <label class="hint">时间范围 <select id="trendRange" title="月度批次趋势时间窗口（按批次开始日期月份统计，与甘特图窗口相互独立）">
+        <label class="hint" style="display:flex;align-items:center;gap:4px;cursor:pointer" title="勾选后月度批次趋势跟随甘特图时间窗口，甘特图调整范围时同步刷新；取消勾选恢复独立设置"><input type="checkbox" id="trendLink">与甘特图联动</label>
+        <label class="hint">时间范围 <select id="trendRange" title="月度批次趋势时间窗口（按批次开始日期月份统计，默认与甘特图窗口相互独立；勾选「与甘特图联动」后跟随甘特图窗口）">
           <option value="all" selected>全部</option>
           <option value="1m">近1个月</option>
           <option value="3m">近3个月</option>
@@ -554,7 +564,7 @@
         <p>· <b>批量解锁与刷新自动排产</b>：生产计划可在批次表首列勾选多个锁定批次「批量解锁」；「刷新自动排产」按当前需求重新排产所有未锁定批次（锁定批次与终态批次保持不变）。</p>
         <p>· <b>需求导出</b>：需求列表可一键导出 Excel/CSV（项目、类型、批次类型、交期、状态、规格、阶段、预算、首次生产分子信息等全部填报字段）。</p>
         <p>· <b>甘特图视图</b>：产线支持多选过滤；时间范围（全部/近1月/近3月/近6月/自定义）与时间轴密度（px/天）、刻度单位（月/周）可调，设置保存在本地。</p>
-        <p>· <b>排产分析</b>：每次「自动排产」记录快照（自动排产），每 2 周自动记录一次定期快照（含人工调整结果），可分析批次日期漂移、月度批次趋势与准时率；快照最多保留 30 条。</p>
+        <p>· <b>排产分析</b>：每次「自动排产」记录快照（自动排产），每 2 周自动记录一次定期快照（含人工调整结果），可分析批次日期漂移、月度批次趋势与准时率；快照按来源分别限额保留：自动排产 15 条 / 定期 10 条 / 人工 5 条。</p>
         <p>· <b>权限说明</b>：「📊 参考数据」与「⚙️ 规则参数」仅「🏭 生产计划」角色可见与操作；需求方角色不显示入口。</p>
         <p>· <b>参考数据</b>：「产线情况 / 制剂产能 / 人员配置 / 需求字段矩阵」四张表可修订（生产计划角色），保存后本地持久化。</p>
       </div>
@@ -586,7 +596,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.9.3（云端共享）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.9.4（云端共享）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -641,10 +651,10 @@
 <div id="toast"></div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=293"></script>
-<script src="xlsx.full.min.js?v=293"></script>
-<script src="cloud.js?v=293"></script>
-<script src="scheduling.js?v=293"></script>
+<script src="cloudbase.full.js?v=294"></script>
+<script src="xlsx.full.min.js?v=294"></script>
+<script src="cloud.js?v=294"></script>
+<script src="scheduling.js?v=294"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -718,7 +728,7 @@
   };
 
   var state = { requirements: [], batches: [], rules: null, role: 'requester', user: '',
-    ganttAxis: { px: 2.5, unit: 'month' }, ganttLines: null, ganttRange: { preset: 'all', start: '', end: '' }, trendRange: { preset: 'all', start: '', end: '' }, refData: null, snapshots: [] };
+    ganttAxis: { px: 2.5, unit: 'month' }, ganttLines: null, ganttRange: { preset: 'all', start: '', end: '' }, trendRange: { preset: 'all', start: '', end: '' }, trendLink: false, refData: null, snapshots: [] };
   var editingId = null;
   var refEditKey = null; // 正在编辑的参考数据表 key（lines/caps/staff/fields）
 
@@ -744,6 +754,7 @@
         if(state.ganttLines==null) state.ganttLines=null;
         if(!state.ganttRange) state.ganttRange={ preset:'all', start:'', end:'' };
         if(!state.trendRange) state.trendRange={ preset:'all', start:'', end:'' };
+        if(state.trendLink==null) state.trendLink=false;
         if(!state.refData) state.refData=null;
         if(!state.snapshots) state.snapshots=[];
         return true; }
@@ -752,9 +763,9 @@
   }
   function resetToHistory(){
     var hist = window.HISTORY_BATCHES || {CB:[],DS:[],DP:[]};
-    var keep = { role: state.role||'requester', user: state.user||'', ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, ganttRange: state.ganttRange||{preset:'all',start:'',end:''}, trendRange: state.trendRange||{preset:'all',start:'',end:''}, refData: state.refData||null, snapshots: state.snapshots||[] };
+    var keep = { role: state.role||'requester', user: state.user||'', ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, ganttRange: state.ganttRange||{preset:'all',start:'',end:''}, trendRange: state.trendRange||{preset:'all',start:'',end:''}, trendLink: !!state.trendLink, refData: state.refData||null, snapshots: state.snapshots||[] };
     state = { requirements: [], batches: importHistory(hist), rules: null, role: keep.role, user: keep.user,
-      ganttAxis: keep.ganttAxis, ganttLines: keep.ganttLines, ganttRange: keep.ganttRange, trendRange: keep.trendRange, refData: keep.refData, snapshots: keep.snapshots };
+      ganttAxis: keep.ganttAxis, ganttLines: keep.ganttLines, ganttRange: keep.ganttRange, trendRange: keep.trendRange, trendLink: keep.trendLink, refData: keep.refData, snapshots: keep.snapshots };
     save(); renderAll(); renderRules();
   }
   // 历史遗留数据修复：批次 id 唯一化（旧版本跨次排产复用 NB1/NB2...，会导致人工调整命中错误批次）
@@ -1122,8 +1133,8 @@
           project:b.project||'', status:b.status, dueDate: (state.requirements.find(function(r){return r.id===b.reqId;})||{}).dueDate||'' };
       })
     });
-    // 保留最多 30 条快照
-    if(state.snapshots.length > 30) state.snapshots = state.snapshots.slice(-30);
+    // 按来源限额保留快照（auto 15 / periodic 10 / manual 5）
+    trimSnapshots();
     save(); renderAll();
     // 告警横幅
     var warnBanner = $('warnBanner');
@@ -1137,6 +1148,21 @@
       warnBanner.classList.remove('show');
     }
     toast('排产完成：生成 '+res.batches.length+' 个草案批次，待生产计划确认');
+  }
+  // 快照分类限额：auto 15 / periodic 10 / manual 5（总上限 30 不变）
+  // 按来源分别保留最新 N 条，避免频繁「自动排产」把关键的人工/定期快照挤出 30 条窗口
+  var SNAP_CAP = { auto:15, periodic:10, manual:5 };
+  function trimSnapshots(){
+    if(!state.snapshots) state.snapshots = [];
+    Object.keys(SNAP_CAP).forEach(function(src){
+      var idxs = [];
+      state.snapshots.forEach(function(s,i){ if((s.source||'auto')===src) idxs.push(i); });
+      if(idxs.length > SNAP_CAP[src]){
+        var drop = {};
+        idxs.slice(0, idxs.length - SNAP_CAP[src]).forEach(function(i){ drop[i] = 1; });
+        state.snapshots = state.snapshots.filter(function(s,i){ return !drop[i]; });
+      }
+    });
   }
   // 每 2 周定期保存一次快照（source=periodic）：捕捉自动排产之后的人工调整结果（改日期/锁定/终态等）
   function maybeSavePeriodicSnapshot(){
@@ -1167,16 +1193,16 @@
           project:b.project||'', status:b.status, dueDate: (state.requirements.find(function(r){return r.id===b.reqId;})||{}).dueDate||'' };
       })
     });
-    if(state.snapshots.length > 30) state.snapshots = state.snapshots.slice(-30);
+    trimSnapshots();
     save();
     return true;
   }
   // 手动保存人工快照（source=manual）：关键节点版本存档（如人工调整后、会议确认后），参与漂移分析
+  // 备注来自卡片内嵌输入框 manualSnapNote（v2.9.4 起替代原生 prompt，保存后自动清空）
   function saveManualSnapshot(){
     if(!state.batches.length){ toast('当前无批次数据，无法保存快照'); return; }
-    var input = prompt('人工快照备注（可选，50 字内，如：3月排产会议确认版）');
-    if(input === null) return; // 用户取消
-    var note = (input || '').trim().slice(0, 50);
+    var noteEl = $('manualSnapNote');
+    var note = ((noteEl && noteEl.value) || '').trim().slice(0, 50);
     if(!state.snapshots) state.snapshots = [];
     var warnN = state.batches.filter(function(b){return b.status==='预警';}).length;
     state.snapshots.push({
@@ -1191,8 +1217,9 @@
           project:b.project||'', status:b.status, dueDate: (state.requirements.find(function(r){return r.id===b.reqId;})||{}).dueDate||'' };
       })
     });
-    if(state.snapshots.length > 30) state.snapshots = state.snapshots.slice(-30);
+    trimSnapshots();
     save(); renderAnalysis();
+    if(noteEl) noteEl.value = '';
     toast('人工快照已保存' + (note ? '：'+note : ''));
   }
   function clearPlan(){
@@ -1436,6 +1463,78 @@
     $('ganttLegend').appendChild(L);
   }
 
+  // ---------- 渲染：日期漂移（可任选两次快照对比，默认最近两次） ----------
+  function renderDrift(){
+    var snaps = state.snapshots || [];
+    var driftTb = $('driftTable'), driftEmpty = $('driftEmpty');
+    var selA = $('driftSelA'), selB = $('driftSelB');
+    if(!driftTb || !selA || !selB) return;
+    driftTb.querySelector('tbody').innerHTML = '';
+    // 填充快照选择器（快照列表未变时保留当前选择；新增/淘汰快照后重置为默认「最近两次」）
+    function optLabel(s, i){
+      return '#'+(i+1)+' '+(s.time||'').slice(0,10)+' '+snapSrcName(s.source)+(s.note?'（'+s.note+'）':'');
+    }
+    var listKey = snaps.map(function(s){ return (s.time||'')+'|'+(s.source||'')+'|'+(s.note||''); }).join(';');
+    var curA = selA.value, curB = selB.value;
+    if(listKey !== renderDrift._key){ curA = ''; curB = ''; renderDrift._key = listKey; }
+    var opts = snaps.map(function(s,i){ return '<option value="'+i+'">'+esc(optLabel(s,i))+'</option>'; }).join('');
+    selA.innerHTML = opts; selB.innerHTML = opts;
+    var iA = parseInt(curA,10), iB = parseInt(curB,10);
+    if(!(iA>=0 && iA<snaps.length)) iA = Math.max(0, snaps.length-2);
+    if(!(iB>=0 && iB<snaps.length)) iB = Math.max(0, snaps.length-1);
+    if(iA === iB && snaps.length >= 2){ iA = (iB-1 >= 0) ? iB-1 : iB+1; } // 基准与对比不能是同一个快照
+    selA.value = String(iA); selB.value = String(iB);
+    if(snaps.length < 2){
+      driftEmpty.style.display = '';
+      $('driftInfo').textContent = '需至少两次快照';
+      $('driftSummary').innerHTML = '';
+      return;
+    }
+    driftEmpty.style.display = 'none';
+    var prev = snaps[iA], last = snaps[iB];
+    // 若反向选择（基准晚于对比），按时间自动交换，保证「上次 → 本次」方向正确
+    if(new Date(prev.time).getTime() > new Date(last.time).getTime()){ var tmp = prev; prev = last; last = tmp; }
+    $('driftInfo').textContent = (prev.time||'').slice(0,10)+' → '+(last.time||'').slice(0,10)+'（'+snapSrcName(prev.source)+' → '+snapSrcName(last.source)+'）';
+    // 按 reqId+type+line 匹配，找日期漂移
+    var driftRows = [];
+    (last.batches||[]).forEach(function(nb){
+      if(!nb.reqId) return;
+      var match = (prev.batches||[]).find(function(pb){ return pb.reqId===nb.reqId && pb.type===nb.type && pb.line===nb.line; });
+      if(match){
+        var dStart = U.diff(U.p(nb.start), U.p(match.start));
+        var dEnd = U.diff(U.p(nb.end), U.p(match.end));
+        if(dStart !== 0 || dEnd !== 0){
+          driftRows.push({ nb:nb, match:match, dStart:dStart, dEnd:dEnd });
+        }
+      }
+    });
+    driftRows.sort(function(a,b){ return Math.abs(b.dStart)+Math.abs(b.dEnd) - Math.abs(a.dStart)-Math.abs(a.dEnd); });
+    // 汇总：变动批次数 / 平均漂移天数（开始与完成两端均值）/ 漂移≥7天批次数
+    var n = driftRows.length, sumDrift = 0, sev = 0;
+    driftRows.forEach(function(x){
+      sumDrift += Math.abs(x.dStart) + Math.abs(x.dEnd);
+      if(Math.abs(x.dStart) >= 7 || Math.abs(x.dEnd) >= 7) sev++;
+    });
+    $('driftSummary').innerHTML = n
+      ? ('变动 <b>'+n+'</b> 个批次 · 平均漂移 <b>'+(Math.round(sumDrift/(2*n)*10)/10)+'</b> 天 · 漂移≥7天 <b style="color:#dc2626">'+sev+'</b> 个')
+      : '两次快照批次日期无变化';
+    driftRows.forEach(function(x){
+      var tr = document.createElement('tr');
+      var driftColor = (Math.abs(x.dStart)>=7 || Math.abs(x.dEnd)>=7) ? '#dc2626' : (Math.abs(x.dStart)>=1 ? '#f59e0b' : '#22c55e');
+      tr.innerHTML =
+        '<td><span class="badge '+(TYPE_BADGE[x.nb.type]||'b-gray')+'">'+esc(x.nb.type)+'</span></td>'+
+        '<td>'+esc(x.nb.project||'-')+'</td>'+
+        '<td>'+esc(x.nb.line)+'</td>'+
+        '<td style="color:var(--sub)">'+x.match.start+' ~ '+x.match.end+'</td>'+
+        '<td>'+x.nb.start+' ~ '+x.nb.end+'</td>'+
+        '<td style="color:'+driftColor+';font-weight:600">'+(x.dStart>0?'+':'')+x.dStart+' / '+(x.dEnd>0?'+':'')+x.dEnd+'</td>'+
+        '<td style="font-size:11px;color:var(--sub)">'+snapSrcName(prev.source)+' → '+snapSrcName(last.source)+'</td>'+
+        '<td><span class="st '+(x.nb.status==='预警'?'warn':(x.nb.locked?'lock':'auto'))+'">'+esc(x.nb.status||'-')+'</span></td>';
+      driftTb.querySelector('tbody').appendChild(tr);
+    });
+    if(!driftRows.length) driftEmpty.style.display = '';
+  }
+
   // ---------- 渲染：排产分析 ----------
   function renderAnalysis(){
     var snaps = state.snapshots || [];
@@ -1463,47 +1562,8 @@
       card('交期预警', warnCount, '#f59e0b')+
       card('准时率', onTimePct+'%', onTimePct>=80?'#22c55e':'#dc2626')+
       card('快照记录', snaps.length+' 条', '#06b6d4');
-    // 日期漂移：对比最近两次快照（auto=自动排产 / periodic=每2周定期，含人工调整结果）
-    var driftTb = $('driftTable').querySelector('tbody');
-    driftTb.innerHTML = '';
-    var driftEmpty = $('driftEmpty');
-    if(snaps.length < 2){
-      driftEmpty.style.display = '';
-      $('driftInfo').textContent = '需至少两次快照';
-    } else {
-      driftEmpty.style.display = 'none';
-      var prev = snaps[snaps.length-2], last = snaps[snaps.length-1];
-      $('driftInfo').textContent = (prev.time||'').slice(0,10)+' → '+(last.time||'').slice(0,10)+'（'+snapSrcName(prev.source)+' → '+snapSrcName(last.source)+'）';
-      // 按 reqId+type+line 匹配，找日期漂移
-      var driftRows = [];
-      last.batches.forEach(function(nb){
-        if(!nb.reqId) return;
-        var match = prev.batches.find(function(pb){ return pb.reqId===nb.reqId && pb.type===nb.type && pb.line===nb.line; });
-        if(match){
-          var dStart = U.diff(U.p(nb.start), U.p(match.start));
-          var dEnd = U.diff(U.p(nb.end), U.p(match.end));
-          if(dStart !== 0 || dEnd !== 0){
-            driftRows.push({ nb:nb, match:match, dStart:dStart, dEnd:dEnd });
-          }
-        }
-      });
-      driftRows.sort(function(a,b){ return Math.abs(b.dStart)+Math.abs(b.dEnd) - Math.abs(a.dStart)-Math.abs(a.dEnd); });
-      driftRows.forEach(function(d){
-        var tr = document.createElement('tr');
-        var driftColor = (Math.abs(d.dStart)>=7 || Math.abs(d.dEnd)>=7) ? '#dc2626' : (Math.abs(d.dStart)>=1 ? '#f59e0b' : '#22c55e');
-        tr.innerHTML =
-          '<td><span class="badge '+(TYPE_BADGE[d.nb.type]||'b-gray')+'">'+esc(d.nb.type)+'</span></td>'+
-          '<td>'+esc(d.nb.project||'-')+'</td>'+
-          '<td>'+esc(d.nb.line)+'</td>'+
-          '<td style="color:var(--sub)">'+d.match.start+' ~ '+d.match.end+'</td>'+
-          '<td>'+d.nb.start+' ~ '+d.nb.end+'</td>'+
-          '<td style="color:'+driftColor+';font-weight:600">'+(d.dStart>0?'+':'')+d.dStart+' / '+(d.dEnd>0?'+':'')+d.dEnd+'</td>'+
-          '<td style="font-size:11px;color:var(--sub)">'+snapSrcName(prev.source)+' → '+snapSrcName(last.source)+'</td>'+
-          '<td><span class="st '+(d.nb.status==='预警'?'warn':(d.nb.locked?'lock':'auto'))+'">'+esc(d.nb.status||'-')+'</span></td>';
-        driftTb.appendChild(tr);
-      });
-      if(!driftRows.length) driftEmpty.style.display = '';
-    }
+    // 日期漂移：可任选两次快照对比（默认最近两次；auto=自动排产 / periodic=每2周定期，含人工调整结果）
+    renderDrift();
     // 月度批次趋势
     renderTrend();
     // 排产历史记录
@@ -1542,8 +1602,9 @@
     var SERIES = { Mab:['Mab','CM DP'], ADC:['ADC DS','ADC DP'] };      // 图例系列（产品系列分色）
     var CATS = { CB:['MCB','WCB'], DS:['Mab','ADC DS'], DP:['CM DP','ADC DP','APS','冻干放大测试'] }; // 工序筛选
     var COLORS = { Mab:'#8b5cf6', ADC:'#06b6d4', other:'#94a3b8' };
-    // 时间范围窗口（trendRange）：all=全部 / 1m/3m/6m=近N月 / custom=自定义起止（按批次开始日期所在月份过滤，与甘特图窗口相互独立）
-    var rg = state.trendRange || { preset:'all', start:'', end:'' };
+    // 时间范围窗口：默认独立（trendRange）；勾选「与甘特图联动」(trendLink) 后跟随甘特图窗口（ganttRange）
+    // all=全部 / 1m/3m/6m=近N月 / custom=自定义起止（按批次开始日期所在月份过滤）
+    var rg = state.trendLink ? (state.ganttRange||{ preset:'all', start:'', end:'' }) : (state.trendRange || { preset:'all', start:'', end:'' });
     var wStartK = '', wEndK = '';
     if(rg.preset === '1m' || rg.preset === '3m' || rg.preset === '6m'){
       var t0 = new Date(), backM = { '1m':1, '3m':3, '6m':6 }[rg.preset];
@@ -1596,6 +1657,17 @@
     html += '</div>';
     html += '<div class="legend" style="margin-top:8px"><span><i style="background:'+COLORS.Mab+'"></i>Mab（Mab / CM DP）</span><span><i style="background:'+COLORS.ADC+'"></i>ADC（ADC DS / ADC DP）</span><span><i style="background:'+COLORS.other+'"></i>其他（CB / APS / 维护等）</span></div>';
     el.innerHTML = html;
+  }
+  // 联动开关：联动时禁用趋势图独立范围控件（避免两处设置打架）
+  function syncTrendRangeDisabled(){
+    var sel = $('trendRange'), s = $('trendRangeStart'), e = $('trendRangeEnd');
+    if(!sel) return;
+    var dis = !!state.trendLink;
+    sel.disabled = dis;
+    if(s) s.disabled = dis;
+    if(e) e.disabled = dis;
+    sel.title = dis ? '已联动甘特图时间窗口：调整甘特图范围即可同步；取消勾选「与甘特图联动」可独立设置'
+      : '月度批次趋势时间窗口（按批次开始日期月份统计，默认与甘特图窗口相互独立）';
   }
   function card(title, value, color){
     return '<div class="card" style="padding:14px 16px;text-align:center">'+
@@ -2053,8 +2125,8 @@
     a.click();
     setTimeout(function(){URL.revokeObjectURL(a.href);}, 1000);
   }
-  function exportData(){
-    if(typeof XLSX === 'undefined'){ toast('Excel 组件未加载，无法导出'); return; }
+  // 构建完整数据工作簿（需求 + 批次 + 配置），导出与自动备份共用
+  function buildWorkbook(){
     var wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, toSheet(state.requirements), '需求');
     XLSX.utils.book_append_sheet(wb, toSheet(state.batches), '排产批次');
@@ -2064,11 +2136,27 @@
       ['ganttLines', state.ganttLines==null?'':JSON.stringify(state.ganttLines)],
       ['ganttRange', JSON.stringify(state.ganttRange||{preset:'all',start:'',end:''})],
       ['trendRange', JSON.stringify(state.trendRange||{preset:'all',start:'',end:''})],
+      ['trendLink', state.trendLink?'1':'0'],
       ['rules', state.rules==null?'':JSON.stringify(state.rules)],
       ['refData', state.refData==null?'':JSON.stringify(state.refData)],
       ['snapshots', JSON.stringify(state.snapshots||[])]];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(cfg), '配置');
-    saveXlsx(wb, '排产系统数据_'+today()+'.xlsx');
+    return wb;
+  }
+  // 危险操作（清空/重置）前自动下载带时间戳的完整备份，文件可直接通过「导入」恢复
+  // 返回 true=备份完成（或无数据可备），false=备份失败（调用方应中止操作）
+  function autoBackup(){
+    if(typeof XLSX === 'undefined'){ toast('⚠️ Excel 组件未加载，自动备份失败，操作已中止'); return false; }
+    if(!state.requirements.length && !state.batches.length && !(state.snapshots||[]).length) return true; // 无数据无需备份
+    var n = new Date();
+    var ts = today().replace(/-/g,'')+'_'+String(n.getHours()).padStart(2,'0')+String(n.getMinutes()).padStart(2,'0')+String(n.getSeconds()).padStart(2,'0');
+    saveXlsx(buildWorkbook(), '排产系统自动备份_'+ts+'.xlsx');
+    toast('已自动下载备份「排产系统自动备份_'+ts+'.xlsx」，可用于恢复');
+    return true;
+  }
+  function exportData(){
+    if(typeof XLSX === 'undefined'){ toast('Excel 组件未加载，无法导出'); return; }
+    saveXlsx(buildWorkbook(), '排产系统数据_'+today()+'.xlsx');
     toast('已导出 Excel 数据文件');
   }
   function importData(file){
@@ -2090,6 +2178,7 @@
               if(!row || !row[0]) return;
               var k = row[0], v = row[1];
               if(k==='rules' || k==='ganttAxis' || k==='ganttLines' || k==='ganttRange' || k==='trendRange' || k==='refData' || k==='snapshots'){ try { d[k] = v ? JSON.parse(v) : null; } catch(e){ d[k] = null; } }
+              else if(k==='trendLink'){ d.trendLink = (v==='1' || v===1 || v===true); }
               else d[k] = v;
             });
           }
@@ -2104,6 +2193,10 @@
         if(!state.trendRange) state.trendRange={ preset:'all', start:'', end:'' };
         if(!state.refData) state.refData=null;
         if(!state.snapshots) state.snapshots=[];
+        if(typeof state.trendLink === 'string') state.trendLink = state.trendLink==='1';
+        if(state.trendLink==null) state.trendLink=false;
+        $('trendLink').checked = !!state.trendLink;
+        syncTrendRangeDisabled();
         $('userName').value = state.user;
         save(); applyRole(); renderAll();
         toast('导入成功：需求 '+d.requirements.length+' 条，批次 '+d.batches.length+' 批');
@@ -2272,20 +2365,30 @@
       if(this.value === 'custom'){ $('ganttRangeDates').style.display = 'flex'; }
       else { $('ganttRangeDates').style.display = 'none'; }
       save(); renderGantt();
+      if(state.trendLink) renderTrend(); // 联动模式：甘特图窗口变化同步刷新趋势图
     });
     $('ganttRangeStart').addEventListener('change', function(){
       state.ganttRange = state.ganttRange || { preset:'custom', start:'', end:'' };
       state.ganttRange.start = this.value;
       save(); renderGantt();
+      if(state.trendLink) renderTrend();
     });
     $('ganttRangeEnd').addEventListener('change', function(){
       state.ganttRange = state.ganttRange || { preset:'custom', start:'', end:'' };
       state.ganttRange.end = this.value;
       save(); renderGantt();
+      if(state.trendLink) renderTrend();
     });
     // 月度批次趋势：工序筛选
     document.querySelectorAll('#trendFilter input[name="trendCat"]').forEach(function(r){
       r.addEventListener('change', function(){ renderTrend(); });
+    });
+    // 月度批次趋势：与甘特图联动开关（勾选后趋势图窗口跟随甘特图，独立范围控件禁用）
+    $('trendLink').addEventListener('change', function(){
+      state.trendLink = this.checked;
+      syncTrendRangeDisabled();
+      save(); renderTrend();
+      toast(this.checked ? '趋势图已联动甘特图时间窗口' : '趋势图时间范围已恢复独立');
     });
     // 月度批次趋势：时间范围窗口
     $('trendRange').addEventListener('change', function(){
@@ -2330,18 +2433,25 @@
     $('btnImport').addEventListener('click', function(){ $('importFile').click(); });
     $('importFile').addEventListener('change', function(){ if(this.files[0]) importData(this.files[0]); this.value=''; });
     $('btnReimportHist').addEventListener('click', function(){
-      if(confirm('重新导入历史计划将替换当前所有批次与需求，确定继续？')) resetToHistory();
+      if(confirm('重新导入历史计划将替换当前所有批次与需求，确定继续？系统将先自动下载备份。')){
+        if(autoBackup()) resetToHistory();
+      }
     });
     $('btnClearAll').addEventListener('click', function(){
-      if(!confirm('⚠️ 清空全部数据（需求、批次、规则），此操作不可恢复！建议先导出备份。确定继续？')) return;
+      if(!confirm('⚠️ 清空全部数据（需求、批次、规则），此操作不可恢复！系统将先自动下载备份（含快照）。确定继续？')) return;
+      if(!autoBackup()) return; // 备份失败（Excel 组件缺失等）→ 中止，避免无备份清空
       state = { requirements: [], batches: [], rules: null, role: state.role||'requester', user: state.user||'',
-        ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, ganttRange: state.ganttRange||{preset:'all',start:'',end:''}, trendRange: state.trendRange||{preset:'all',start:'',end:''}, refData: state.refData||null, snapshots: state.snapshots||[] };
+        ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, ganttRange: state.ganttRange||{preset:'all',start:'',end:''}, trendRange: state.trendRange||{preset:'all',start:'',end:''}, trendLink: !!state.trendLink, refData: state.refData||null, snapshots: state.snapshots||[] };
       save(); renderAll(); renderRules(); toast('已清空全部数据');
     });
     // 保存人工快照 / 清空快照
     if($('btnManualSnap')) $('btnManualSnap').addEventListener('click', saveManualSnapshot);
+    // 漂移分析：对比快照选择器
+    if($('driftSelA')) $('driftSelA').addEventListener('change', renderDrift);
+    if($('driftSelB')) $('driftSelB').addEventListener('change', renderDrift);
     if($('btnClearSnap')) $('btnClearSnap').addEventListener('click', function(){
-      if(!confirm('清空全部排产快照记录？此操作不可恢复。')) return;
+      if(!confirm('清空全部排产快照记录？此操作不可恢复，系统将先自动下载备份。')) return;
+      if(!autoBackup()) return;
       state.snapshots = []; save(); renderAnalysis(); toast('已清空排产快照');
     });
     // Tab 切换
@@ -2377,6 +2487,10 @@
     // 月度批次趋势时间范围控件同步
     state.trendRange = state.trendRange || { preset:'all', start:'', end:'' };
     $('trendRange').value = state.trendRange.preset || 'all';
+    // 联动开关同步（trendLink：勾选后趋势图跟随甘特图窗口）
+    state.trendLink = !!state.trendLink;
+    if($('trendLink')) $('trendLink').checked = state.trendLink;
+    syncTrendRangeDisabled();
     if(state.trendRange.preset === 'custom') $('trendRangeDates').style.display = 'flex';
     $('trendRangeStart').value = state.trendRange.start || '';
     $('trendRangeEnd').value = state.trendRange.end || '';
@@ -2394,7 +2508,7 @@
     if(window.CloudSync){
       window.CloudSync.connect({
         getReqs: function(){ return state.requirements; },
-        getPlan: function(){ return { batches: state.batches, rules: state.rules, refData: state.refData, ganttAxis: state.ganttAxis, ganttLines: state.ganttLines, ganttRange: state.ganttRange, trendRange: state.trendRange, snapshots: state.snapshots }; },
+        getPlan: function(){ return { batches: state.batches, rules: state.rules, refData: state.refData, ganttAxis: state.ganttAxis, ganttLines: state.ganttLines, ganttRange: state.ganttRange, trendRange: state.trendRange, trendLink: !!state.trendLink, snapshots: state.snapshots }; },
         applyReqs: function(reqs){ state.requirements = reqs; },
         onRemoteReqs: function(n){ showNewReqBanner(n); },
         applyPlan: function(p){
@@ -2406,6 +2520,7 @@
           if(p.ganttLines) state.ganttLines = p.ganttLines;
           if(p.ganttRange) state.ganttRange = p.ganttRange;
           if(p.trendRange) state.trendRange = p.trendRange;
+          if(p.trendLink != null) state.trendLink = !!p.trendLink;
           if(p.snapshots) state.snapshots = p.snapshots;
         },
         afterSync: function(){ save(); renderAll(); renderRules(); }
