@@ -52,6 +52,7 @@
     .card h2{font-size:14px}
     .form-row .f{min-width:100%}
     .btn{padding:9px 14px}
+    .gantt-wrap{max-height:62vh;overflow:auto}
     .tbl{font-size:12px}
     header .stats{margin-left:0;width:100%;font-size:11px}
   }
@@ -99,8 +100,9 @@
   body.role-requester .plan-only{display:none!important}
   body.role-planner .req-only{display:none!important}
   /* 甘特图 */
-  .gantt-wrap{overflow-x:auto;overflow-y:hidden;border:1px solid var(--line);border-radius:8px;background:#fff;position:relative}
+  .gantt-wrap{overflow-x:auto;overflow-y:hidden;border:1px solid var(--line);border-radius:8px;background:#fff;position:relative;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
   .gantt{position:relative;min-width:100%}
+  .btn.dim{opacity:.55}
   .g-line{position:relative;height:36px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center}
   .g-line:nth-child(even){background:#fafbfc}
   .g-label{position:sticky;left:0;z-index:5;width:170px;flex:none;background:#f8fafc;border-right:1px solid var(--line);padding:0 10px;font-size:12px;font-weight:700;color:#334155;height:36px;display:flex;align-items:center;box-shadow:3px 0 6px rgba(0,0,0,.06)}
@@ -158,7 +160,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.10.1（⑰修复：远端实时同步重绘不再清空快照删除勾选，避免「删除快照无反应」；⑩-⑯见 v2.10.0）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.10.1</span></h1>
+  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.11.0（⑱自定义确认弹窗，兼容微信/企微内嵌浏览器 ⑲清空/导入同步云端需求，修复数据复活 ⑳快照限额收紧+体积兜底 ㉑操作日志上云 ㉒Excel组件按需加载，首屏省 950KB ㉓删除按钮零勾选可点击提示 ㉔移动端甘特图触摸滚动；⑰⑯⑮⑭⑬⑫⑪⑩见 v2.10.x）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.11.0</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -509,7 +511,7 @@
         <h2 style="margin:0">排产历史记录 <span class="tag">快照管理</span></h2>
         <span class="hint">勾选快照可批量删除，删除前自动下载备份；清空/删除后立即同步云端，避免刷新后被旧快照回填</span>
         <span class="spacer" style="flex:1"></span>
-        <button class="btn sm plan-only" id="btnDelSnaps" disabled>🗑️ 删除选中（0）</button>
+        <button class="btn sm plan-only" id="btnDelSnaps">🗑️ 删除选中（0）</button>
       </div>
       <div class="scroll-tbl" style="max-height:260px">
         <table class="tbl" id="snapTable">
@@ -628,7 +630,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.10.1（云端共享）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.11.0（云端共享）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -682,11 +684,21 @@
 
 <div id="toast"></div>
 
+<!-- 自定义确认弹窗（v2.11.0 ⑱）：替代原生 confirm，兼容微信/企微等内嵌浏览器 -->
+<div id="cfmOverlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:200;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:20px;max-width:430px;width:calc(100% - 40px);box-shadow:0 20px 50px rgba(0,0,0,.25)">
+    <div id="cfmMsg" style="white-space:pre-wrap;font-size:14px;line-height:1.7;color:#0f172a;max-height:50vh;overflow:auto"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+      <button class="btn" id="cfmNo">取消</button>
+      <button class="btn primary" id="cfmOk">确定</button>
+    </div>
+  </div>
+</div>
+
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=2101"></script>
-<script src="xlsx.full.min.js?v=2101"></script>
-<script src="cloud.js?v=2101"></script>
-<script src="scheduling.js?v=2101"></script>
+<script src="cloudbase.full.js?v=2110"></script>
+<script src="cloud.js?v=2110"></script>
+<script src="scheduling.js?v=2110"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -771,6 +783,43 @@
   function today(){ return U.f(new Date()); }
   function esc(s){ return String(s||'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
   function isPlanner(){ return state.role==='planner'; }
+
+  // ---------- 确认弹窗（v2.11.0 ⑱）与 Excel 组件按需加载（㉒） ----------
+  // uiConfirm(msg, cb)：替代原生 confirm——微信/企微等内嵌浏览器会静默拦截 confirm 造成「点了没反应」。
+  // 优先级：window.__askConfirm 测试钩子（同步）→ 页内自定义模态（异步队列）。
+  var _cfmQ = [];
+  function uiConfirm(msg, cb){
+    if(typeof window.__askConfirm === 'function'){
+      var r = window.__askConfirm(msg);
+      if(r && typeof r.then === 'function'){ r.then(function(v){ cb(!!v); }); return; }
+      cb(!!r); return; // 测试/降级路径：同步回调
+    }
+    _cfmQ.push({ m: msg, cb: cb });
+    if(_cfmQ.length === 1) _cfmShow();
+  }
+  function _cfmShow(){
+    var it = _cfmQ[0]; if(!it) return;
+    $('cfmMsg').textContent = it.m;
+    $('cfmOverlay').style.display = 'flex';
+  }
+  function _cfmResolve(ok){
+    var it = _cfmQ.shift();
+    $('cfmOverlay').style.display = 'none';
+    try{ if(it && it.cb) it.cb(ok); }catch(e){ console.warn('[cfm] 回调异常：', e); }
+    _cfmShow(); // 队列中下一条
+  }
+  // ensureXlsx(cb)：XLSX 已加载 → 同步回调；未加载 → 注入 script 拉取（952KB 不再随首屏加载）
+  var _xlsxQ = null;
+  function ensureXlsx(cb){
+    if(typeof XLSX !== 'undefined'){ cb(true); return; }
+    if(_xlsxQ){ _xlsxQ.push(cb); return; }
+    _xlsxQ = [cb];
+    var s = document.createElement('script');
+    s.src = 'xlsx.full.min.js?v=2110';
+    s.onload = function(){ var q = _xlsxQ; _xlsxQ = null; q.forEach(function(f){ f(true); }); };
+    s.onerror = function(){ var q = _xlsxQ; _xlsxQ = null; q.forEach(function(f){ f(false); }); toast('⚠️ Excel 组件加载失败，请检查网络后重试', 5000); };
+    document.head.appendChild(s);
+  }
 
   // ---------- 存储 ----------
   // _echoSave：云端数据应用到本地引发的保存（applyPlan/applyReqs → afterSync 链路）不算本地新修改，不标脏
@@ -1048,11 +1097,13 @@
   function delReq(id){
     var r = state.requirements.find(function(x){return x.id===id;});
     if(r && !isPlanner() && !canDelReq(r)){ toast('该需求由「'+r.requester+'」提交，仅本人可删。解决：右上角「👤 当前用户」改为'+r.requester+'，或切换「🏭 生产计划」角色'); return; }
-    if(!confirm('删除该需求及其排产批次？')) return;
-    state.requirements = state.requirements.filter(function(r){return r.id!==id;});
-    state.batches = state.batches.filter(function(b){return b.reqId!==id;});
-    save(); renderAll();
-    if(window.CloudSync) window.CloudSync.delReqCloud(id); // 同步删除云端需求
+    uiConfirm('删除该需求及其排产批次？', function(ok){
+      if(!ok) return;
+      state.requirements = state.requirements.filter(function(r){return r.id!==id;});
+      state.batches = state.batches.filter(function(b){return b.reqId!==id;});
+      save(); renderAll();
+      if(window.CloudSync) window.CloudSync.delReqCloud(id); // 同步删除云端需求
+    });
   }
   function editReq(id){
     var r = state.requirements.find(function(x){return x.id===id;});
@@ -1185,11 +1236,29 @@
     addOp('重新排产', '生成 '+res.batches.length+' 个草案批次'); save();
   }
   // 快照批次白名单字段构建（三处快照共用；预构建 reqId→dueDate 映射避免 O(批次×需求) 查找）
-  // 操作审计日志（v2.10.0）：记录关键操作（最近 100 条），随 save() 持久化到本地；不参与云端计划同步
+  // 操作审计日志（v2.10.0 引入，v2.11.0 ㉑上云）：本机持久化最近 100 条 + 异步推送云端 op_logs 集合（多人可见）
   function addOp(action, detail){
     if(!state.opLog) state.opLog = [];
     state.opLog.push({ t: today()+' '+new Date().toTimeString().slice(0,8), u: state.user || '', a: action, d: (detail||'').slice(0,60) });
     if(state.opLog.length > 100) state.opLog = state.opLog.slice(-100);
+    if(window.CloudSync && window.CloudSync.pushOpLog) window.CloudSync.pushOpLog(state.opLog[state.opLog.length-1]);
+  }
+  // 操作日志面板表格渲染（v2.11.0 ㉑：本地+云端合并展示，isMerged 表示含云端记录）
+  function _renderOpLog(logs, isMerged){
+    var tbEl = $('opLogTable');
+    var tb = tbEl ? tbEl.querySelector('tbody') : null;
+    if(!tb) return;
+    tb.innerHTML = '';
+    if(!logs.length){
+      tb.innerHTML = '<tr><td colspan="4" class="empty">暂无操作记录</td></tr>';
+      return;
+    }
+    logs.forEach(function(x){
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td style="white-space:nowrap">'+esc(x.t||'')+'</td><td>'+esc(x.u||'-')+'</td><td><span class="tag">'+esc(x.a||'')+'</span></td><td style="font-size:12px;color:var(--sub)">'+esc(x.d||'')+'</td>';
+      tb.appendChild(tr);
+    });
+    if(isMerged) toast('已合并云端操作记录（多人协作可见）');
   }
   function snapshotBatches(){
     var dueMap = {};
@@ -1199,11 +1268,14 @@
         project:b.project||'', status:b.status, dueDate: dueMap[b.reqId]||'' };
     });
   }
-  // 快照分类限额：auto 15 / periodic 10 / manual 5（总上限 30 不变）
-  // 按来源分别保留最新 N 条，避免频繁「自动排产」把关键的人工/定期快照挤出 30 条窗口
-  var SNAP_CAP = { auto:15, periodic:10, manual:5 };
+  // 快照分类限额（v2.11.0 ⑳收紧：auto 10 / periodic 5 / manual 4，总上限 19）
+  // 原 v2.9.x 的 15/10/5（总 30）在 250+ 批次时约 990KB，逼近云端单文档上限导致推送失败；
+  // 收紧后最坏约 690KB，配合 trimSnapshots 的体积兜底与 cloud.js 800KB 预警形成三重防护。
+  // 按来源分别保留最新 N 条，避免频繁「自动排产」把关键的人工/定期快照挤出窗口。
+  var SNAP_CAP = { auto:10, periodic:5, manual:4 };
   function trimSnapshots(){
     if(!state.snapshots) state.snapshots = [];
+    var dropped = 0;
     Object.keys(SNAP_CAP).forEach(function(src){
       var idxs = [];
       state.snapshots.forEach(function(s,i){ if((s.source||'auto')===src) idxs.push(i); });
@@ -1211,8 +1283,21 @@
         var drop = {};
         idxs.slice(0, idxs.length - SNAP_CAP[src]).forEach(function(i){ drop[i] = 1; });
         state.snapshots = state.snapshots.filter(function(s,i){ return !drop[i]; });
+        dropped++;
       }
     });
+    // 体积兜底：计划数据（批次+快照）JSON 超 ~700KB 时，优先淘汰最旧的 auto 快照（manual/periodic 不动，auto 至少保留 3 份）
+    function planSize(){ try{ return JSON.stringify({ b: state.batches, s: state.snapshots }).length; }catch(e){ return 0; } }
+    while(planSize() > 700 * 1024){
+      var idx = -1, autoN = 0;
+      for(var i=0;i<state.snapshots.length;i++){
+        if((state.snapshots[i].source||'auto')==='auto'){ autoN++; if(idx<0) idx=i; }
+      }
+      if(idx<0 || autoN<=3) break;
+      state.snapshots.splice(idx,1); dropped++;
+    }
+    if(dropped) toast('已自动清理旧快照（控制云端体积，人工/定期快照不受影响）');
+    return dropped;
   }
   // 每 2 周定期保存一次快照（source=periodic）：捕捉自动排产之后的人工调整结果（改日期/锁定/终态等）
   function maybeSavePeriodicSnapshot(){
@@ -1276,10 +1361,12 @@
   function lockPlan(){
     var pend = state.batches.filter(function(b){ return !b.locked && !isFinal(b); });
     if(!pend.length){ toast('没有待确认的批次'); return; }
-    if(!confirm('确认锁定 '+pend.length+' 个待确认批次？\n锁定后作为已占用产能，不再参与下次自动重排。')) return;
-    pend.forEach(function(b){ b.locked=true; b.status='锁定'; });
-    addOp('批量锁定', pend.length+' 个批次'); save(); renderAll();
-    toast('已锁定 '+pend.length+' 个批次，排产确认完成');
+    uiConfirm('确认锁定 '+pend.length+' 个待确认批次？\n锁定后作为已占用产能，不再参与下次自动重排。', function(ok){
+      if(!ok) return;
+      pend.forEach(function(b){ b.locked=true; b.status='锁定'; });
+      addOp('批量锁定', pend.length+' 个批次'); save(); renderAll();
+      toast('已锁定 '+pend.length+' 个批次，排产确认完成');
+    });
   }
   function confirmBatch(id){
     var b = state.batches.find(function(x){return x.id===id;});
@@ -1291,10 +1378,12 @@
   function unlockBatch(id){
     var b = state.batches.find(function(x){return x.id===id;});
     if(!b || !b.locked || b.source==='历史') return;
-    if(!confirm('解锁后该批次将恢复为待确认状态，确定继续？')) return;
-    b.locked=false; b.status='人工';
-    addOp('解锁批次', b.id); save(); renderAll();
-    toast('已解锁，该批次恢复为待确认');
+    uiConfirm('解锁后该批次将恢复为待确认状态，确定继续？', function(ok){
+      if(!ok) return;
+      b.locked=false; b.status='人工';
+      addOp('解锁批次', b.id); save(); renderAll();
+      toast('已解锁，该批次恢复为待确认');
+    });
   }
   // 批量解锁：按批次表勾选框解锁多个锁定批次
   function batchUnlockSelected(){
@@ -1302,13 +1391,15 @@
     var boxes = document.querySelectorAll('#batchTable tbody input[data-sel]:checked');
     var ids = Array.prototype.map.call(boxes, function(c){ return c.dataset.sel; });
     if(!ids.length){ toast('请先勾选需要解锁的锁定批次（首列选择框）'); return; }
-    if(!confirm('解锁选中的 '+ids.length+' 个批次？\n解锁后恢复为待确认状态；可点击「刷新自动排产」按当前需求重新排产。')) return;
-    ids.forEach(function(id){
-      var b = state.batches.find(function(x){return x.id===id;});
-      if(b && b.locked && b.source!=='历史'){ b.locked=false; b.status='人工'; b.warning=''; }
+    uiConfirm('解锁选中的 '+ids.length+' 个批次？\n解锁后恢复为待确认状态；可点击「刷新自动排产」按当前需求重新排产。', function(ok){
+      if(!ok) return;
+      ids.forEach(function(id){
+        var b = state.batches.find(function(x){return x.id===id;});
+        if(b && b.locked && b.source!=='历史'){ b.locked=false; b.status='人工'; b.warning=''; }
+      });
+      save(); renderAll();
+      toast('已批量解锁 '+ids.length+' 个批次，恢复为待确认');
     });
-    save(); renderAll();
-    toast('已批量解锁 '+ids.length+' 个批次，恢复为待确认');
   }
   // 需求状态（派生）：待排产 / 待确认 / 已锁定（终态批次视为已定案，不阻塞需求）
   function reqStatus(r){
@@ -1696,26 +1787,33 @@
     var btn = $('btnDelSnaps'); if(!btn) return;
     var n = document.querySelectorAll('.snap-chk:checked').length;
     btn.textContent = '🗑️ 删除选中（'+n+'）';
-    btn.disabled = n === 0;
+    btn.classList.toggle('dim', n === 0); // v2.11.0 ㉓：不再 disabled——零勾选可点击并 toast 提示，避免「点了完全没反应」
   }
   // 快照勾选状态（id→true）：跨渲染持久。远端实时同步会触发 renderAll 重绘快照表，
   // 若勾选不持久，正在勾选删除的用户会被重绘清空勾选、删除按钮被禁用，点击「无反应」（v2.10.1 修复）
   var _snapSel = {};
   // 删除选中的快照（多版本选择删除）：备份 → 移除 → 本地持久化 → 立即同步云端（防旧快照回填）
+  // v2.11.0：回调式 autoBackup + try-catch，任何环节失败都有明确提示，不再静默中止
   function deleteSnapshots(ids){
     var snaps = state.snapshots || [];
-    if(!ids || !ids.length) return;
+    if(!ids || !ids.length){ toast('请先勾选要删除的快照'); return; }
     var idSet = {};
     ids.forEach(function(id){ idSet[id] = 1; });
     var kept = snaps.filter(function(s){ return !idSet[s.id]; });
     var removed = snaps.length - kept.length;
     if(!removed) return;
-    if(!autoBackup()) return; // 备份失败（Excel 组件缺失等）→ 中止，避免无备份删除
-    state.snapshots = kept; addOp('删除快照', removed+' 份'); save();
-    ids.forEach(function(id){ delete _snapSel[id]; }); // 清掉已删快照的勾选记录
-    if(window.CloudSync && window.CloudSync.forcePushPlan) window.CloudSync.forcePushPlan(); // 立即覆盖云端快照
-    renderAnalysis();
-    toast('已删除 '+removed+' 份快照');
+    autoBackup(function(bok){
+      if(!bok) return; // 备份失败（Excel 组件缺失/下载异常）→ 中止，避免无备份删除
+      try{
+        state.snapshots = kept; addOp('删除快照', removed+' 份'); save();
+        ids.forEach(function(id){ delete _snapSel[id]; }); // 清掉已删快照的勾选记录
+        if(window.CloudSync && window.CloudSync.forcePushPlan) window.CloudSync.forcePushPlan(); // 立即覆盖云端快照
+        renderAnalysis();
+        toast('已删除 '+removed+' 份快照');
+      }catch(e){
+        toast('⚠️ 删除失败：'+e.message+'（数据可能未同步，请勿关闭页面）', 6000);
+      }
+    });
   }
   function snapSrcName(src){
     if(src === 'periodic') return '定期快照';
@@ -2032,19 +2130,23 @@
   }
   function delBatch(){
     if(!isPlanner()){ toast('仅生产计划角色可删除批次'); return; }
-    if(!confirm('删除该批次？')) return;
-    state.batches = state.batches.filter(function(x){return x.id!==editingId;});
-    addOp('删除批次', editingId); save(); renderAll(); closeEdit();
-    toast('批次已删除');
+    uiConfirm('删除该批次？', function(ok){
+      if(!ok) return;
+      state.batches = state.batches.filter(function(x){return x.id!==editingId;});
+      addOp('删除批次', editingId); save(); renderAll(); closeEdit();
+      toast('批次已删除');
+    });
   }
   function delBatchDirect(id){
     if(!isPlanner()){ toast('仅生产计划角色可删除批次'); return; }
     var b = state.batches.find(function(x){return x.id===id;});
     if(!b) return;
-    if(!confirm('删除该批次？'+(isFinal(b)?'（终态批次）':''))) return;
-    state.batches = state.batches.filter(function(x){return x.id!==id;});
-    save(); renderAll();
-    toast('批次已删除');
+    uiConfirm('删除该批次？'+(isFinal(b)?'（终态批次）':''), function(ok){
+      if(!ok) return;
+      state.batches = state.batches.filter(function(x){return x.id!==id;});
+      save(); renderAll();
+      toast('批次已删除');
+    });
   }
 
   // ---------- 规则参数页 ----------
@@ -2272,46 +2374,67 @@
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(cfg), '配置');
     return wb;
   }
-  // 危险操作（清空/重置）前自动下载带时间戳的完整备份，文件可直接通过「导入」恢复
-  // 返回 true=备份完成（或无数据可备），false=备份失败（调用方应中止操作）
-  function autoBackup(){
-    if(typeof XLSX === 'undefined'){ toast('⚠️ Excel 组件未加载，自动备份失败，操作已中止'); return false; }
-    if(!state.requirements.length && !state.batches.length && !(state.snapshots||[]).length) return true; // 无数据无需备份
-    var n = new Date();
-    var ts = today().replace(/-/g,'')+'_'+String(n.getHours()).padStart(2,'0')+String(n.getMinutes()).padStart(2,'0')+String(n.getSeconds()).padStart(2,'0');
-    saveXlsx(buildWorkbook(), '排产系统自动备份_'+ts+'.xlsx');
-    toast('已自动下载备份「排产系统自动备份_'+ts+'.xlsx」，可用于恢复');
-    return true;
+  // 危险操作（清空/重置/导入/删快照）前自动下载带时间戳的完整备份，文件可直接通过「导入」恢复
+  // cb(true)=备份完成（或无数据可备），cb(false)=备份失败（调用方应中止操作）
+  // v2.11.0：XLSX 按需加载（回调风格，已加载时同步执行）；saveXlsx 异常不再静默中止而是明确提示
+  function autoBackup(cb){
+    ensureXlsx(function(ok){
+      if(!ok){ cb(false); return; }
+      if(!state.requirements.length && !state.batches.length && !(state.snapshots||[]).length){ cb(true); return; } // 无数据无需备份
+      try{
+        var n = new Date();
+        var ts = today().replace(/-/g,'')+'_'+String(n.getHours()).padStart(2,'0')+String(n.getMinutes()).padStart(2,'0')+String(n.getSeconds()).padStart(2,'0');
+        saveXlsx(buildWorkbook(), '排产系统自动备份_'+ts+'.xlsx');
+        toast('已自动下载备份「排产系统自动备份_'+ts+'.xlsx」，可用于恢复');
+        cb(true);
+      }catch(e){
+        toast('⚠️ 自动备份失败：'+e.message+'，操作已中止', 5000);
+        cb(false);
+      }
+    });
   }
   function exportData(){
-    if(typeof XLSX === 'undefined'){ toast('Excel 组件未加载，无法导出'); return; }
-    saveXlsx(buildWorkbook(), '排产系统数据_'+today()+'.xlsx');
-    toast('已导出 Excel 数据文件');
+    ensureXlsx(function(ok){
+      if(!ok) return;
+      try{ saveXlsx(buildWorkbook(), '排产系统数据_'+today()+'.xlsx'); toast('已导出 Excel 数据文件'); }
+      catch(e){ toast('导出失败：'+e.message); }
+    });
   }
   // 导出全部快照为 Excel：Sheet1 快照列表（时间/来源/备注/需求数/预警数/批次数）+ Sheet2 批次明细
   function downloadSnapshots(){
-    if(typeof XLSX === 'undefined'){ toast('Excel 组件未加载，无法导出'); return; }
-    var snaps = state.snapshots || [];
-    if(!snaps.length){ toast('暂无快照可下载'); return; }
-    function srcName(s){ return s==='auto'?'自动排产':(s==='periodic'?'定期快照':(s==='manual'?'人工快照':(s||'未知'))); }
-    var list = [['序号','快照时间','来源','备注','需求数','预警数','批次数']];
-    var rows = [['快照时间','来源','备注','批次ID','需求ID','项目','工序','产线','开始','结束','状态','到期日']];
-    snaps.forEach(function(s, i){
-      list.push([i+1, (s.time||'').slice(0,16).replace('T',' '), srcName(s.source), s.note||'', s.reqCount||0, s.warningCount||0, (s.batches||[]).length]);
-      (s.batches||[]).forEach(function(b){
-        rows.push([(s.time||'').slice(0,16).replace('T',' '), srcName(s.source), s.note||'', b.id||'', b.reqId||'', b.project||'', b.type||'', b.line||'', b.start||'', b.end||'', b.status||'', b.dueDate||'']);
+    ensureXlsx(function(ok){
+      if(!ok) return;
+      var snaps = state.snapshots || [];
+      if(!snaps.length){ toast('暂无快照可下载'); return; }
+      function srcName(s){ return s==='auto'?'自动排产':(s==='periodic'?'定期快照':(s==='manual'?'人工快照':(s||'未知'))); }
+      var list = [['序号','快照时间','来源','备注','需求数','预警数','批次数']];
+      var rows = [['快照时间','来源','备注','批次ID','需求ID','项目','工序','产线','开始','结束','状态','到期日']];
+      snaps.forEach(function(s, i){
+        list.push([i+1, (s.time||'').slice(0,16).replace('T',' '), srcName(s.source), s.note||'', s.reqCount||0, s.warningCount||0, (s.batches||[]).length]);
+        (s.batches||[]).forEach(function(b){
+          rows.push([(s.time||'').slice(0,16).replace('T',' '), srcName(s.source), s.note||'', b.id||'', b.reqId||'', b.project||'', b.type||'', b.line||'', b.start||'', b.end||'', b.status||'', b.dueDate||'']);
+        });
       });
+      try{
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(list), '快照列表');
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '批次明细');
+        saveXlsx(wb, '排产快照_'+today()+'.xlsx');
+        toast('已下载快照数据（共 '+snaps.length+' 份快照）');
+      }catch(e){ toast('快照导出失败：'+e.message); }
     });
-    var wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(list), '快照列表');
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '批次明细');
-    saveXlsx(wb, '排产快照_'+today()+'.xlsx');
-    toast('已下载快照数据（共 '+snaps.length+' 份快照）');
   }
   function importData(file){
-    // 导入是覆盖式操作：先确认，再自动备份当前数据（v2.10.0 起与清空/重置同级别防护）
-    if(!confirm('导入将用文件数据覆盖当前全部数据（需求、排产批次、快照记录）。\n系统会先自动下载当前数据的备份。确定继续？')) return;
-    if(!autoBackup()) return;
+    // 导入是覆盖式操作：先确认，再自动备份当前数据（v2.10.0 起与清空/重置同级别防护；v2.11.0 ⑱改自定义弹窗+回调式备份）
+    uiConfirm('导入将用文件数据覆盖当前全部数据（需求、排产批次、快照记录）。\n系统会先自动下载当前数据的备份。确定继续？', function(cok){
+      if(!cok) return;
+      autoBackup(function(bok){
+        if(!bok) return;
+        _doImport(file);
+      });
+    });
+  }
+  function _doImport(file){
     var isJson = /\.json$/i.test(file.name||'');
     var reader = new FileReader();
     reader.onload = function(){
@@ -2353,45 +2476,60 @@
         $('userName').value = state.user;
         save(); applyRole(); renderAll();
         addOp('导入数据', '需求 '+d.requirements.length+' 条 / 批次 '+d.batches.length+' 批（'+(file.name||'')+'）'); save();
-        toast('导入成功：需求 '+d.requirements.length+' 条，批次 '+d.batches.length+' 批');
+        // v2.11.0 ⑲：云模式下同步导入结果——清空云端需求集合后逐条补传，防止旧需求在下次打开时「复活」
+        if(window.CloudSync && window.CloudSync.isReady && window.CloudSync.isReady()){
+          if(window.CloudSync.delAllReqs) window.CloudSync.delAllReqs();
+          state.requirements.forEach(function(r){ if(window.CloudSync.pushReq) window.CloudSync.pushReq(r); });
+          toast('导入成功：需求 '+d.requirements.length+' 条，批次 '+d.batches.length+' 批（已同步云端）');
+        } else {
+          toast('导入成功：需求 '+d.requirements.length+' 条，批次 '+d.batches.length+' 批');
+        }
       }catch(e){ toast('导入失败：'+e.message); }
     };
     if(isJson) reader.readAsText(file); else reader.readAsArrayBuffer(file);
   }
   function exportCSV(){
-    if(typeof XLSX === 'undefined'){ toast('Excel 组件未加载，无法导出'); return; }
-    var rows = [['状态','类型','项目','需求人','批次号','产线','开始','完成','下罐/灌装','包装完成','GMP','备注']];
-    state.batches.forEach(function(b){
-      rows.push([b.status, b.type, b.project, b.requester||'', b.batchNo||'', b.line, b.start, b.end, b.harvestDate||b.fillDate||'', packDateOf(b)||'', b.gmp?'Y':'N', (b.warning||b.note||'').replace(/\n/g,' ')]);
+    ensureXlsx(function(ok){
+      if(!ok) return;
+      try{
+        var rows = [['状态','类型','项目','需求人','批次号','产线','开始','完成','下罐/灌装','包装完成','GMP','备注']];
+        state.batches.forEach(function(b){
+          rows.push([b.status, b.type, b.project, b.requester||'', b.batchNo||'', b.line, b.start, b.end, b.harvestDate||b.fillDate||'', packDateOf(b)||'', b.gmp?'Y':'N', (b.warning||b.note||'').replace(/\n/g,' ')]);
+        });
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '排产批次');
+        saveXlsx(wb, '排产批次_'+today()+'.xlsx');
+      }catch(e){ toast('导出失败：'+e.message); }
     });
-    var wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '排产批次');
-    saveXlsx(wb, '排产批次_'+today()+'.xlsx');
   }
   // 需求填报信息导出（Excel/CSV）
   function exportReqCSV(){
-    if(typeof XLSX === 'undefined'){ toast('Excel 组件未加载，无法导出'); return; }
-    if(!state.requirements.length){ toast('暂无需求可导出'); return; }
-    var rows = [['项目号','类型','批次类型','批次数','交期','优先级','需求人','状态','规格','项目阶段','预算','首次生产','Molecule Type','Target','Novelty','mAb subtype','Host Cell Line','二次稀配','注射瓶规格','Titer','制剂批量','备注','提交时间']];
-    state.requirements.forEach(function(r){
-      var isEQP = r.type==='EQP';
-      var typeTxt = isEQP ? '设备维护' : (r.type==='CB' ? r.cbKind : (r.type==='DP' ? r.dpKind+' '+r.dosage : r.type));
-      rows.push([
-        isEQP ? (r.maintKind||'设备维护') : (r.henliusProject||r.atProject||''),
-        typeTxt, isEQP ? (r.maintKind||'-') : (r.batchKind||(r.gmp?'GMP生产':'Non-GMP')), r.batchCount,
-        isEQP ? (r.maintStart+'~'+r.maintEnd) : (r.dueDate||''),
-        r.priority||'', r.requester||'', reqStatus(r),
-        isEQP ? (r.maintLine||'') : (r.spec||''),
-        r.stage||'', r.budget||'', r.firstProduction?'是':'否',
-        r.molType||'', r.target||'', r.novelty||'', r.mabSubtype||'', r.hostCell||'',
-        r.secondaryDilution?'是':'否', r.vialSpec||'', (r.titer===''||r.titer==null)?'':r.titer,
-        r.concentration||'', (r.note||'').replace(/\n/g,' '), (r.createdAt||'').slice(0,10)
-      ]);
+    ensureXlsx(function(ok){
+      if(!ok) return;
+      if(!state.requirements.length){ toast('暂无需求可导出'); return; }
+      var rows = [['项目号','类型','批次类型','批次数','交期','优先级','需求人','状态','规格','项目阶段','预算','首次生产','Molecule Type','Target','Novelty','mAb subtype','Host Cell Line','二次稀配','注射瓶规格','Titer','制剂批量','备注','提交时间']];
+      state.requirements.forEach(function(r){
+        var isEQP = r.type==='EQP';
+        var typeTxt = isEQP ? '设备维护' : (r.type==='CB' ? r.cbKind : (r.type==='DP' ? r.dpKind+' '+r.dosage : r.type));
+        rows.push([
+          isEQP ? (r.maintKind||'设备维护') : (r.henliusProject||r.atProject||''),
+          typeTxt, isEQP ? (r.maintKind||'-') : (r.batchKind||(r.gmp?'GMP生产':'Non-GMP')), r.batchCount,
+          isEQP ? (r.maintStart+'~'+r.maintEnd) : (r.dueDate||''),
+          r.priority||'', r.requester||'', reqStatus(r),
+          isEQP ? (r.maintLine||'') : (r.spec||''),
+          r.stage||'', r.budget||'', r.firstProduction?'是':'否',
+          r.molType||'', r.target||'', r.novelty||'', r.mabSubtype||'', r.hostCell||'',
+          r.secondaryDilution?'是':'否', r.vialSpec||'', (r.titer===''||r.titer==null)?'':r.titer,
+          r.concentration||'', (r.note||'').replace(/\n/g,' '), (r.createdAt||'').slice(0,10)
+        ]);
+      });
+      try{
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '需求清单');
+        saveXlsx(wb, '需求清单_'+today()+'.xlsx');
+        toast('已导出需求清单（'+state.requirements.length+' 条）');
+      }catch(e){ toast('导出失败：'+e.message); }
     });
-    var wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '需求清单');
-    saveXlsx(wb, '需求清单_'+today()+'.xlsx');
-    toast('已导出需求清单（'+state.requirements.length+' 条）');
   }
 
   // ---------- 角色切换 ----------
@@ -2605,40 +2743,61 @@
     $('btnImport').addEventListener('click', function(){ $('importFile').click(); });
     $('importFile').addEventListener('change', function(){ if(this.files[0]) importData(this.files[0]); this.value=''; });
     $('btnReimportHist').addEventListener('click', function(){
-      if(confirm('重新导入历史计划将替换当前所有批次与需求，确定继续？系统将先自动下载备份。')){
-        if(autoBackup()) resetToHistory();
-      }
+      uiConfirm('重新导入历史计划将替换当前所有批次与需求，确定继续？系统将先自动下载备份。', function(ok){
+        if(!ok) return;
+        autoBackup(function(bok){ if(bok) resetToHistory(); });
+      });
     });
-    // 操作日志面板：toggle 显示
+    // 自定义确认弹窗按钮（v2.11.0 ⑱）
+    $('cfmOk').addEventListener('click', function(){ _cfmResolve(true); });
+    $('cfmNo').addEventListener('click', function(){ _cfmResolve(false); });
+    document.addEventListener('keydown', function(ev){ if(ev.key==='Escape' && _cfmQ.length) _cfmResolve(false); });
+    // 操作日志面板：toggle 显示（v2.11.0 ㉑：云端 op_logs 合并展示）
     if($('btnOpLog')) $('btnOpLog').addEventListener('click', function(){
       var panel = $('opLogPanel');
       if(panel.style.display === 'none'){
-        var tb = $('opLogTable').querySelector('tbody');
-        tb.innerHTML = '';
-        var logs = (state.opLog||[]).slice().reverse();
-        if(!logs.length){
-          tb.innerHTML = '<tr><td colspan="4" class="empty">暂无操作记录</td></tr>';
-        } else {
-          logs.forEach(function(x){
-            var tr = document.createElement('tr');
-            tr.innerHTML = '<td style="white-space:nowrap">'+esc(x.t||'')+'</td><td>'+esc(x.u||'-')+'</td><td><span class="tag">'+esc(x.a||'')+'</span></td><td style="font-size:12px;color:var(--sub)">'+esc(x.d||'')+'</td>';
-            tb.appendChild(tr);
-          });
-        }
+        _renderOpLog((state.opLog||[]).slice().reverse(), false);
         panel.style.display = '';
+        // 异步拉取云端操作日志，与本地合并去重后重渲染（拉取失败静默降级为仅本地）
+        if(window.CloudSync && window.CloudSync.fetchOpLogs && window.CloudSync.isReady && window.CloudSync.isReady()){
+          window.CloudSync.fetchOpLogs().then(function(remote){
+            if(!remote || !remote.length || panel.style.display === 'none') return;
+            var seen = {}, merged = [];
+            (state.opLog||[]).forEach(function(x){ var k = x.t+'|'+x.u+'|'+x.a+'|'+x.d; seen[k] = 1; merged.push(x); });
+            remote.forEach(function(x){
+              if(!x || !x.t) return;
+              var k = x.t+'|'+x.u+'|'+x.a+'|'+x.d;
+              if(!seen[k]){ seen[k] = 1; merged.push(x); }
+            });
+            merged.sort(function(a,b){ return (b.t||'').localeCompare(a.t||''); });
+            _renderOpLog(merged.slice(0,100), true);
+          }).catch(function(){});
+        }
       } else {
         panel.style.display = 'none';
       }
     });
     $('btnClearAll').addEventListener('click', function(){
-      if(!confirm('⚠️ 清空全部数据（需求、批次、规则），此操作不可恢复！系统将先自动下载备份（含快照）。确定继续？')) return;
-      if(!autoBackup()) return; // 备份失败（Excel 组件缺失等）→ 中止，避免无备份清空
-      var _who = state.user||''; // 清空后 state 重建，先留用户名
-      state = { requirements: [], batches: [], rules: null, role: state.role||'requester', user: state.user||'',
-        ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, ganttRange: state.ganttRange||{preset:'all',start:'',end:''}, trendRange: state.trendRange||{preset:'all',start:'',end:''}, trendLink: !!state.trendLink, refData: state.refData||null, snapshots: state.snapshots||[] };
-      _snapSel = {}; // 数据已清空，勾选记录失效
-      addOp('清空全部数据', '操作人：'+(_who||'未署名')); save();
-      renderAll(); renderRules(); toast('已清空全部数据');
+      uiConfirm('⚠️ 清空全部数据（需求、批次、规则），此操作不可恢复！系统将先自动下载备份（含快照）。确定继续？', function(ok){
+        if(!ok) return;
+        autoBackup(function(bok){
+          if(!bok) return; // 备份失败（Excel 组件缺失等）→ 中止，避免无备份清空
+          var _who = state.user||''; // 清空后 state 重建，先留用户名
+          state = { requirements: [], batches: [], rules: null, role: state.role||'requester', user: state.user||'',
+            ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, ganttRange: state.ganttRange||{preset:'all',start:'',end:''}, trendRange: state.trendRange||{preset:'all',start:'',end:''}, trendLink: !!state.trendLink, refData: state.refData||null, snapshots: state.snapshots||[] };
+          _snapSel = {}; // 数据已清空，勾选记录失效
+          addOp('清空全部数据', '操作人：'+(_who||'未署名')); save();
+          // v2.11.0 ⑲：云模式下立即清空云端——删除 requests 全部文档 + 推送空计划，防止下次打开旧需求「复活」
+          if(window.CloudSync && window.CloudSync.isReady && window.CloudSync.isReady()){
+            if(window.CloudSync.delAllReqs) window.CloudSync.delAllReqs();
+            if(window.CloudSync.forcePushPlan) window.CloudSync.forcePushPlan();
+            toast('已清空全部数据（含云端同步）');
+          } else {
+            toast('已清空全部数据');
+          }
+          renderAll(); renderRules();
+        });
+      });
     });
     // 保存人工快照 / 清空快照 / 下载快照
     if($('btnManualSnap')) $('btnManualSnap').addEventListener('click', saveManualSnapshot);
@@ -2647,19 +2806,25 @@
     if($('driftSelA')) $('driftSelA').addEventListener('change', renderDrift);
     if($('driftSelB')) $('driftSelB').addEventListener('change', renderDrift);
     if($('btnClearSnap')) $('btnClearSnap').addEventListener('click', function(){
-      if(!confirm('清空全部排产快照记录？此操作不可恢复，系统将先自动下载备份。')) return;
-      if(!autoBackup()) return;
-      state.snapshots = []; addOp('清空快照', ''); save();
-      _snapSel = {}; // 清空勾选记录
-      if(window.CloudSync && window.CloudSync.forcePushPlan) window.CloudSync.forcePushPlan(); // 立即覆盖云端快照，防止刷新后被旧快照回填
-      renderAnalysis(); toast('已清空排产快照');
+      uiConfirm('清空全部排产快照记录？此操作不可恢复，系统将先自动下载备份。', function(ok){
+        if(!ok) return;
+        autoBackup(function(bok){
+          if(!bok) return;
+          state.snapshots = []; addOp('清空快照', ''); save();
+          _snapSel = {}; // 清空勾选记录
+          if(window.CloudSync && window.CloudSync.forcePushPlan) window.CloudSync.forcePushPlan(); // 立即覆盖云端快照，防止刷新后被旧快照回填
+          renderAnalysis(); toast('已清空排产快照');
+        });
+      });
     });
     // 快照多选删除：全选 / 删除选中 / 勾选联动按钮
     if($('btnDelSnaps')) $('btnDelSnaps').addEventListener('click', function(){
       var ids = Array.prototype.map.call(document.querySelectorAll('.snap-chk:checked'), function(c){ return c.getAttribute('data-id'); });
       if(!ids.length){ toast('请先勾选要删除的快照'); return; }
-      if(!confirm('删除选中的 '+ids.length+' 份快照？此操作不可恢复，系统将先自动下载备份。')) return;
-      deleteSnapshots(ids);
+      uiConfirm('删除选中的 '+ids.length+' 份快照？此操作不可恢复，系统将先自动下载备份。', function(ok){
+        if(!ok) return;
+        deleteSnapshots(ids);
+      });
     });
     if($('snapSelAll')) $('snapSelAll').addEventListener('change', function(){
       document.querySelectorAll('.snap-chk').forEach(function(c){ c.checked = $('snapSelAll').checked; _snapSel[c.getAttribute('data-id')] = c.checked; });
@@ -2726,6 +2891,7 @@
     if(window.CloudSync){
       window.CloudSync.connect({
         getReqs: function(){ return state.requirements; },
+        uiConfirm: uiConfirm, // v2.11.0 ⑱：cloud.js 冲突检测/新鲜度弹窗走主应用自定义模态
         getPlan: function(){ return { batches: state.batches, rules: state.rules, refData: state.refData, ganttAxis: state.ganttAxis, ganttLines: state.ganttLines, ganttRange: state.ganttRange, trendRange: state.trendRange, trendLink: !!state.trendLink, snapshots: state.snapshots }; },
         applyReqs: function(reqs){ _echoSave = true; state.requirements = reqs; },
         onRemoteReqs: function(n){ showNewReqBanner(n); },
