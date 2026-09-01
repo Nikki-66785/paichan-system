@@ -154,7 +154,21 @@
     var localOnly = localReqs.filter(function (r) { return !cloudById[r.id]; });
 
     if (hook.applyReqs) hook.applyReqs(merged);
-    if (initial && hook.applyPlan && cloudPlan && cloudPlan.data) hook.applyPlan(cloudPlan.data);
+    // v2.10.0 本地新鲜度：首次同步时若本机有未上云的修改（上次推送失败/节流窗口内关闭页面），不静默用云端覆盖——
+    // 由用户选择：「确定」保留本机版本并强制上传；「取消」放弃本机修改、使用云端版本
+    if (initial && cloudPlan && cloudPlan.data && hook.isDirty && hook.isDirty()) {
+      if (typeof confirm === 'function' &&
+          confirm('⚠️ 检测到本机有尚未同步到云端的修改（上次推送可能失败或页面提前关闭）。\n\n「确定」= 保留本机版本并上传覆盖云端\n「取消」= 放弃本机修改，使用云端版本')) {
+        // 保留本机：先登记云端当前版本（避免随后的 watch 回声误判），再强制上传（用户已明确选择，跳过冲突检测）
+        if (cloudPlan.updatedAt) rememberPlanVersion(cloudPlan.updatedAt);
+        forcePushPlan();
+      } else {
+        if (hook.applyPlan) hook.applyPlan(cloudPlan.data);
+        if (hook.clearDirty) hook.clearDirty();
+      }
+    } else if (initial && hook.applyPlan && cloudPlan && cloudPlan.data) {
+      hook.applyPlan(cloudPlan.data);
+    }
     // 云端同步引发的本地保存不回传计划（内容来自云端，回传是冗余写且可能引发推送风暴）
     applyingRemotePlan = true;
     if (hook.afterSync) hook.afterSync();
@@ -348,10 +362,26 @@
       })
       .catch(function () { doPushPlan(p); }); // 云端读取失败（权限/网络）→ 按原逻辑直接推送
   }
+  // v2.10.0 体积预警：云端单文档约 1MB 上限，超 800KB 提醒清理快照（同会话只提醒一次）
+  var sizeWarned = false;
   function doPushPlan(p) {
     var ts = Date.now();
     rememberPlanVersion(ts); // 登记版本，抑制自己推送触发的 watch 回声
-    upsert(PLAN_COLL, PLAN_ID, { data: p, updatedAt: ts }, '计划');
+    try {
+      var sz = JSON.stringify(p).length;
+      if (sz > 800 * 1024 && !sizeWarned) {
+        sizeWarned = true;
+        toast('⚠️ 排产数据体积约 ' + Math.round(sz / 1024) + 'KB，接近云端 1MB 上限，同步可能失败。建议在「排产分析 → 快照管理」删除旧快照');
+      }
+    } catch (e) { /* 体积测量失败不影响推送 */ }
+    // v2.10.0 推送结果回调：成功清除本地脏标记；失败显式告知用户（不再静默吞掉，防止刷新后被云端旧版覆盖）
+    upsert(PLAN_COLL, PLAN_ID, { data: p, updatedAt: ts }, '计划').then(function (ok) {
+      if (ok) {
+        if (hook.clearDirty) hook.clearDirty();
+      } else {
+        if (hook.onPushFail) hook.onPushFail();
+      }
+    });
   }
   // 破坏性本地操作（清空/删除快照等，用户已明确确认）需要立即云端生效：
   // ①绕过 800ms 节流——避免用户在节流窗口内刷新/关闭导致推送未执行、云端旧数据下次打开时回填；
