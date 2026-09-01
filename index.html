@@ -158,7 +158,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.10.0（⑩导入前自动备份+确认 ⑪云端推送失败显式提示+本地新鲜度保护 ⑫数据体积接近云端上限预警 ⑬远端同步不清空正在编辑的表单 ⑭操作审计日志 ⑮移动端适配 ⑯快照构建去重优化）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.10.0</span></h1>
+  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.10.1（⑰修复：远端实时同步重绘不再清空快照删除勾选，避免「删除快照无反应」；⑩-⑯见 v2.10.0）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.10.1</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -628,7 +628,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.10.0（云端共享）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.10.1（云端共享）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -683,10 +683,10 @@
 <div id="toast"></div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=2100"></script>
-<script src="xlsx.full.min.js?v=2100"></script>
-<script src="cloud.js?v=2100"></script>
-<script src="scheduling.js?v=2100"></script>
+<script src="cloudbase.full.js?v=2101"></script>
+<script src="xlsx.full.min.js?v=2101"></script>
+<script src="cloud.js?v=2101"></script>
+<script src="scheduling.js?v=2101"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -1678,7 +1678,7 @@
       var sPct = sChecked > 0 ? Math.round(sOnTime/sChecked*100) : 100;
       var tr = document.createElement('tr');
       tr.innerHTML =
-        '<td><input type="checkbox" class="snap-chk plan-only" data-id="'+esc(s.id)+'" title="选择此快照用于删除"></td>'+
+        '<td><input type="checkbox" class="snap-chk plan-only" data-id="'+esc(s.id)+'"'+(_snapSel[s.id]?' checked':'')+' title="选择此快照用于删除"></td>'+
         '<td>#'+seq+'</td>'+
         '<td>'+esc(s.time.replace('T',' ').slice(0,16))+(s.note?'<div style="font-size:11px;color:var(--sub)">📝 '+esc(s.note)+'</div>':'')+'</td>'+
         '<td><span class="tag" style="'+(s.source==='periodic'?'background:#ecfdf5;color:#059669':(s.source==='manual'?'background:#fff7ed;color:#c2410c':''))+'">'+snapSrcName(s.source)+'</span></td>'+
@@ -1689,7 +1689,7 @@
         '<td>'+(seq===snaps.length?'<span class="tag">最新</span>':'')+'</td>';
       snapTb.appendChild(tr);
     });
-    updateDelSnapsBtn(); // 重置删除按钮计数与禁用态（渲染后勾选全部清空）
+    updateDelSnapsBtn(); // 按勾选持久状态恢复删除按钮计数与禁用态（重绘不清空勾选，v2.10.1）
   }
   // 快照多选删除：删除按钮计数/禁用态
   function updateDelSnapsBtn(){
@@ -1698,6 +1698,9 @@
     btn.textContent = '🗑️ 删除选中（'+n+'）';
     btn.disabled = n === 0;
   }
+  // 快照勾选状态（id→true）：跨渲染持久。远端实时同步会触发 renderAll 重绘快照表，
+  // 若勾选不持久，正在勾选删除的用户会被重绘清空勾选、删除按钮被禁用，点击「无反应」（v2.10.1 修复）
+  var _snapSel = {};
   // 删除选中的快照（多版本选择删除）：备份 → 移除 → 本地持久化 → 立即同步云端（防旧快照回填）
   function deleteSnapshots(ids){
     var snaps = state.snapshots || [];
@@ -1709,6 +1712,7 @@
     if(!removed) return;
     if(!autoBackup()) return; // 备份失败（Excel 组件缺失等）→ 中止，避免无备份删除
     state.snapshots = kept; addOp('删除快照', removed+' 份'); save();
+    ids.forEach(function(id){ delete _snapSel[id]; }); // 清掉已删快照的勾选记录
     if(window.CloudSync && window.CloudSync.forcePushPlan) window.CloudSync.forcePushPlan(); // 立即覆盖云端快照
     renderAnalysis();
     toast('已删除 '+removed+' 份快照');
@@ -2341,6 +2345,7 @@
         if(!state.trendRange) state.trendRange={ preset:'all', start:'', end:'' };
         if(!state.refData) state.refData=null;
         if(!state.snapshots) state.snapshots=[];
+        _snapSel = {}; // 快照已被导入数据整体替换，勾选记录失效
         if(typeof state.trendLink === 'string') state.trendLink = state.trendLink==='1';
         if(state.trendLink==null) state.trendLink=false;
         $('trendLink').checked = !!state.trendLink;
@@ -2631,6 +2636,7 @@
       var _who = state.user||''; // 清空后 state 重建，先留用户名
       state = { requirements: [], batches: [], rules: null, role: state.role||'requester', user: state.user||'',
         ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, ganttRange: state.ganttRange||{preset:'all',start:'',end:''}, trendRange: state.trendRange||{preset:'all',start:'',end:''}, trendLink: !!state.trendLink, refData: state.refData||null, snapshots: state.snapshots||[] };
+      _snapSel = {}; // 数据已清空，勾选记录失效
       addOp('清空全部数据', '操作人：'+(_who||'未署名')); save();
       renderAll(); renderRules(); toast('已清空全部数据');
     });
@@ -2644,6 +2650,7 @@
       if(!confirm('清空全部排产快照记录？此操作不可恢复，系统将先自动下载备份。')) return;
       if(!autoBackup()) return;
       state.snapshots = []; addOp('清空快照', ''); save();
+      _snapSel = {}; // 清空勾选记录
       if(window.CloudSync && window.CloudSync.forcePushPlan) window.CloudSync.forcePushPlan(); // 立即覆盖云端快照，防止刷新后被旧快照回填
       renderAnalysis(); toast('已清空排产快照');
     });
@@ -2655,12 +2662,15 @@
       deleteSnapshots(ids);
     });
     if($('snapSelAll')) $('snapSelAll').addEventListener('change', function(){
-      document.querySelectorAll('.snap-chk').forEach(function(c){ c.checked = $('snapSelAll').checked; });
+      document.querySelectorAll('.snap-chk').forEach(function(c){ c.checked = $('snapSelAll').checked; _snapSel[c.getAttribute('data-id')] = c.checked; });
       updateDelSnapsBtn();
     });
     var snapTbEl = $('snapTable');
     if(snapTbEl) snapTbEl.querySelector('tbody').addEventListener('change', function(ev){
-      if(ev.target && ev.target.classList && ev.target.classList.contains('snap-chk')) updateDelSnapsBtn();
+      if(ev.target && ev.target.classList && ev.target.classList.contains('snap-chk')){
+        _snapSel[ev.target.getAttribute('data-id')] = ev.target.checked; // 勾选状态持久，跨重绘保留（v2.10.1）
+        updateDelSnapsBtn();
+      }
     });
     // Tab 切换
     $('nav').addEventListener('click', function(ev){
