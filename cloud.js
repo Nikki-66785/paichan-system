@@ -1,5 +1,5 @@
 /* =====================================================
- * cloud.js — CloudBase 云同步层（排产系统 v2.5 → v2.9.7：计划推送冲突检测 + forcePushPlan 破坏性操作即时上云）
+ * cloud.js — CloudBase 云同步层（排产系统 v2.5 → v2.11.0：确认弹窗走主应用模态 + 清空/导入云端需求同步 + 操作日志上云 op_logs）
  *
  * 作用：让「需求填报」与「排产计划」在多人浏览器之间实时共享。
  *   · requests   集合：需求（每条需求一个文档，多人提交互不覆盖）
@@ -139,6 +139,13 @@
   }
 
   // 云端需求 → 合并 → 回调主逻辑（initial=首次同步：补传本地独有+应用计划；watch 触发时只做增量合并）
+  // v2.11.0 ⑱：确认弹窗统一走主应用注入的 uiConfirm（自定义模态，兼容微信/企微内嵌浏览器）；
+  // 主应用未注入（cloud.js 独立运行/旧版页面）时降级为原生 confirm 并同步回调
+  function uiConfirmC(msg, cb) {
+    if (hook && typeof hook.uiConfirm === 'function') { hook.uiConfirm(msg, cb); return; }
+    var r = (typeof confirm === 'function') ? confirm(msg) : true;
+    cb(!!r);
+  }
   function applyCloudReqs(cloudReqs, cloudPlan, initial) {
     var localReqs = (hook.getReqs && hook.getReqs()) || [];
 
@@ -154,35 +161,41 @@
     var localOnly = localReqs.filter(function (r) { return !cloudById[r.id]; });
 
     if (hook.applyReqs) hook.applyReqs(merged);
+    // 共享收尾：保存本地 + 刷新界面 + 首次同步补传（dirty 分支异步确认后也要执行，故提取为函数）
+    var finishApply = function () {
+      // 云端同步引发的本地保存不回传计划（内容来自云端，回传是冗余写且可能引发推送风暴）
+      applyingRemotePlan = true;
+      if (hook.afterSync) hook.afterSync();
+      applyingRemotePlan = false;
+
+      if (initial) {
+        localOnly.forEach(function (r) { pushReq(r); });                  // 补传本地独有（幂等）
+        if ((!cloudPlan || !cloudPlan.data) && hook.getPlan) pushPlan();  // 云端无计划 → 初始化
+        if (localOnly.length) toast('已同步云端需求 ' + cloudReqs.length + ' 条，并补传本地新增 ' + localOnly.length + ' 条');
+      } else if (newIds.length) {
+        toast('📥 收到其他用户新需求 ' + newIds.length + ' 条');
+        // 主逻辑弹「一键排产」提示条（不自动重排，由人确认后触发）
+        if (hook.onRemoteReqs) hook.onRemoteReqs(newIds.length);
+      }
+    };
     // v2.10.0 本地新鲜度：首次同步时若本机有未上云的修改（上次推送失败/节流窗口内关闭页面），不静默用云端覆盖——
     // 由用户选择：「确定」保留本机版本并强制上传；「取消」放弃本机修改、使用云端版本
     if (initial && cloudPlan && cloudPlan.data && hook.isDirty && hook.isDirty()) {
-      if (typeof confirm === 'function' &&
-          confirm('⚠️ 检测到本机有尚未同步到云端的修改（上次推送可能失败或页面提前关闭）。\n\n「确定」= 保留本机版本并上传覆盖云端\n「取消」= 放弃本机修改，使用云端版本')) {
-        // 保留本机：先登记云端当前版本（避免随后的 watch 回声误判），再强制上传（用户已明确选择，跳过冲突检测）
-        if (cloudPlan.updatedAt) rememberPlanVersion(cloudPlan.updatedAt);
-        forcePushPlan();
-      } else {
-        if (hook.applyPlan) hook.applyPlan(cloudPlan.data);
-        if (hook.clearDirty) hook.clearDirty();
-      }
-    } else if (initial && hook.applyPlan && cloudPlan && cloudPlan.data) {
-      hook.applyPlan(cloudPlan.data);
+      uiConfirmC('⚠️ 检测到本机有尚未同步到云端的修改（上次推送可能失败或页面提前关闭）。\n\n「确定」= 保留本机版本并上传覆盖云端\n「取消」= 放弃本机修改，使用云端版本', function (ok) {
+        if (ok) {
+          // 保留本机：先登记云端当前版本（避免随后的 watch 回声误判），再强制上传（用户已明确选择，跳过冲突检测）
+          if (cloudPlan.updatedAt) rememberPlanVersion(cloudPlan.updatedAt);
+          forcePushPlan();
+        } else {
+          if (hook.applyPlan) hook.applyPlan(cloudPlan.data);
+          if (hook.clearDirty) hook.clearDirty();
+        }
+        finishApply();
+      });
+      return;
     }
-    // 云端同步引发的本地保存不回传计划（内容来自云端，回传是冗余写且可能引发推送风暴）
-    applyingRemotePlan = true;
-    if (hook.afterSync) hook.afterSync();
-    applyingRemotePlan = false;
-
-    if (initial) {
-      localOnly.forEach(function (r) { pushReq(r); });                  // 补传本地独有（幂等）
-      if ((!cloudPlan || !cloudPlan.data) && hook.getPlan) pushPlan();  // 云端无计划 → 初始化
-      if (localOnly.length) toast('已同步云端需求 ' + cloudReqs.length + ' 条，并补传本地新增 ' + localOnly.length + ' 条');
-    } else if (newIds.length) {
-      toast('📥 收到其他用户新需求 ' + newIds.length + ' 条');
-      // 主逻辑弹「一键排产」提示条（不自动重排，由人确认后触发）
-      if (hook.onRemoteReqs) hook.onRemoteReqs(newIds.length);
-    }
+    if (initial && hook.applyPlan && cloudPlan && cloudPlan.data) hook.applyPlan(cloudPlan.data);
+    finishApply();
   }
 
   // 打开页面时全量拉一次
@@ -335,6 +348,32 @@
     db.collection(REQ_COLL).doc(id).remove()
       .catch(function (e) { console.warn('[cloud] 需求删除失败：', e); });
   }
+  // v2.11.0 ⑲：清空云端全部需求文档（「清空全部数据」/「导入覆盖」时调用，防止旧需求下次打开时「复活」）
+  function delAllReqs() {
+    if (!ready) return;
+    getAll(REQ_COLL).then(function (rows) {
+      (rows || []).forEach(function (d) {
+        if (d && d._id) db.collection(REQ_COLL).doc(d._id).remove()
+          .catch(function (e) { console.warn('[cloud] 云端需求删除失败：', d._id, e); });
+      });
+    }).catch(function (e) { console.warn('[cloud] 云端需求集合读取失败（清空未完成）：', e); });
+  }
+  // v2.11.0 ㉑：操作审计日志上云（op_logs 集合，每条一文档；失败静默降级为仅本机记录）
+  function pushOpLog(entry) {
+    if (!ready || !entry) return;
+    try {
+      db.collection('op_logs').add({ data: entry, updatedAt: Date.now() })
+        .catch(function (e) { console.warn('[cloud] 操作日志上传失败（仅本机记录）：', e); });
+    } catch (e) { console.warn('[cloud] 操作日志上传异常：', e); }
+  }
+  function fetchOpLogs() {
+    if (!ready) return Promise.resolve([]);
+    return db.collection('op_logs').orderBy('updatedAt', 'desc').limit(100).get()
+      .then(function (res) {
+        return ((res && res.data) || []).map(function (d) { return d && d.data ? d.data : null; }).filter(Boolean);
+      })
+      .catch(function (e) { console.warn('[cloud] 操作日志拉取失败：', e); return []; });
+  }
   function pushPlan() {
     if (!ready || !hook || !hook.getPlan) return;
     var p = hook.getPlan();
@@ -346,17 +385,20 @@
       .then(function (r) {
         var doc = (r && r.data) || null;
         if (doc && doc.updatedAt && planVersions.indexOf(doc.updatedAt) < 0) {
-          if (typeof confirm === 'function' &&
-              !confirm('⚠️ 云端存在其他用户的更新版本（本页尚未同步）。\n\n确定用本页计划覆盖云端版本？\n「取消」将改为拉取云端最新版本到本页。')) {
-            // 不覆盖：应用云端版本（本地未同步的改动将被云端版本替换，与 watch 实时同步行为一致）
-            applyingRemotePlan = true;
-            rememberPlanVersion(doc.updatedAt);
-            if (hook.applyPlan && doc.data) hook.applyPlan(doc.data);
-            if (hook.afterSync) hook.afterSync();
-            applyingRemotePlan = false;
-            toast('已拉取云端最新计划（本页版本未覆盖云端）');
-            return;
-          }
+          uiConfirmC('⚠️ 云端存在其他用户的更新版本（本页尚未同步）。\n\n确定用本页计划覆盖云端版本？\n「取消」将改为拉取云端最新版本到本页。', function (ok) {
+            if (!ok) {
+              // 不覆盖：应用云端版本（本地未同步的改动将被云端版本替换，与 watch 实时同步行为一致）
+              applyingRemotePlan = true;
+              rememberPlanVersion(doc.updatedAt);
+              if (hook.applyPlan && doc.data) hook.applyPlan(doc.data);
+              if (hook.afterSync) hook.afterSync();
+              applyingRemotePlan = false;
+              toast('已拉取云端最新计划（本页版本未覆盖云端）');
+              return;
+            }
+            doPushPlan(p);
+          });
+          return;
         }
         doPushPlan(p);
       })
@@ -402,6 +444,8 @@
 
   window.CloudSync = {
     connect: connect, isReady: isReady, onSaved: onSaved,
-    pushReq: pushReq, delReqCloud: delReqCloud, pushPlan: pushPlan, forcePushPlan: forcePushPlan
+    pushReq: pushReq, delReqCloud: delReqCloud, delAllReqs: delAllReqs,
+    pushPlan: pushPlan, forcePushPlan: forcePushPlan,
+    pushOpLog: pushOpLog, fetchOpLogs: fetchOpLogs // v2.11.0 ㉑ 操作日志上云
   };
 })();
