@@ -41,6 +41,20 @@
   .grid2{display:grid;grid-template-columns:420px 1fr;gap:16px;align-items:start}
   body.role-planner .grid2{grid-template-columns:1fr}
   @media(max-width:1100px){.grid2{grid-template-columns:1fr}}
+  /* v2.10.0 移动端基础适配（≤640px）：紧凑间距、可换行工具栏、缩小字号与触控目标 */
+  @media(max-width:640px){
+    header{padding:10px 12px;gap:8px}
+    header h1{font-size:16px;flex-wrap:wrap}
+    nav{padding:0 6px}
+    nav button{padding:10px 10px;font-size:13px}
+    main{padding:12px 10px}
+    .card{padding:12px 12px}
+    .card h2{font-size:14px}
+    .form-row .f{min-width:100%}
+    .btn{padding:9px 14px}
+    .tbl{font-size:12px}
+    header .stats{margin-left:0;width:100%;font-size:11px}
+  }
   .form-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
   .form-row .f{flex:1;min-width:130px}
   label{display:block;font-size:12px;color:var(--sub);margin-bottom:4px;font-weight:600}
@@ -144,7 +158,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.9.7（①清空/重置前自动下载备份 ②快照分类限额 ③漂移分析可任选两次快照对比+汇总+新增/取消批次统计 ④云端同步冲突提示 ⑤人工快照备注改为内嵌输入框 ⑥趋势图可与甘特图联动 ⑦未排产需求提示 ⑧快照下载 ⑨快照多选删除，清空/删除后立即同步云端）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.9.7</span></h1>
+  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.10.0（⑩导入前自动备份+确认 ⑪云端推送失败显式提示+本地新鲜度保护 ⑫数据体积接近云端上限预警 ⑬远端同步不清空正在编辑的表单 ⑭操作审计日志 ⑮移动端适配 ⑯快照构建去重优化）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.10.0</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -593,6 +607,16 @@
         <input type="file" id="importFile" accept=".xlsx,.json" style="display:none">
         <button class="btn" id="btnReimportHist">📥 重新导入历史计划（锁定产能）</button>
         <button class="btn danger" id="btnClearAll">🗑 清空全部数据</button>
+        <button class="btn" id="btnOpLog">📋 操作日志</button>
+      </div>
+      <div id="opLogPanel" style="display:none;margin-top:12px">
+        <div class="scroll-tbl" style="max-height:240px">
+          <table class="tbl" id="opLogTable">
+            <thead><tr><th>时间</th><th>用户</th><th>操作</th><th>详情</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="hint" style="margin-top:6px">最近 100 条关键操作（排产/锁定/调整/删除/导入/清空），保存在本机浏览器，不上传云端。</div>
       </div>
       <div class="hint" style="margin-top:12px;line-height:2.2">
         <p>· <b>导出</b>：将需求、排产批次、规则参数保存为 Excel（.xlsx）文件，可在其它电脑导入使用（同时兼容旧版 JSON 文件导入）。</p>
@@ -604,7 +628,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.9.7（云端共享）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.10.0（云端共享）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -659,10 +683,10 @@
 <div id="toast"></div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=297"></script>
-<script src="xlsx.full.min.js?v=297"></script>
-<script src="cloud.js?v=297"></script>
-<script src="scheduling.js?v=297"></script>
+<script src="cloudbase.full.js?v=2100"></script>
+<script src="xlsx.full.min.js?v=2100"></script>
+<script src="cloud.js?v=2100"></script>
+<script src="scheduling.js?v=2100"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -749,8 +773,13 @@
   function isPlanner(){ return state.role==='planner'; }
 
   // ---------- 存储 ----------
+  // _echoSave：云端数据应用到本地引发的保存（applyPlan/applyReqs → afterSync 链路）不算本地新修改，不标脏
+  var _echoSave = false;
   function save(){
-    try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+    try{
+      localStorage.setItem(LS_KEY, JSON.stringify(state));
+      if(!_echoSave) localStorage.setItem(LS_KEY+'_dirty', '1'); // 本地新修改标记，云端推送成功后由 cloud.js 清除（v2.10.0）
+    }
     catch(e){ toast('保存失败：'+e.message); }
     if(window.CloudSync) window.CloudSync.onSaved(); // 云端计划同步（节流）
   }
@@ -1136,10 +1165,7 @@
       source: 'auto',
       reqCount: state.requirements.length,
       warningCount: res.warnings.length,
-      batches: state.batches.map(function(b){
-        return { id:b.id, reqId:b.reqId, type:b.type, line:b.line||'其他', start:b.start, end:b.end,
-          project:b.project||'', status:b.status, dueDate: (state.requirements.find(function(r){return r.id===b.reqId;})||{}).dueDate||'' };
-      })
+      batches: snapshotBatches()
     });
     // 按来源限额保留快照（auto 15 / periodic 10 / manual 5）
     trimSnapshots();
@@ -1156,6 +1182,22 @@
       warnBanner.classList.remove('show');
     }
     toast('排产完成：生成 '+res.batches.length+' 个草案批次，待生产计划确认');
+    addOp('重新排产', '生成 '+res.batches.length+' 个草案批次'); save();
+  }
+  // 快照批次白名单字段构建（三处快照共用；预构建 reqId→dueDate 映射避免 O(批次×需求) 查找）
+  // 操作审计日志（v2.10.0）：记录关键操作（最近 100 条），随 save() 持久化到本地；不参与云端计划同步
+  function addOp(action, detail){
+    if(!state.opLog) state.opLog = [];
+    state.opLog.push({ t: today()+' '+new Date().toTimeString().slice(0,8), u: state.user || '', a: action, d: (detail||'').slice(0,60) });
+    if(state.opLog.length > 100) state.opLog = state.opLog.slice(-100);
+  }
+  function snapshotBatches(){
+    var dueMap = {};
+    state.requirements.forEach(function(r){ dueMap[r.id] = r.dueDate || ''; });
+    return state.batches.map(function(b){
+      return { id:b.id, reqId:b.reqId, type:b.type, line:b.line||'其他', start:b.start, end:b.end,
+        project:b.project||'', status:b.status, dueDate: dueMap[b.reqId]||'' };
+    });
   }
   // 快照分类限额：auto 15 / periodic 10 / manual 5（总上限 30 不变）
   // 按来源分别保留最新 N 条，避免频繁「自动排产」把关键的人工/定期快照挤出 30 条窗口
@@ -1196,10 +1238,7 @@
       source: 'periodic',
       reqCount: state.requirements.length,
       warningCount: warnN,
-      batches: state.batches.map(function(b){
-        return { id:b.id, reqId:b.reqId, type:b.type, line:b.line||'其他', start:b.start, end:b.end,
-          project:b.project||'', status:b.status, dueDate: (state.requirements.find(function(r){return r.id===b.reqId;})||{}).dueDate||'' };
-      })
+      batches: snapshotBatches()
     });
     trimSnapshots();
     save();
@@ -1220,14 +1259,12 @@
       note: note,
       reqCount: state.requirements.length,
       warningCount: warnN,
-      batches: state.batches.map(function(b){
-        return { id:b.id, reqId:b.reqId, type:b.type, line:b.line||'其他', start:b.start, end:b.end,
-          project:b.project||'', status:b.status, dueDate: (state.requirements.find(function(r){return r.id===b.reqId;})||{}).dueDate||'' };
-      })
+      batches: snapshotBatches()
     });
     trimSnapshots();
     save(); renderAnalysis();
     if(noteEl) noteEl.value = '';
+    addOp('人工快照', note || '无备注'); save();
     toast('人工快照已保存' + (note ? '：'+note : ''));
   }
   function clearPlan(){
@@ -1241,14 +1278,14 @@
     if(!pend.length){ toast('没有待确认的批次'); return; }
     if(!confirm('确认锁定 '+pend.length+' 个待确认批次？\n锁定后作为已占用产能，不再参与下次自动重排。')) return;
     pend.forEach(function(b){ b.locked=true; b.status='锁定'; });
-    save(); renderAll();
+    addOp('批量锁定', pend.length+' 个批次'); save(); renderAll();
     toast('已锁定 '+pend.length+' 个批次，排产确认完成');
   }
   function confirmBatch(id){
     var b = state.batches.find(function(x){return x.id===id;});
     if(!b || b.locked || isFinal(b)) return;
     b.locked=true; b.status='锁定';
-    save(); renderAll();
+    addOp('确认批次', b.id+'（'+(b.project||b.type||'')+'）'); save(); renderAll();
     toast('批次已确认锁定');
   }
   function unlockBatch(id){
@@ -1256,7 +1293,7 @@
     if(!b || !b.locked || b.source==='历史') return;
     if(!confirm('解锁后该批次将恢复为待确认状态，确定继续？')) return;
     b.locked=false; b.status='人工';
-    save(); renderAll();
+    addOp('解锁批次', b.id); save(); renderAll();
     toast('已解锁，该批次恢复为待确认');
   }
   // 批量解锁：按批次表勾选框解锁多个锁定批次
@@ -1671,7 +1708,7 @@
     var removed = snaps.length - kept.length;
     if(!removed) return;
     if(!autoBackup()) return; // 备份失败（Excel 组件缺失等）→ 中止，避免无备份删除
-    state.snapshots = kept; save();
+    state.snapshots = kept; addOp('删除快照', removed+' 份'); save();
     if(window.CloudSync && window.CloudSync.forcePushPlan) window.CloudSync.forcePushPlan(); // 立即覆盖云端快照
     renderAnalysis();
     toast('已删除 '+removed+' 份快照');
@@ -1986,14 +2023,14 @@
     else if(b.locked){ b.status='锁定'; b.warning=''; }
     else if(b.status==='锁定'){ b.status='人工'; }
     else if(b.status==='自动'||b.status==='预警'){ b.status='人工'; }
-    save(); renderAll(); closeEdit();
+    addOp('人工调整', b.id+'：'+s+'~'+e+(b.locked?'（锁定）':'')); save(); renderAll(); closeEdit();
     toast('已保存调整'+(conflict?'（存在冲突，请关注）':''));
   }
   function delBatch(){
     if(!isPlanner()){ toast('仅生产计划角色可删除批次'); return; }
     if(!confirm('删除该批次？')) return;
     state.batches = state.batches.filter(function(x){return x.id!==editingId;});
-    save(); renderAll(); closeEdit();
+    addOp('删除批次', editingId); save(); renderAll(); closeEdit();
     toast('批次已删除');
   }
   function delBatchDirect(id){
@@ -2268,6 +2305,9 @@
     toast('已下载快照数据（共 '+snaps.length+' 份快照）');
   }
   function importData(file){
+    // 导入是覆盖式操作：先确认，再自动备份当前数据（v2.10.0 起与清空/重置同级别防护）
+    if(!confirm('导入将用文件数据覆盖当前全部数据（需求、排产批次、快照记录）。\n系统会先自动下载当前数据的备份。确定继续？')) return;
+    if(!autoBackup()) return;
     var isJson = /\.json$/i.test(file.name||'');
     var reader = new FileReader();
     reader.onload = function(){
@@ -2307,6 +2347,7 @@
         syncTrendRangeDisabled();
         $('userName').value = state.user;
         save(); applyRole(); renderAll();
+        addOp('导入数据', '需求 '+d.requirements.length+' 条 / 批次 '+d.batches.length+' 批（'+(file.name||'')+'）'); save();
         toast('导入成功：需求 '+d.requirements.length+' 条，批次 '+d.batches.length+' 批');
       }catch(e){ toast('导入失败：'+e.message); }
     };
@@ -2383,6 +2424,24 @@
   function renderAll(){
     renderStats(); renderReq(); renderGantt(); renderBatches(); renderData(); renderRef(); renderRefMab(); renderAnalysis();
     syncGanttCheckboxes();
+  }
+  // 远端同步后的安全渲染：用户正在输入时暂缓重绘，等 blur 再刷新（数据已同步，仅界面延迟）
+  var _pendingRender = null;
+  function safeRenderAll(){
+    var ae = document.activeElement;
+    var editing = ae && document.body.contains(ae) && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) && !ae.disabled && !ae.readOnly;
+    if(editing){
+      if(!_pendingRender){
+        toast('📡 云端有更新，界面将在完成当前编辑后刷新');
+        _pendingRender = ae;
+        ae.addEventListener('blur', function(){
+          _pendingRender = null;
+          renderAll();
+        }, { once:true });
+      }
+      return;
+    }
+    renderAll();
   }
 
   // ---------- 事件绑定 ----------
@@ -2545,12 +2604,35 @@
         if(autoBackup()) resetToHistory();
       }
     });
+    // 操作日志面板：toggle 显示
+    if($('btnOpLog')) $('btnOpLog').addEventListener('click', function(){
+      var panel = $('opLogPanel');
+      if(panel.style.display === 'none'){
+        var tb = $('opLogTable').querySelector('tbody');
+        tb.innerHTML = '';
+        var logs = (state.opLog||[]).slice().reverse();
+        if(!logs.length){
+          tb.innerHTML = '<tr><td colspan="4" class="empty">暂无操作记录</td></tr>';
+        } else {
+          logs.forEach(function(x){
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<td style="white-space:nowrap">'+esc(x.t||'')+'</td><td>'+esc(x.u||'-')+'</td><td><span class="tag">'+esc(x.a||'')+'</span></td><td style="font-size:12px;color:var(--sub)">'+esc(x.d||'')+'</td>';
+            tb.appendChild(tr);
+          });
+        }
+        panel.style.display = '';
+      } else {
+        panel.style.display = 'none';
+      }
+    });
     $('btnClearAll').addEventListener('click', function(){
       if(!confirm('⚠️ 清空全部数据（需求、批次、规则），此操作不可恢复！系统将先自动下载备份（含快照）。确定继续？')) return;
       if(!autoBackup()) return; // 备份失败（Excel 组件缺失等）→ 中止，避免无备份清空
+      var _who = state.user||''; // 清空后 state 重建，先留用户名
       state = { requirements: [], batches: [], rules: null, role: state.role||'requester', user: state.user||'',
         ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, ganttRange: state.ganttRange||{preset:'all',start:'',end:''}, trendRange: state.trendRange||{preset:'all',start:'',end:''}, trendLink: !!state.trendLink, refData: state.refData||null, snapshots: state.snapshots||[] };
-      save(); renderAll(); renderRules(); toast('已清空全部数据');
+      addOp('清空全部数据', '操作人：'+(_who||'未署名')); save();
+      renderAll(); renderRules(); toast('已清空全部数据');
     });
     // 保存人工快照 / 清空快照 / 下载快照
     if($('btnManualSnap')) $('btnManualSnap').addEventListener('click', saveManualSnapshot);
@@ -2561,7 +2643,7 @@
     if($('btnClearSnap')) $('btnClearSnap').addEventListener('click', function(){
       if(!confirm('清空全部排产快照记录？此操作不可恢复，系统将先自动下载备份。')) return;
       if(!autoBackup()) return;
-      state.snapshots = []; save();
+      state.snapshots = []; addOp('清空快照', ''); save();
       if(window.CloudSync && window.CloudSync.forcePushPlan) window.CloudSync.forcePushPlan(); // 立即覆盖云端快照，防止刷新后被旧快照回填
       renderAnalysis(); toast('已清空排产快照');
     });
@@ -2635,9 +2717,14 @@
       window.CloudSync.connect({
         getReqs: function(){ return state.requirements; },
         getPlan: function(){ return { batches: state.batches, rules: state.rules, refData: state.refData, ganttAxis: state.ganttAxis, ganttLines: state.ganttLines, ganttRange: state.ganttRange, trendRange: state.trendRange, trendLink: !!state.trendLink, snapshots: state.snapshots }; },
-        applyReqs: function(reqs){ state.requirements = reqs; },
+        applyReqs: function(reqs){ _echoSave = true; state.requirements = reqs; },
         onRemoteReqs: function(n){ showNewReqBanner(n); },
+        // v2.10.0 本地新鲜度：本地修改是否尚未成功上云（推送失败/节流窗口内刷新）
+        isDirty: function(){ return localStorage.getItem(LS_KEY+'_dirty') === '1'; },
+        clearDirty: function(){ try{ localStorage.removeItem(LS_KEY+'_dirty'); }catch(e){} },
+        onPushFail: function(){ toast('⚠️ 云端同步失败：本地修改未上云。请勿直接关闭页面——可稍后重试或导出备份（刷新页面上次修改可能被云端旧版覆盖）', 6000); },
         applyPlan: function(p){
+          _echoSave = true;
           if(!p) return;
           state.batches = p.batches || state.batches;
           state.rules = p.rules || null;
@@ -2649,7 +2736,8 @@
           if(p.trendLink != null) state.trendLink = !!p.trendLink;
           if(p.snapshots) state.snapshots = p.snapshots;
         },
-        afterSync: function(){ save(); renderAll(); renderRules(); }
+        // 远端数据应用后刷新界面：若用户正在表单输入，暂缓重绘到 blur，避免清掉正在编辑的内容（v2.10.0）
+        afterSync: function(){ save(); renderRules(); safeRenderAll(); _echoSave = false; }
       });
     }
   }
