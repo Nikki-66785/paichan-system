@@ -160,7 +160,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.12.0（方案A安全加固：邮箱登录+操作日志记录操作者，未登录时弹登录框，匿名可过渡使用）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.12.0</span></h1>
+  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.12.1（方案A安全加固：邮箱登录+操作日志记录操作者，未登录时弹登录框，匿名可过渡使用；点击右上角连接状态可退出/切换账号）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.12.1</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -171,7 +171,7 @@
     <input id="userName" placeholder="姓名（选填）">
   </div>
   <div class="stats">
-    <span class="stat" id="cloudStatus" title="云端连接状态：配置 CloudBase 环境后，多人提交的需求实时共享">☁️ 连接中…</span>
+    <span class="stat" id="cloudStatus" title="云端连接状态：配置 CloudBase 环境后，多人提交的需求实时共享。连接后点击此处可退出/切换账号">☁️ 连接中…</span>
     <span class="stat">需求 <b id="stReq">0</b></span>
     <span class="stat">批次 <b id="stBatch">0</b></span>
     <span class="stat">锁定 <b id="stLock">0</b></span>
@@ -630,7 +630,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.12.0（云端共享·邮箱登录）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.12.1（云端共享·邮箱登录）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -696,9 +696,9 @@
 </div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=2120"></script>
-<script src="cloud.js?v=2120"></script>
-<script src="scheduling.js?v=2120"></script>
+<script src="cloudbase.full.js?v=2121"></script>
+<script src="cloud.js?v=2121"></script>
+<script src="scheduling.js?v=2121"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -815,7 +815,7 @@
     if(_xlsxQ){ _xlsxQ.push(cb); return; }
     _xlsxQ = [cb];
     var s = document.createElement('script');
-    s.src = 'xlsx.full.min.js?v=2120';
+    s.src = 'xlsx.full.min.js?v=2121';
     s.onload = function(){ var q = _xlsxQ; _xlsxQ = null; q.forEach(function(f){ f(true); }); };
     s.onerror = function(){ var q = _xlsxQ; _xlsxQ = null; q.forEach(function(f){ f(false); }); toast('⚠️ Excel 组件加载失败，请检查网络后重试', 5000); };
     document.head.appendChild(s);
