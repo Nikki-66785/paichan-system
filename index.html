@@ -168,7 +168,7 @@
 <body class="role-requester">
 
 <header>
-  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.15.5（反白 Logo 独立文件名+防缓存；Logo 字标与标题同高；权限邮箱强制单行）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.15.5</span></h1>
+  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.15.6（甘特图删除利用率百分比；月度趋势按全部生产类型分开堆叠显示）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.15.6</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -636,7 +636,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.15.5（云端共享·邮箱登录·权限三档·新账号默认读者）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.15.6（云端共享·邮箱登录·权限三档·新账号默认读者）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -1686,13 +1686,7 @@
         return s && e && e >= minD && s <= maxD;
       });
       if(!lbs.length && line!=='其他') return;
-      // 产线利用率：窗口内占用天数 / 窗口总跨度天数
-      var occDays = 0;
-      lbs.forEach(function(b){ if(!isFinal(b)){ occDays += U.diff(U.p(b.end), U.p(b.start))+1; } });
-      var utilPct = total > 0 ? Math.round(occDays/total*100) : 0;
-      var utilColor = utilPct >= 80 ? '#dc2626' : (utilPct >= 50 ? '#f59e0b' : '#22c55e');
-      html += '<div class="g-line"><div class="g-label">'+line+'<span style="font-weight:400;color:var(--sub);margin-left:4px">'+lbs.length+'批</span>'+
-        '<span style="margin-left:auto;font-size:10px;color:'+utilColor+'">'+utilPct+'%</span></div><div class="g-body" style="width:'+ganttW+'px">'+weekendHtml;
+      html += '<div class="g-line"><div class="g-label">'+line+'<span style="font-weight:400;color:var(--sub);margin-left:4px">'+lbs.length+'批</span></div><div class="g-body" style="width:'+ganttW+'px">'+weekendHtml;
       lbs.forEach(function(b){
         var s=U.p(b.start), e=U.p(b.end);
         if(!s||!e) return;
@@ -1957,14 +1951,15 @@
     if(src === 'auto') return '自动排产';
     return '自动排产'; // 旧版快照（v2.6.0 及之前）均为排产触发
   }
-  // 月度批次趋势：按开始日期月份统计批次数量，Mab/ADC/其他 分色，支持工序筛选
+  // 月度批次趋势：按开始日期月份统计批次数量，全部生产类型分开显示（堆叠柱，TYPE_COLOR 配色），支持工序筛选
   function renderTrend(){
     var el = $('trendChart'); if(!el) return;
     var catInput = document.querySelector('#trendFilter input[name="trendCat"]:checked');
     var cat = catInput ? catInput.value : 'all';
-    var SERIES = { Mab:['Mab','CM DP'], ADC:['ADC DS','ADC DP'] };      // 图例系列（产品系列分色）
     var CATS = { CB:['MCB','WCB'], DS:['Mab','ADC DS'], DP:['CM DP','ADC DP','APS','冻干放大测试'] }; // 工序筛选
-    var COLORS = { Mab:'#8b5cf6', ADC:'#06b6d4', other:'#94a3b8' };
+    // 全部生产类型（固定顺序，与甘特图图例一致）；未列出的类型统一归「其他」
+    var TYPES = ['MCB','WCB','Mab','ADC DS','ADC DP','CM DP','冻干放大测试','APS','设备维护'];
+    var typeKey = function(t){ return TYPES.indexOf(t) >= 0 ? t : '其他'; };
     // 时间范围窗口：默认独立（trendRange）；勾选「与甘特图联动」(trendLink) 后跟随甘特图窗口（ganttRange）
     // all=全部 / 1m/3m/6m=近N月 / custom=自定义起止（按批次开始日期所在月份过滤）
     var rg = state.trendLink ? (state.ganttRange||{ preset:'all', start:'', end:'' }) : (state.trendRange || { preset:'all', start:'', end:'' });
@@ -1986,39 +1981,51 @@
       return true;
     });
     if(!bs.length){ el.innerHTML = '<div class="empty">暂无批次（'+({CB:'CB 细胞库',DS:'DS 原液',DP:'DP 制剂'}[cat]||'当前筛选')+'）</div>'; return; }
-    // 按月聚合
+    // 按月聚合：每种生产类型独立计数
     var months = {}, keys = [];
     bs.forEach(function(b){
       var k = (b.start||'').slice(0,7);
       if(!/^\d{4}-\d{2}$/.test(k)) return;
-      if(!months[k]){ months[k] = { Mab:0, ADC:0, other:0 }; keys.push(k); }
-      if(SERIES.Mab.indexOf(b.type) >= 0) months[k].Mab++;
-      else if(SERIES.ADC.indexOf(b.type) >= 0) months[k].ADC++;
-      else months[k].other++;
+      if(!months[k]){ months[k] = {}; keys.push(k); }
+      var tk = typeKey(b.type);
+      months[k][tk] = (months[k][tk]||0) + 1;
     });
     keys.sort();
     if(!keys.length){ el.innerHTML = '<div class="empty">批次缺少有效开始日期</div>'; return; }
+    // 图表内出现的类型（保持固定顺序，只显示有数据的）
+    var usedTypes = [];
+    TYPES.concat(['其他']).forEach(function(t){
+      var has = keys.some(function(k){ return (months[k][t]||0) > 0; });
+      if(has) usedTypes.push(t);
+    });
+    var colorOf = function(t){ return t === '其他' ? '#a8a29e' : (TYPE_COLOR[t] || '#a8a29e'); };
     var maxV = 0;
-    keys.forEach(function(k){ var t = months[k].Mab + months[k].ADC + months[k].other; if(t > maxV) maxV = t; });
+    keys.forEach(function(k){
+      var t = 0; usedTypes.forEach(function(s){ t += months[k][s]||0; });
+      if(t > maxV) maxV = t;
+    });
     var CH = 150; // 图表主体高度
     var html = '<div style="display:flex;align-items:flex-end;gap:4px;padding:0 4px;overflow-x:auto">';
     keys.forEach(function(k){
-      var m = months[k];
-      var total = m.Mab + m.ADC + m.other;
-      function hOf(v){ return maxV > 0 ? Math.max(Math.round(v/maxV*CH), v>0?4:0) : 0; }
-      var bars = ['Mab','ADC','other'].map(function(s){
-        if(!m[s]) return '<div style="width:9px"></div>';
-        var name = s === 'other' ? '其他' : s;
-        return '<div title="'+name+'：'+m[s]+' 批" style="width:9px;height:'+hOf(m[s])+'px;background:'+COLORS[s]+';border-radius:2px 2px 0 0"></div>';
-      }).join('');
+      var total = 0; usedTypes.forEach(function(s){ total += months[k][s]||0; });
+      // 堆叠柱：自下而上按固定类型顺序堆叠，每段带类型 tooltip
+      var segs = '';
+      usedTypes.forEach(function(s){
+        var v = months[k][s]||0;
+        if(!v) return;
+        var h = maxV > 0 ? Math.max(Math.round(v/maxV*CH), 4) : 0;
+        segs += '<div title="'+esc(s)+'：'+v+' 批" style="width:100%;height:'+h+'px;background:'+colorOf(s)+'"></div>';
+      });
       html += '<div style="flex:1;min-width:44px;display:flex;flex-direction:column;align-items:center;gap:2px">'+
         '<div style="font-size:10px;font-weight:700;color:#334155">'+total+'</div>'+
-        '<div style="display:flex;align-items:flex-end;gap:2px;height:'+CH+'px">'+bars+'</div>'+
+        '<div title="'+k+' 共 '+total+' 批" style="display:flex;flex-direction:column-reverse;align-items:center;width:70%;max-width:18px;height:'+CH+'px;justify-content:flex-start">'+segs+'</div>'+
         '<div style="font-size:9px;color:var(--sub);white-space:nowrap">'+k+'</div>'+
       '</div>';
     });
     html += '</div>';
-    html += '<div class="legend" style="margin-top:8px"><span><i style="background:'+COLORS.Mab+'"></i>Mab（Mab / CM DP）</span><span><i style="background:'+COLORS.ADC+'"></i>ADC（ADC DS / ADC DP）</span><span><i style="background:'+COLORS.other+'"></i>其他（CB / APS / 维护等）</span></div>';
+    html += '<div class="legend" style="margin-top:8px;flex-wrap:wrap">'+usedTypes.map(function(t){
+      return '<span><i style="background:'+colorOf(t)+'"></i>'+esc(t)+'</span>';
+    }).join('')+'</div>';
     el.innerHTML = html;
   }
   // 联动开关：联动时禁用趋势图独立范围控件（避免两处设置打架）
