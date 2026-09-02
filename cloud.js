@@ -1,5 +1,5 @@
 /* =====================================================
- * cloud.js — CloudBase 云同步层（排产系统 v2.5 → v2.12.1：状态栏点击退出/切换账号 + 邮箱登录（安全加固方案A）+ 确认弹窗走主应用模态 + 清空/导入云端需求同步 + 操作日志上云 op_logs）
+ * cloud.js — CloudBase 云同步层（排产系统 v2.5 → v2.13.0：角色绑定登录身份（方案A权限分层）+ 状态栏点击退出/切换账号 + 邮箱登录（安全加固方案A）+ 确认弹窗走主应用模态 + 清空/导入云端需求同步 + 操作日志上云 op_logs）
  *
  * 作用：让「需求填报」与「排产计划」在多人浏览器之间实时共享。
  *   · requests   集合：需求（每条需求一个文档，多人提交互不覆盖）
@@ -21,6 +21,9 @@
   var REQ_COLL = 'requests';   // 需求集合
   var PLAN_COLL = 'plan_state'; // 排产计划集合
   var PLAN_ID = 'main';
+  // v2.13.0 角色白名单：列表内邮箱登录 = 「生产计划」角色（可调整/锁定/删除/清空/导入）；
+  // 其他邮箱/匿名 = 「需求方」角色（可填报需求、查看全部页面）。可用 CLOUD_CONFIG.planAdmins 追加。
+  var PLAN_ADMINS = ['shunchao_zhang@henlius.com'].concat(CFG.planAdmins || []).map(function (s) { return String(s || '').trim().toLowerCase(); });
 
   var db = null, ready = false;
   var retriedLogin = false; // 凭证缺失自动重登标志（每次会话最多一次）
@@ -93,6 +96,7 @@
   var appRef = null; // 保留 app 引用供重登使用
   var authRef = null;      // auth 实例（登录/登出）
   var curEmail = '';       // 当前登录邮箱（空 = 匿名/未知），用于操作日志追溯与状态栏展示
+  var adminFlag = false;   // v2.13.0：当前身份是否「生产计划」角色（邮箱白名单判定）
   var EMAIL_KEY = 'paichan_login_email'; // 本地记住登录邮箱（会话恢复时显示用）
 
   function rememberEmail(email) {
@@ -106,11 +110,24 @@
   function onAuthed() {
     db = appRef.database();
     ready = true;
-    if (curEmail) setStatus('☁️ 已连接·' + curEmail, 'cloud-on');
-    else setStatus('☁️ 已连接·匿名', 'cloud-on'); // v2.12.1：匿名状态显式标出，提示用户可切换
-    if (statusEl) statusEl.title = (curEmail ? '当前登录：' + curEmail : '当前为匿名登录（过渡期），建议用邮箱账号') + '。点击此处可退出并切换账号';
+    // v2.13.0：角色绑定登录身份——管理员白名单邮箱=生产计划，其他/匿名=需求方
+    adminFlag = PLAN_ADMINS.indexOf((curEmail || '').toLowerCase()) >= 0;
+    if (curEmail) setStatus(adminFlag ? '☁️ 已连接·' + curEmail + '（生产计划）' : '☁️ 已连接·' + curEmail + '（需求方）', 'cloud-on');
+    else setStatus('☁️ 已连接·匿名（需求方）', 'cloud-on'); // v2.12.1：匿名状态显式标出，提示用户可切换
+    if (statusEl) statusEl.title = (curEmail ? '当前登录：' + curEmail + (adminFlag ? '（生产计划）' : '（需求方）') : '当前为匿名登录（需求方权限），建议用邮箱账号') + '。点击此处可退出并切换账号';
+    if (hook && typeof hook.setRole === 'function') {
+      try { hook.setRole(adminFlag); } catch (e) { console.warn('[cloud] setRole 回调异常：', e); }
+    }
     toast('☁️ 已连接云端，需求实时共享');
     syncDown();
+  }
+  // v2.13.0：当前登录身份是否为「生产计划」角色。
+  // 本地模式（未配置云）与连接建立前的启动瞬间不拦截，保持离线单机全功能；
+  // 连接后以登录邮箱白名单为准（防 F12 手改 state.role 绕过 UI）。
+  function isPlanAdmin() {
+    if (!enabled()) return true;
+    if (!ready) return true;
+    return adminFlag;
   }
   // 登录框（v2.12.0 方案A）：邮箱+密码；匿名登录保留为过渡降级路径
   function showLogin(tip) {
@@ -547,6 +564,7 @@
 
   window.CloudSync = {
     connect: connect, isReady: isReady, onSaved: onSaved, logout: logout,
+    isPlanAdmin: isPlanAdmin, // v2.13.0 角色查询：主文件 isPlanner() 据此强制身份
     pushReq: pushReq, delReqCloud: delReqCloud, delAllReqs: delAllReqs,
     pushPlan: pushPlan, forcePushPlan: forcePushPlan,
     pushOpLog: pushOpLog, fetchOpLogs: fetchOpLogs // v2.11.0 ㉑ 操作日志上云
