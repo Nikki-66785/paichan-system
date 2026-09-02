@@ -1,16 +1,17 @@
 /* =====================================================
- * cloud.js — CloudBase 云同步层（排产系统 v2.5 → v2.11.0：确认弹窗走主应用模态 + 清空/导入云端需求同步 + 操作日志上云 op_logs）
+ * cloud.js — CloudBase 云同步层（排产系统 v2.5 → v2.12.0：邮箱登录（安全加固方案A）+ 确认弹窗走主应用模态 + 清空/导入云端需求同步 + 操作日志上云 op_logs）
  *
  * 作用：让「需求填报」与「排产计划」在多人浏览器之间实时共享。
  *   · requests   集合：需求（每条需求一个文档，多人提交互不覆盖）
  *   · plan_state 集合：排产计划（单文档，管理员维护，大家加载）
+ *   · op_logs    集合：操作审计日志（v2.11.0 起上云，v2.12.0 起附带操作者邮箱）
  * 两个集合均有实时监听（watch）：他人提交需求、调整/锁定排产，几秒内自动同步，无需刷新。
  * 未配置 envId / SDK 未加载 / 网络不可用 → 自动降级为纯本地模式（localStorage）。
  *
- * 接入步骤（详见「CloudBase 接入说明.md」）：
+ * 接入步骤（详见「数据安全加固指南.md」方案A）：
  *   1. 腾讯云控制台开通 CloudBase 环境（免费额度即可）
- *   2. 环境 → 登录授权 → 开启「匿名登录」
- *   3. 数据库 → 创建集合 requests、plan_state → 权限规则「所有用户可读，所有用户可写」
+ *   2. 环境 → 身份验证 → 开启「邮箱登录」+ 创建团队成员用户（保留匿名登录作过渡）
+ *   3. 数据库 → 创建集合 requests、plan_state、op_logs → 权限规则「auth != null 可读写」
  *   4. 把环境 ID 填到 排产系统.html 顶部 window.CLOUD_CONFIG.envId
  * ===================================================== */
 (function () {
@@ -88,16 +89,102 @@
     return m;
   }
 
-  // ---------- 连接：初始化 + 匿名登录 ----------
+  // ---------- 连接：初始化 + 邮箱登录（v2.12.0 方案A：persistence:'local' 记住会话，刷新免登录） ----------
   var appRef = null; // 保留 app 引用供重登使用
-  function reSignIn() {
-    return appRef.auth({ persistence: 'none' }).anonymousAuthProvider().signIn();
+  var authRef = null;      // auth 实例（登录/登出）
+  var curEmail = '';       // 当前登录邮箱（空 = 匿名/未知），用于操作日志追溯与状态栏展示
+  var EMAIL_KEY = 'paichan_login_email'; // 本地记住登录邮箱（会话恢复时显示用）
+
+  function rememberEmail(email) {
+    curEmail = email || '';
+    try {
+      if (curEmail) localStorage.setItem(EMAIL_KEY, curEmail);
+      else localStorage.removeItem(EMAIL_KEY);
+    } catch (e) { /* 隐私模式等场景忽略 */ }
+  }
+  // 登录成功/会话恢复后的统一入口
+  function onAuthed() {
+    db = appRef.database();
+    ready = true;
+    if (curEmail) setStatus('☁️ 已连接·' + curEmail, 'cloud-on');
+    else setStatus('☁️ 已连接', 'cloud-on');
+    if (statusEl) statusEl.title = curEmail ? ('当前登录：' + curEmail + '（换人使用请在控制台执行 CloudSync.logout()）') : '当前为匿名登录（过渡期），建议联系管理员开通邮箱账号';
+    toast('☁️ 已连接云端，需求实时共享');
+    syncDown();
+  }
+  // 登录框（v2.12.0 方案A）：邮箱+密码；匿名登录保留为过渡降级路径
+  function showLogin(tip) {
+    if (document.getElementById('loginOverlay')) { // 已在登录页
+      var tipEl2 = document.getElementById('loginTip');
+      if (tipEl2 && tip) tipEl2.textContent = tip;
+      return;
+    }
+    var ov = document.createElement('div');
+    ov.id = 'loginOverlay';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:300;display:flex;align-items:center;justify-content:center;font-family:inherit';
+    ov.innerHTML =
+      '<div style="background:#fff;border-radius:12px;padding:22px;width:min(360px,92vw);box-shadow:0 12px 40px rgba(0,0,0,.18)">' +
+        '<div style="font-size:16px;font-weight:600;color:#0f172a;margin-bottom:4px">☁️ 云端同步登录</div>' +
+        '<div id="loginTip" style="font-size:12px;color:#64748b;margin-bottom:14px">' + (tip || '请使用管理员分配的邮箱账号登录') + '</div>' +
+        '<input id="loginEmail" type="email" placeholder="邮箱" autocomplete="username" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;margin-bottom:10px;outline:none">' +
+        '<input id="loginPwd" type="password" placeholder="密码" autocomplete="current-password" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;margin-bottom:6px;outline:none">' +
+        '<div id="loginErr" style="font-size:12px;color:#dc2626;min-height:16px;margin-bottom:8px"></div>' +
+        '<button id="loginOk" style="width:100%;padding:10px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:14px;cursor:pointer">登 录</button>' +
+        '<button id="loginAnon" style="width:100%;margin-top:8px;padding:8px;border:none;border-radius:8px;background:#f1f5f9;color:#475569;font-size:13px;cursor:pointer">暂不登录，匿名继续（过渡期）</button>' +
+      '</div>';
+    document.body.appendChild(ov);
+    var emailEl = document.getElementById('loginEmail'),
+        pwdEl = document.getElementById('loginPwd'),
+        errEl = document.getElementById('loginErr'),
+        okBtn = document.getElementById('loginOk');
+    try { emailEl.value = localStorage.getItem(EMAIL_KEY) || ''; } catch (e) { /* 忽略 */ }
+    setTimeout(function () { (emailEl.value ? pwdEl : emailEl).focus(); }, 50);
+    function err(msg) { errEl.textContent = msg || '登录失败，请检查邮箱和密码'; okBtn.disabled = false; okBtn.textContent = '登 录'; }
+    function doLogin() {
+      var email = (emailEl.value || '').trim(), pwd = pwdEl.value || '';
+      if (!email || email.indexOf('@') < 0) { err('请输入有效邮箱'); return; }
+      if (!pwd) { err('请输入密码'); return; }
+      okBtn.disabled = true; okBtn.textContent = '登录中…'; errEl.textContent = '';
+      authRef.signInWithEmailAndPassword(email, pwd)
+        .then(function () {
+          rememberEmail(email);
+          ov.remove();
+          onAuthed();
+        })
+        .catch(function (e) {
+          console.warn('[cloud] 邮箱登录失败：', e);
+          var c = (e && e.code) || '';
+          if (/invalid-email|INVALID_EMAIL/i.test(c)) err('邮箱格式不正确');
+          else if (/user-not-found|USER_NOT_FOUND|no user/i.test(c)) err('账号不存在，请联系管理员创建');
+          else if (/wrong-password|invalid-password|WRONG_PASS|INVALID_PASS/i.test(c)) err('密码错误');
+          else if (/too-many|TOO_MANY/i.test(c)) err('尝试次数过多，请稍后再试');
+          else err('登录失败：' + shortErr(e));
+        });
+    }
+    okBtn.addEventListener('click', doLogin);
+    [emailEl, pwdEl].forEach(function (el) {
+      el.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') doLogin(); });
+    });
+    document.getElementById('loginAnon').addEventListener('click', function () {
+      okBtn.disabled = true; errEl.textContent = '';
+      authRef.anonymousAuthProvider().signIn()
+        .then(function () {
+          rememberEmail('');
+          ov.remove();
+          onAuthed(); // 匿名也是 auth != null，过渡期可继续读写
+        })
+        .catch(function (e) {
+          console.warn('[cloud] 匿名登录失败：请确认控制台未关闭「匿名登录」', e);
+          err('匿名登录失败：' + shortErr(e) + '（控制台可能已关闭匿名登录）');
+          okBtn.disabled = false;
+        });
+    });
   }
   function connect(h) {
     hook = h || hook;
     statusEl = document.getElementById('cloudStatus');
     if (!enabled()) { setStatus('📴 本地模式', 'cloud-off'); return; }
-    // file:// 等非 http(s) 方式打开时 Origin 不在安全域名白名单，匿名登录必失败
+    // file:// 等非 http(s) 方式打开时 Origin 不在安全域名白名单，登录必失败
     if (window.location && window.location.protocol && window.location.protocol.indexOf('http') !== 0) {
       setStatus('⚠️ 本地文件无法连云，请用线上地址访问', 'cloud-off');
       if (statusEl) statusEl.title = '云端同步需要从 https://nikki-66785.github.io/paichan-system/ 打开页面';
@@ -107,21 +194,27 @@
     // v3 SDK 根据 envId 自动路由到正确地域（网关 host 不带 region），无需硬编码 region
     try { app = appRef = window.cloudbase.init({ env: CFG.envId, region: CFG.region }); }
     catch (e) { console.warn('[cloud] init 失败：', e); setStatus('⚠️ 云端连接失败', 'cloud-off'); return; }
-    // persistence:'none'：登录态不落 localStorage，每次刷新都全新匿名登录，
-    // 避免复用已过期的本地凭证导致数据库访问返回 unauthenticated（401）
-    app.auth({ persistence: 'none' }).anonymousAuthProvider().signIn()
-      .then(function () {
-        db = app.database();
-        ready = true;
-        setStatus('☁️ 已连接', 'cloud-on');
-        toast('☁️ 已连接云端，需求实时共享');
-        syncDown();
-      })
-      .catch(function (e) {
-        console.warn('[cloud] 匿名登录失败：请确认控制台已开启「匿名登录」', e);
-        setStatus('⚠️ 云端未连接：' + shortErr(e), 'cloud-off');
-        if (statusEl) statusEl.title = '完整错误：' + shortErr(e, 300); // hover 看完整错误
-      });
+    // v2.12.0 方案A：邮箱登录（persistence:'local' 记住会话）；旧版匿名 persistence:'none' 已弃用
+    authRef = app.auth({ persistence: 'local' });
+    var st = null;
+    try { st = authRef.hasLoginState(); } catch (e) { console.warn('[cloud] 会话检查异常：', e); }
+    if (st && typeof st.then === 'function') { // 部分版本返回 Promise
+      st.then(function (s) { s ? onAuthed() : showLogin(); }).catch(function () { showLogin(); });
+    } else if (st) { // 同步返回 LoginState
+      try { var u = st.user; rememberEmail((u && (u.email || (u.userInfo && u.userInfo.email) || u.username)) || (localStorage.getItem(EMAIL_KEY) || '')); } catch (e2) { /* 忽略 */ }
+      onAuthed();
+    } else {
+      showLogin();
+    }
+  }
+  // 退出登录（换人使用共用电脑时在浏览器控制台执行 CloudSync.logout()）
+  function logout() {
+    if (!authRef) return;
+    try { localStorage.removeItem(EMAIL_KEY); } catch (e) { /* 忽略 */ }
+    authRef.signOut().then(function () { location.reload(); }).catch(function (e) {
+      console.warn('[cloud] 退出失败：', e);
+      location.reload();
+    });
   }
 
   // ---------- 读取：分页拉取集合 ----------
@@ -215,17 +308,14 @@
     }).catch(function (e) {
       var full = shortErr(e, 300);
       console.warn('[cloud] 拉取失败：', e);
-      // 凭证缺失（signIn 内部失败被 SDK 吞掉等）→ 重新匿名登录后重试一次
+      // 凭证失效（token 过期/被改密）→ 退出登录态并重新弹出登录框（登录成功后 onAuthed 会重试 syncDown）
       if (!retriedLogin && /unauthenticated|credentials not found|401/i.test(full)) {
         retriedLogin = true;
-        console.warn('[cloud] 检测到凭证缺失，尝试重新匿名登录…');
-        reSignIn().then(function () {
-          db = appRef.database(); ready = true;
-          syncDown();
-        }).catch(function (e2) {
-          setStatus('⚠️ 云端未连接：' + shortErr(e2), 'cloud-off');
-          if (statusEl) statusEl.title = '完整错误：' + shortErr(e2, 300);
-        });
+        console.warn('[cloud] 检测到凭证失效，需重新登录');
+        ready = false;
+        try { authRef.signOut().catch(function () {}); } catch (e2) { /* 忽略 */ }
+        rememberEmail('');
+        showLogin('登录已过期或凭证失效，请重新登录');
         return;
       }
       setStatus('⚠️ 同步失败：' + shortErr(e), 'cloud-off');
@@ -359,9 +449,11 @@
     }).catch(function (e) { console.warn('[cloud] 云端需求集合读取失败（清空未完成）：', e); });
   }
   // v2.11.0 ㉑：操作审计日志上云（op_logs 集合，每条一文档；失败静默降级为仅本机记录）
+  // v2.12.0 方案A：邮箱登录后自动附带 by（操作者邮箱），审计可追溯到人；匿名登录时无 by
   function pushOpLog(entry) {
     if (!ready || !entry) return;
     try {
+      if (curEmail) entry.by = curEmail;
       db.collection('op_logs').add({ data: entry, updatedAt: Date.now() })
         .catch(function (e) { console.warn('[cloud] 操作日志上传失败（仅本机记录）：', e); });
     } catch (e) { console.warn('[cloud] 操作日志上传异常：', e); }
@@ -443,7 +535,7 @@
   }
 
   window.CloudSync = {
-    connect: connect, isReady: isReady, onSaved: onSaved,
+    connect: connect, isReady: isReady, onSaved: onSaved, logout: logout,
     pushReq: pushReq, delReqCloud: delReqCloud, delAllReqs: delAllReqs,
     pushPlan: pushPlan, forcePushPlan: forcePushPlan,
     pushOpLog: pushOpLog, fetchOpLogs: fetchOpLogs // v2.11.0 ㉑ 操作日志上云
