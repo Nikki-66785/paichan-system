@@ -168,7 +168,7 @@
 <body class="role-requester">
 
 <header>
-  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.16.0（需求录入优化：删优先级、备注选填、期望日期移至工艺转移后、Mab可选SJ1/SJ2产线；新增排产冲突提示与首次生产汇总；月度趋势按产线筛选）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.16.0</span></h1>
+  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.16.1（月度趋势产线筛选改为多选；排产冲突提示改为排产时间与期望完成日期差异提醒）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.16.1</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -207,7 +207,7 @@
     </div>
     <div id="warnBanner" class="warn-banner"></div>
     <div id="newReqBanner" class="newreq-banner"></div>
-    <div id="conflictBanner" class="warn-banner"></div>
+    <div id="dueBanner" class="warn-banner"></div>
     <div id="readerBanner" class="warn-banner" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8">👀 当前账号为「读者」权限：仅可预览需求录入、排产计划与排产分析，不能新增/编辑/删除。如需提需求，请联系生产计划管理员在「🛡️ 权限管理」中调整角色</div>
     <div class="grid2">
       <div class="card" id="reqFormCard">
@@ -488,14 +488,14 @@
       <div class="toolbar" style="margin-bottom:8px">
         <span class="hint">产线筛选：</span>
         <span class="chk-group" id="trendFilter">
-          <label><input type="radio" name="trendCat" value="all" checked>全部</label>
-          <label><input type="radio" name="trendCat" value="SJ2 CB">SJ2 CB 细胞库</label>
-          <label><input type="radio" name="trendCat" value="SJ1DS">SJ1DS Mab</label>
-          <label><input type="radio" name="trendCat" value="SJ2DS">SJ2DS Mab</label>
-          <label><input type="radio" name="trendCat" value="SJ2 ADC DS">SJ2 ADC DS</label>
-          <label><input type="radio" name="trendCat" value="SJ2 ADC DP">SJ2 ADC DP</label>
-          <label><input type="radio" name="trendCat" value="C7CM DP">C7CM DP</label>
-          <label><input type="radio" name="trendCat" value="SJ2CM DP">SJ2CM DP</label>
+          <label><input type="checkbox" name="trendLine" value="all" checked>全部</label>
+          <label><input type="checkbox" name="trendLine" value="SJ2 CB">SJ2 CB 细胞库</label>
+          <label><input type="checkbox" name="trendLine" value="SJ1DS">SJ1DS Mab</label>
+          <label><input type="checkbox" name="trendLine" value="SJ2DS">SJ2DS Mab</label>
+          <label><input type="checkbox" name="trendLine" value="SJ2 ADC DS">SJ2 ADC DS</label>
+          <label><input type="checkbox" name="trendLine" value="SJ2 ADC DP">SJ2 ADC DP</label>
+          <label><input type="checkbox" name="trendLine" value="C7CM DP">C7CM DP</label>
+          <label><input type="checkbox" name="trendLine" value="SJ2CM DP">SJ2CM DP</label>
         </span>
         <span class="spacer" style="flex:1"></span>
         <label class="hint" style="display:flex;align-items:center;gap:4px;cursor:pointer" title="勾选后月度批次趋势跟随甘特图时间窗口，甘特图调整范围时同步刷新；取消勾选恢复独立设置"><input type="checkbox" id="trendLink">与甘特图联动</label>
@@ -648,7 +648,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.16.0（云端共享·邮箱登录·权限三档·新账号默认读者）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.16.1（云端共享·邮箱登录·权限三档·新账号默认读者）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -1554,40 +1554,36 @@
     if(!bs.length) return '待排产';
     return bs.every(function(b){ return b.locked || isFinal(b); }) ? '已锁定' : '待确认';
   }
-  // v2.16.0：排产冲突信息（需求录入页横幅）——同产线批次时间段两两重叠即为冲突
-  function renderConflictInfo(){
-    var el = $('conflictBanner'); if(!el) return;
-    var pairs = [];
-    var byLine = {};
-    state.batches.forEach(function(b){
-      if(!b.start || !b.end || isFinal(b)) return; // 终态批次不占产能，不算冲突
-      var ln = b.line || '其他';
-      (byLine[ln] = byLine[ln] || []).push(b);
+  // v2.16.1：交期差异提醒（需求录入页横幅）——各需求已排批次的最晚完成日期 vs 期望完成日期，晚于交期即提醒
+  function renderDueInfo(){
+    var el = $('dueBanner'); if(!el) return;
+    var late = [], onTime = 0;
+    state.requirements.forEach(function(r){
+      if(!r.dueDate) return;
+      var bs = state.batches.filter(function(b){ return b.reqId === r.id && b.end && !isFinal(b); });
+      if(!bs.length) return; // 待排产（尚无批次）无排产时间，暂不对比
+      var lastEnd = bs[0].end;
+      bs.forEach(function(b){ if(b.end > lastEnd) lastEnd = b.end; });
+      var d = Math.round((U.p(lastEnd) - U.p(r.dueDate)) / 86400000);
+      if(d > 0){
+        var lineMap = {};
+        bs.forEach(function(b){ lineMap[b.line || '-'] = 1; });
+        late.push({ req: r, lastEnd: lastEnd, days: d, lines: Object.keys(lineMap).join('、'), n: bs.length });
+      } else onTime++;
     });
-    Object.keys(byLine).forEach(function(ln){
-      var arr = byLine[ln].sort(function(a,b){ return a.start < b.start ? -1 : 1; });
-      for(var i=0;i<arr.length;i++){
-        for(var j=i+1;j<arr.length;j++){
-          if(arr[j].start <= arr[i].end){ // 时间段重叠（按 ISO 日期字符串比较）
-            pairs.push({ line: ln, a: arr[i], b: arr[j] });
-          } else break; // 已按开始日期排序，后者开始晚于前者结束即可跳出
-        }
-      }
-    });
-    if(!pairs.length){ el.classList.remove('show'); el.innerHTML=''; return; }
-    function projOf(b){
-      if(b.henlius) return b.henlius;
-      if(b.project) return b.project;
-      var rq = b.reqId ? state.requirements.find(function(r){ return r.id===b.reqId; }) : null;
-      return (rq && (rq.henliusProject||rq.atProject)) || b.id;
+    if(!late.length){ el.classList.remove('show'); el.innerHTML = ''; return; }
+    late.sort(function(a,b){ return b.days - a.days; }); // 晚得最多的排前面
+    function desc(it){
+      var r = it.req;
+      return '<b>'+esc(r.henliusProject||r.atProject||r.id)+'</b>（'+esc(r.type)+' · '+esc(it.lines)+' · '+it.n+'批）最晚完成 '+(it.lastEnd||'?')+'，期望完成 '+(r.dueDate||'?')+'，<b>晚 '+it.days+' 天</b>';
     }
-    function desc(b){ return '<b>'+esc(projOf(b))+'</b>（'+esc(b.type)+' · '+esc(b.line||'-')+' · '+(b.start||'?')+'~'+(b.end||'?')+' · '+(b.locked?'锁定':(b.status||'-'))+'）'; }
     var MAX = 8;
-    var shown = pairs.slice(0, MAX);
-    el.innerHTML = '<b>⚠️ 排产冲突 '+pairs.length+' 处（同产线批次时间段重叠）</b>'+
-      '<ul>'+shown.map(function(p){ return '<li>产线「'+esc(p.line)+'」：'+desc(p.a)+' 与 '+desc(p.b)+'</li>'; }).join('')+'</ul>'+
-      (pairs.length > MAX ? '<div style="margin-top:4px">… 其余 '+(pairs.length-MAX)+' 处见「📅 排产计划」批次明细（筛选状态=预警）</div>' : '')+
-      '<div style="margin-top:4px">处理建议：在「📅 排产计划」中人工调整批次日期，或确认后勾选「锁定」保留（锁定批次间重叠表示已人工确认占用）。</div>';
+    var shown = late.slice(0, MAX);
+    el.innerHTML = '<b>⚠️ 交期差异提醒：'+late.length+' 项排产完成晚于期望完成日期</b>'+
+      '<ul>'+shown.map(function(it){ return '<li>'+desc(it)+'</li>'; }).join('')+'</ul>'+
+      (late.length > MAX ? '<div style="margin-top:4px">… 其余 '+(late.length-MAX)+' 项见「📅 排产计划」批次明细</div>' : '')+
+      (onTime > 0 ? '<div style="margin-top:4px">另有 '+onTime+' 项已排需求不晚于期望完成日期。</div>' : '')+
+      '<div style="margin-top:4px">处理建议：在「📅 排产计划」中人工调整批次日期提前，或与需求方协商顺延期望完成日期。</div>';
     el.classList.add('show');
   }
 
@@ -1602,7 +1598,7 @@
 
   // ---------- 渲染：需求列表 ----------
   function renderReq(){
-    renderConflictInfo(); // v2.16.0：排产冲突信息随需求列表刷新
+    renderDueInfo(); // v2.16.1：交期差异提醒随需求列表刷新
     $('reqCount').textContent = state.requirements.length+' 条';
     var tb = $('reqTable').querySelector('tbody');
     tb.innerHTML='';
@@ -2001,11 +1997,12 @@
     if(src === 'auto') return '自动排产';
     return '自动排产'; // 旧版快照（v2.6.0 及之前）均为排产触发
   }
-  // 月度批次趋势：按开始日期月份统计批次数量，全部生产类型分开显示（堆叠柱，TYPE_COLOR 配色），支持工序筛选
+  // 月度批次趋势：按开始日期月份统计批次数量，全部生产类型分开显示（堆叠柱，TYPE_COLOR 配色），支持产线多选
   function renderTrend(){
     var el = $('trendChart'); if(!el) return;
-    var catInput = document.querySelector('#trendFilter input[name="trendCat"]:checked');
-    var cat = catInput ? catInput.value : 'all';
+    var catBoxes = Array.prototype.slice.call(document.querySelectorAll('#trendFilter input[name="trendLine"]:checked'));
+    var cats = catBoxes.map(function(b){ return b.value; });
+    var isAll = cats.indexOf('all') >= 0 || cats.length === 0; // v2.16.1：多选产线；空选视为全部
     var CAT_NAMES = { 'SJ2 CB':'SJ2 CB 细胞库', 'SJ1DS':'SJ1DS Mab', 'SJ2DS':'SJ2DS Mab', 'SJ2 ADC DS':'SJ2 ADC DS', 'SJ2 ADC DP':'SJ2 ADC DP', 'C7CM DP':'C7CM DP', 'SJ2CM DP':'SJ2CM DP' }; // 产线筛选
     // 全部生产类型（固定顺序）；CM DP 按产线拆分为 C7/SJ2 两条；未列出的类型统一归「其他」
     var TYPES = ['MCB','WCB','Mab','ADC DS','ADC DP','CM DP·C7','CM DP·SJ2','冻干放大测试','APS','设备维护'];
@@ -2029,13 +2026,13 @@
     }
     var bs = state.batches.filter(function(b){
       if(!b.start) return false;
-      if(cat !== 'all' && (b.line||'其他') !== cat) return false; // v2.16.0：按产线筛选
+      if(!isAll && cats.indexOf(b.line||'其他') < 0) return false; // v2.16.1：按多选产线筛选
       var k = b.start.slice(0,7);
       if(wStartK && k < wStartK) return false;
       if(wEndK && k > wEndK) return false;
       return true;
     });
-    if(!bs.length){ el.innerHTML = '<div class="empty">暂无批次（'+(CAT_NAMES[cat]||'当前筛选')+'）</div>'; return; }
+    if(!bs.length){ el.innerHTML = '<div class="empty">暂无批次（'+(isAll?'全部产线':cats.map(function(c){ return CAT_NAMES[c]||c; }).join('、'))+'）</div>'; return; }
     // 按月聚合：每种生产类型独立计数
     var months = {}, keys = [];
     bs.forEach(function(b){
@@ -2918,9 +2915,19 @@
       save(); renderGantt();
       if(state.trendLink) renderTrend();
     });
-    // 月度批次趋势：工序筛选
-    document.querySelectorAll('#trendFilter input[name="trendCat"]').forEach(function(r){
-      r.addEventListener('change', function(){ renderTrend(); });
+    // 月度批次趋势：产线多选（勾「全部」清空具体产线；勾具体产线取消「全部」；取消最后一个具体产线恢复「全部」）
+    document.querySelectorAll('#trendFilter input[name="trendLine"]').forEach(function(r){
+      r.addEventListener('change', function(){
+        var boxes = Array.prototype.slice.call(document.querySelectorAll('#trendFilter input[name="trendLine"]'));
+        var allBox = boxes.filter(function(o){ return o.value === 'all'; })[0];
+        if(this.checked){
+          if(this.value === 'all'){ boxes.forEach(function(o){ if(o.value !== 'all') o.checked = false; }); }
+          else if(allBox) allBox.checked = false;
+        } else if(!boxes.some(function(o){ return o.checked && o.value !== 'all'; })){
+          if(allBox) allBox.checked = true; // 具体产线全部取消 → 恢复「全部」
+        }
+        renderTrend();
+      });
     });
     // 月度批次趋势：与甘特图联动开关（勾选后趋势图窗口跟随甘特图，独立范围控件禁用）
     $('trendLink').addEventListener('change', function(){
