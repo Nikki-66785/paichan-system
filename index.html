@@ -164,7 +164,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.15.0（权限三档：读者/需求方/生产计划——生产计划可在「权限管理」页给各账号分配角色，读者仅预览需求/排产计划/排产分析）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.15.0</span></h1>
+  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.15.1（权限三档：读者/需求方/生产计划——未登记新账号默认「读者」，由生产计划在「权限管理」页分配角色；读者仅预览需求/排产计划/排产分析）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.15.1</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -632,7 +632,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.15.0（云端共享·邮箱登录·权限三档·需求人绑定账号）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.15.1（云端共享·邮箱登录·权限三档·新账号默认读者）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -698,9 +698,9 @@
 </div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=2150"></script>
-<script src="cloud.js?v=2150"></script>
-<script src="scheduling.js?v=2150"></script>
+<script src="cloudbase.full.js?v=2151"></script>
+<script src="cloud.js?v=2151"></script>
+<script src="scheduling.js?v=2151"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -800,8 +800,9 @@
   // 云端登录身份下发回调（cloud.js hook.setRole）：三档角色 'planner'|'requester'|'reader'（兼容旧版 true/false）
   function onCloudRole(role){
     if(role===true) role='planner';
-    else if(role===false || role==null) role='requester';
-    if(ROLE_NAMES[role]==null) role='requester';
+    else if(role===false) role='requester'; // 旧版布尔兼容（false=已登录非管理员→需求方）
+    else if(role==null) role='reader';      // 未下发身份 → 最简权限（仅预览）
+    if(ROLE_NAMES[role]==null) role='reader'; // v2.15.1：非法角色值兜底为读者（最简权限）
     cloudRoleBound = true; cloudRoleCur = role; cloudIsAdmin = (role==='planner');
     if((state.role||'requester') !== role){ state.role = role; save(); }
     applyRole();
@@ -829,7 +830,7 @@
 
   // ---------- v2.15.0 权限管理（仅生产计划角色）----------
   // 各账号角色存云端 permissions 集合（cloud.js fetchPerms/setPerm 读写）；
-  // 未登记邮箱默认「需求方」；白名单管理员恒为「生产计划」；匿名登录恒为「需求方」。
+  // 未登记新邮箱默认「读者」（v2.15.1 收紧，须管理员分配角色后才可填报需求）；白名单管理员恒为「生产计划」；匿名登录恒为「读者」。
   var PERM_DESC = { reader:'📖 读者（仅预览）', requester:'📋 需求方（填报需求）', planner:'🏭 生产计划（排产管理）' };
   function openPermMgmt(){
     if(!isPlanner()){ toast('仅「生产计划」角色可管理权限'); return; }
@@ -841,11 +842,11 @@
     ov.innerHTML =
       '<div style="background:#fff;border-radius:12px;padding:20px;width:min(560px,94vw);max-height:86vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.18);color:#0f172a">' +
         '<div style="font-size:16px;font-weight:600;margin-bottom:4px">🛡️ 权限管理</div>' +
-        '<div style="font-size:12px;color:#64748b;margin-bottom:12px">给各账号分配角色：<b>读者</b>仅预览 / <b>需求方</b>可填报需求 / <b>生产计划</b>可排产管理。未登记的新账号默认为「需求方」；修改后对方页面会自动生效（或刷新后生效）。</div>' +
+        '<div style="font-size:12px;color:#64748b;margin-bottom:12px">给各账号分配角色：<b>读者</b>仅预览 / <b>需求方</b>可填报需求 / <b>生产计划</b>可排产管理。未登记的新账号默认为「读者」，须在此分配角色后方可填报需求；修改后对方页面会自动生效（或刷新后生效）。</div>' +
         '<div style="font-size:12px;color:#334155;margin-bottom:10px"><b>新增账号</b>：' +
           '<input id="permNewEmail" type="email" placeholder="邮箱（须先在控制台创建该用户）" style="width:220px;padding:6px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;outline:none;margin-right:6px">' +
           '<select id="permNewRole" style="padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px">' +
-            '<option value="reader">📖 读者（仅预览）</option><option value="requester" selected>📋 需求方</option><option value="planner">🏭 生产计划</option></select>' +
+            '<option value="reader" selected>📖 读者（仅预览）</option><option value="requester">📋 需求方</option><option value="planner">🏭 生产计划</option></select>' +
           '<button id="permAddBtn" style="padding:6px 14px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:13px;cursor:pointer;margin-left:6px">分配</button></div>' +
         '<div id="permList" style="font-size:13px;color:#64748b">加载中…</div>' +
         '<div id="permErr" style="font-size:12px;color:#dc2626;min-height:16px;margin-top:6px"></div>' +
@@ -859,8 +860,8 @@
     function savePerm(email, role, selEl){
       window.CloudSync.setPerm(email, role).then(function(ok){
         if(ok){ perr(''); toast('✅ 已将 '+email+' 设为「'+ROLE_NAMES[role]+'」'); }
-        else { perr('写入云端失败（请检查 permissions 集合与安全规则）'); if(selEl) selEl.dataset.rollback && (selEl.value = selEl.dataset.rollback); }
-      }).catch(function(e){ perr('分配失败：'+(e&&e.message||e)); });
+        else { perr('写入云端失败（未知原因，请检查网络后重试）'); if(selEl) selEl.dataset.rollback && (selEl.value = selEl.dataset.rollback); }
+      }).catch(function(e){ perr('分配失败：'+(e&&e.message||e)); if(selEl) selEl.dataset.rollback && (selEl.value = selEl.dataset.rollback); });
     }
     $('permAddBtn').addEventListener('click', function(){
       var email = ($('permNewEmail').value||'').trim().toLowerCase();
@@ -898,7 +899,7 @@
         var em = String(p.email||'').toLowerCase();
         if(!em || seen[em]) return;
         seen[em] = true;
-        html += rowHtml(em, ROLE_NAMES[p.role]!=null ? p.role : 'requester', false);
+        html += rowHtml(em, ROLE_NAMES[p.role]!=null ? p.role : 'reader', false);
       });
       box.innerHTML = html + '<div style="font-size:11.5px;color:#94a3b8;margin-top:8px">提示：账号需先在腾讯云控制台「身份验证→用户管理」中创建，再在此分配角色。</div>';
       bindSelects();
@@ -938,7 +939,7 @@
     if(_xlsxQ){ _xlsxQ.push(cb); return; }
     _xlsxQ = [cb];
     var s = document.createElement('script');
-    s.src = 'xlsx.full.min.js?v=2150';
+    s.src = 'xlsx.full.min.js?v=2151';
     s.onload = function(){ var q = _xlsxQ; _xlsxQ = null; q.forEach(function(f){ f(true); }); };
     s.onerror = function(){ var q = _xlsxQ; _xlsxQ = null; q.forEach(function(f){ f(false); }); toast('⚠️ Excel 组件加载失败，请检查网络后重试', 5000); };
     document.head.appendChild(s);
