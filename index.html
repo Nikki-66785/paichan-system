@@ -160,7 +160,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.11.0（⑱自定义确认弹窗，兼容微信/企微内嵌浏览器 ⑲清空/导入同步云端需求，修复数据复活 ⑳快照限额收紧+体积兜底 ㉑操作日志上云 ㉒Excel组件按需加载，首屏省 950KB ㉓删除按钮零勾选可点击提示 ㉔移动端甘特图触摸滚动；⑰⑯⑮⑭⑬⑫⑪⑩见 v2.10.x）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.11.0</span></h1>
+  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.12.0（方案A安全加固：邮箱登录+操作日志记录操作者，未登录时弹登录框，匿名可过渡使用）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.12.0</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -630,7 +630,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.11.0（云端共享）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.12.0（云端共享·邮箱登录）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -696,9 +696,9 @@
 </div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=2110"></script>
-<script src="cloud.js?v=2110"></script>
-<script src="scheduling.js?v=2110"></script>
+<script src="cloudbase.full.js?v=2120"></script>
+<script src="cloud.js?v=2120"></script>
+<script src="scheduling.js?v=2120"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -815,7 +815,7 @@
     if(_xlsxQ){ _xlsxQ.push(cb); return; }
     _xlsxQ = [cb];
     var s = document.createElement('script');
-    s.src = 'xlsx.full.min.js?v=2110';
+    s.src = 'xlsx.full.min.js?v=2120';
     s.onload = function(){ var q = _xlsxQ; _xlsxQ = null; q.forEach(function(f){ f(true); }); };
     s.onerror = function(){ var q = _xlsxQ; _xlsxQ = null; q.forEach(function(f){ f(false); }); toast('⚠️ Excel 组件加载失败，请检查网络后重试', 5000); };
     document.head.appendChild(s);
@@ -1255,7 +1255,8 @@
     }
     logs.forEach(function(x){
       var tr = document.createElement('tr');
-      tr.innerHTML = '<td style="white-space:nowrap">'+esc(x.t||'')+'</td><td>'+esc(x.u||'-')+'</td><td><span class="tag">'+esc(x.a||'')+'</span></td><td style="font-size:12px;color:var(--sub)">'+esc(x.d||'')+'</td>';
+      var byHtml = x.by ? ' <span style="font-size:11px;color:var(--sub)" title="操作者账号">'+esc(x.by)+'</span>' : ''; // v2.12.0 方案A：邮箱登录后可追溯到人
+      tr.innerHTML = '<td style="white-space:nowrap">'+esc(x.t||'')+'</td><td>'+esc(x.u||'-')+byHtml+'</td><td><span class="tag">'+esc(x.a||'')+'</span></td><td style="font-size:12px;color:var(--sub)">'+esc(x.d||'')+'</td>';
       tb.appendChild(tr);
     });
     if(isMerged) toast('已合并云端操作记录（多人协作可见）');
