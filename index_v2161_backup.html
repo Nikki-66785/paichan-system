@@ -1,0 +1,3167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>临床生产智能排产系统</title>
+<style>
+  :root{
+    --bg:#f4f6fa; --card:#ffffff; --line:#e2e8f0; --text:#1e293b; --sub:#64748b;
+    --pri:#2563eb; --pri-2:#3b82f6; --warn-bg:#fef3c7; --warn-line:#f59e0b; --err:#dc2626;
+    --ok:#16a34a; --radius:10px; --shadow:0 1px 3px rgba(15,23,42,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:13.5px}
+  header{background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;padding:12px 22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  header h1{font-size:18px;font-weight:700;letter-spacing:.5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .logo{height:38px;width:auto;display:block;flex:none}
+  .role-switch{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.18);border-radius:20px;padding:3px 8px}
+  .role-switch .rs-label{font-size:11px;opacity:.85;margin-right:4px}
+  .role-switch button{background:none;border:none;color:#fff;opacity:.7;padding:4px 12px;border-radius:14px;font-size:12.5px;font-weight:600;cursor:pointer}
+  .role-switch button:hover{opacity:1}
+  .role-switch button.on{background:#fff;color:var(--pri);opacity:1}
+  header .stats{display:flex;gap:8px;margin-left:auto;font-size:12px;flex-wrap:wrap}
+  header .stat{background:rgba(255,255,255,.16);border-radius:20px;padding:4px 12px}
+  header .stat b{font-size:14px;margin-left:4px}
+  #cloudStatus.cloud-on{background:rgba(34,197,94,.4)}
+  #cloudStatus.cloud-off{background:rgba(245,158,11,.4)}
+  nav{background:var(--card);border-bottom:1px solid var(--line);display:flex;padding:0 18px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow);flex-wrap:wrap}
+  nav button{background:none;border:none;padding:12px 18px;font-size:14px;color:var(--sub);cursor:pointer;border-bottom:2.5px solid transparent;font-weight:600}
+  nav button.on{color:var(--pri);border-bottom-color:var(--pri)}
+  nav button:hover{color:var(--pri)}
+  main{padding:18px 22px;max-width:1500px;margin:0 auto}
+  section.tab{display:none}
+  section.tab.on{display:block}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:16px}
+  .card h2{font-size:15px;margin-bottom:12px;color:var(--text);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .card h2 .tag{font-size:11px;color:var(--sub);font-weight:400;background:#f1f5f9;border:1px solid var(--line);padding:1px 8px;border-radius:10px}
+  .grid2{display:grid;grid-template-columns:420px 1fr;gap:16px;align-items:start}
+  body.role-planner .grid2{grid-template-columns:1fr}
+  @media(max-width:1100px){.grid2{grid-template-columns:1fr}}
+  /* v2.10.0 移动端基础适配（≤640px）：紧凑间距、可换行工具栏、缩小字号与触控目标 */
+  @media(max-width:640px){
+    header{padding:10px 12px;gap:8px}
+    header h1{font-size:16px;flex-wrap:wrap}
+    nav{padding:0 6px}
+    nav button{padding:10px 10px;font-size:13px}
+    main{padding:12px 10px}
+    .card{padding:12px 12px}
+    .card h2{font-size:14px}
+    .form-row .f{min-width:100%}
+    .btn{padding:9px 14px}
+    .gantt-wrap{max-height:62vh;overflow:auto}
+    .tbl{font-size:12px}
+    header .stats{margin-left:0;width:100%;font-size:11px}
+  }
+  .form-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+  .form-row .f{flex:1;min-width:130px}
+  label{display:block;font-size:12px;color:var(--sub);margin-bottom:4px;font-weight:600}
+  input,select,textarea{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:7px;font-size:13px;background:#fff;color:var(--text);outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+  input[type=checkbox]{width:16px;height:16px;accent-color:var(--pri)}
+  input:disabled,select:disabled{background:#f1f5f9;color:var(--sub)}
+  .chk{display:flex;align-items:center;gap:6px}
+  .chk label{margin:0}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
+  .btn:hover{border-color:var(--pri);color:var(--pri)}
+  .btn.primary{background:var(--pri);border-color:var(--pri);color:#fff}
+  .btn.primary:hover{background:#1d4ed8}
+  .btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+  .btn.ok:hover{background:#15803d}
+  .btn.warn{background:var(--warn-bg);border-color:var(--warn-line);color:#92400e}
+  .btn.danger{background:#fee2e2;border-color:#f87171;color:var(--err)}
+  .btn.sm{padding:4px 10px;font-size:12px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+  th{color:var(--sub);font-weight:600;background:#f8fafc;position:sticky;top:0}
+  tbody tr:hover{background:#f8fafc}
+  .ref-tbl td{white-space:normal}
+  .ref-tbl input{width:100%;min-width:60px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;font-size:12px;box-sizing:border-box}
+  .ref-edit-btn{font-size:11px;margin-left:8px}
+  .ref-editing input{background:#fffbeb}
+  .pri{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700}
+  .pri.high{background:#fee2e2;color:#b91c1c}.pri.mid{background:#fef3c7;color:#92400e}.pri.low{background:#dcfce7;color:#166534}
+  .st{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700}
+  .st.lock{background:#e2e8f0;color:#334155}.st.auto{background:#dbeafe;color:#1d4ed8}.st.warn{background:#fef3c7;color:#b45309;border:1px solid var(--warn-line)}.st.manual{background:#ede9fe;color:#6d28d9}
+  .st.dead{background:#ffedd5;color:#c2410c;border:1px solid #fdba74}.st.fail{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5}.st.cancel{background:#e2e8f0;color:#64748b;border:1px solid #cbd5e1}
+  .badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700}
+  .b-blue{background:#dbeafe;color:#1d4ed8}.b-purple{background:#ede9fe;color:#6d28d9}.b-cyan{background:#cffafe;color:#0e7490}
+  .b-orange{background:#ffedd5;color:#c2410c}.b-green{background:#dcfce7;color:#166534}.b-gray{background:#f1f5f9;color:#475569}
+  .b-pink{background:#fce7f3;color:#be185d}.b-brown{background:#fef3c7;color:#92400e}
+  /* 流程步骤条 */
+  .flow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--sub)}
+  .flow .fs{background:#f8fafc;border:1px solid var(--line);border-radius:16px;padding:5px 14px}
+  .flow .fs b{color:var(--text)}
+  .flow .fa{color:#94a3b8;font-weight:700}
+  /* 角色可见性 */
+  body.role-requester .plan-only{display:none!important}
+  body.role-planner .req-only{display:none!important}
+  /* v2.15.0 读者角色：仅预览——隐藏所有编辑入口（生产计划专属页签 + 需求编辑表单 + 需求方操作按钮） */
+  body.role-reader .plan-only{display:none!important}
+  body.role-reader .req-only{display:none!important}
+  body.role-reader #reqFormCard{display:none!important}
+  #readerBanner{display:none}
+  body.role-reader #readerBanner{display:flex}
+  .perm-btn{margin-left:8px;padding:5px 14px;border:none;border-radius:20px;background:#7c3aed;color:#fff;font-size:12.5px;cursor:pointer;white-space:nowrap}
+  .perm-btn:hover{background:#6d28d9}
+  /* 甘特图 */
+  .gantt-wrap{overflow-x:auto;overflow-y:hidden;border:1px solid var(--line);border-radius:8px;background:#fff;position:relative;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+  .gantt{position:relative;min-width:100%}
+  .btn.dim{opacity:.55}
+  .g-line{position:relative;height:36px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center}
+  .g-line:nth-child(even){background:#fafbfc}
+  .g-label{position:sticky;left:0;z-index:5;width:170px;flex:none;background:#f8fafc;border-right:1px solid var(--line);padding:0 10px;font-size:12px;font-weight:700;color:#334155;height:36px;display:flex;align-items:center;box-shadow:3px 0 6px rgba(0,0,0,.06)}
+  .g-body{position:relative;flex:1;height:36px}
+  .g-month{position:absolute;top:0;bottom:0;border-left:1px solid #eef2f7;font-size:10px;color:#94a3b8;padding-top:2px;padding-left:3px;overflow:hidden}
+  .g-week{position:absolute;top:0;bottom:0;border-left:1px solid #f1f5f9;font-size:10px;color:#cbd5e1;padding-top:2px;padding-left:2px;overflow:hidden}
+  .g-weekend{position:absolute;top:0;bottom:0;background:rgba(148,163,184,.08);pointer-events:none;z-index:0}
+  .g-today{position:absolute;top:0;bottom:0;width:2px;background:#dc2626;z-index:1;pointer-events:none}
+  .g-today::after{content:'今日';position:absolute;top:0;left:4px;font-size:9px;color:#dc2626;font-weight:600;white-space:nowrap}
+  .g-month{position:absolute;top:0;bottom:0;border-left:1px solid #eef2f7;font-size:10px;color:#94a3b8;padding-top:2px;padding-left:3px;overflow:hidden}
+  .g-week{position:absolute;top:0;bottom:0;border-left:1px solid #f1f5f9;font-size:10px;color:#cbd5e1;padding-top:2px;padding-left:2px;overflow:hidden}
+  .chk-group{display:inline-flex;flex-wrap:wrap;gap:2px 12px;align-items:center;font-size:12px}
+  .chk-group label{display:inline-flex;align-items:center;gap:4px;cursor:pointer;color:var(--sub)}
+  .chk-group label:hover{color:var(--text)}
+  .chk-group input{accent-color:#2563eb}
+  .g-bar{position:absolute;top:7px;height:22px;border-radius:4px;font-size:10.5px;color:#fff;display:flex;align-items:center;padding:0 5px;overflow:hidden;white-space:nowrap;cursor:pointer;border:1px solid rgba(0,0,0,.18);text-shadow:0 1px 1px rgba(0,0,0,.25)}
+  .g-bar.locked{outline:2px solid #475569;outline-offset:-2px}
+  .g-bar.warn{border:2px solid #dc2626;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.18) 0 6px,transparent 6px 12px)}
+  .g-bar.dead{opacity:.45;filter:grayscale(1);background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.3) 0 6px,transparent 6px 12px)!important;border:1px dashed #94a3b8}
+  .g-bar:hover{filter:brightness(1.08);z-index:10}
+  .g-head{display:flex}
+  .g-head .g-label{background:#f1f5f9}
+  .g-axis{position:relative;height:24px;border-bottom:1px solid var(--line)}
+  .g-axis .g-month{height:24px;padding-top:4px}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--sub)}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+  /* 弹窗 */
+  .mask{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:100}
+  .mask.on{display:flex}
+  .modal{background:#fff;border-radius:12px;padding:20px 22px;width:460px;max-width:92vw;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+  .modal h3{font-size:15px;margin-bottom:14px}
+  .modal .form-row{margin-bottom:10px}
+  .modal .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:200;display:none;max-width:80vw;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+  #toast.show{display:block}
+  .warn-banner{background:var(--warn-bg);border:1px solid var(--warn-line);color:#78350f;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12.5px;display:none}
+  .warn-banner.show{display:block}
+  .warn-banner ul{margin:6px 0 0 18px}
+  .newreq-banner{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12.5px;display:none;align-items:center;gap:12px;flex-wrap:wrap}
+  .newreq-banner.show{display:flex}
+  .hint{font-size:12px;color:var(--sub);line-height:1.8}
+  .rules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+  .rules-grid .f label{font-size:11.5px}
+  .empty{padding:30px;text-align:center;color:var(--sub);font-size:13px}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+  .toolbar .spacer{flex:1}
+  .filter-bar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+  .filter-bar select{width:auto}
+  .scroll-tbl{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+  .req-tbl{max-height:560px;overflow:auto}
+  footer{color:var(--sub);font-size:12px;text-align:center;padding:16px 0 30px}
+</style>
+</head>
+<body class="role-requester">
+
+<header>
+  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.16.1（月度趋势产线筛选改为多选；排产冲突提示改为排产时间与期望完成日期差异提醒）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.16.1</span></h1>
+  <div class="role-switch" id="roleSwitch">
+    <span class="rs-label">当前角色</span>
+    <button data-role="requester" class="on">📋 需求方</button>
+    <button data-role="planner">🏭 生产计划</button>
+  </div>
+  <button class="perm-btn" id="btnPermMgmt" title="权限管理：给各账号分配「读者 / 需求方 / 生产计划」角色（仅生产计划角色可见）" style="display:none">🛡️ 权限管理</button>
+  <div class="stats">
+    <span class="stat" id="cloudStatus" title="云端连接状态：配置 CloudBase 环境后，多人提交的需求实时共享。连接后点击此处可修改密码或退出/切换账号">☁️ 连接中…</span>
+    <span class="stat">需求 <b id="stReq">0</b></span>
+    <span class="stat">批次 <b id="stBatch">0</b></span>
+    <span class="stat">锁定 <b id="stLock">0</b></span>
+    <span class="stat">待确认 <b id="stPending">0</b></span>
+    <span class="stat">预警 <b id="stWarn" style="color:#fde68a">0</b></span>
+  </div>
+</header>
+
+<nav id="nav">
+  <button class="on" data-tab="req">📋 需求录入</button>
+  <button data-tab="plan">📅 排产计划</button>
+  <button data-tab="analysis">📈 排产分析</button>
+  <button data-tab="ref" class="plan-only">📊 参考数据</button>
+  <button data-tab="rules" class="plan-only">⚙️ 规则参数</button>
+  <button data-tab="data" class="plan-only">💾 数据管理</button>
+</nav>
+
+<main>
+  <!-- ============ 需求录入 ============ -->
+  <section class="tab on" id="tab-req">
+    <div class="card" style="padding:10px 16px">
+      <div class="flow">
+        <span class="fs"><b>① 需求方</b>填写需求</span><span class="fa">→</span>
+        <span class="fs"><b>② 自动排产</b>生成草案批次</span><span class="fa">→</span>
+        <span class="fs"><b>③ 生产计划</b>确认可行性 · 人工调整</span><span class="fa">→</span>
+        <span class="fs"><b>④ 排产锁定</b>成为已占用产能</span>
+      </div>
+    </div>
+    <div id="warnBanner" class="warn-banner"></div>
+    <div id="newReqBanner" class="newreq-banner"></div>
+    <div id="dueBanner" class="warn-banner"></div>
+    <div id="readerBanner" class="warn-banner" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8">👀 当前账号为「读者」权限：仅可预览需求录入、排产计划与排产分析，不能新增/编辑/删除。如需提需求，请联系生产计划管理员在「🛡️ 权限管理」中调整角色</div>
+    <div class="grid2">
+      <div class="card" id="reqFormCard">
+        <h2>新增需求 <span class="tag">需求方填写 · 生产计划可填设备维护</span></h2>
+        <form id="reqForm" autocomplete="off">
+          <div class="form-row">
+            <div class="f"><label>产品类型 *</label>
+              <select id="f_type">
+                <option value="CB">CB 细胞库（MCB/WCB）</option>
+                <option value="Mab">Mab DS 原液</option>
+                <option value="ADC DS">ADC DS 原液</option>
+                <option value="DP">DP 制剂</option>
+                <option value="EQP" class="plan-only">🔧 设备维护保养</option>
+              </select>
+            </div>
+            <div class="f" id="f_cbkind_wrap"><label>CB 种类 *</label>
+              <select id="f_cbkind"><option value="MCB">MCB</option><option value="WCB">WCB</option></select>
+            </div>
+          </div>
+          <div class="form-row" id="dpRow" style="display:none">
+            <div class="f"><label>DP 种类 *</label>
+              <select id="f_dpkind">
+                <option value="CM">CM 制剂（Mab 来源）</option>
+                <option value="ADC">ADC 制剂</option>
+              </select>
+            </div>
+            <div class="f"><label>剂型 *</label>
+              <select id="f_dosage"><option value="水针">水针</option><option value="冻干">冻干</option></select>
+            </div>
+            <div class="f" id="f_dpline_wrap"><label>产线 *</label>
+              <select id="f_dpline">
+                <option value="C7CM DP">C7CM DP（C7车间）</option>
+                <option value="SJ2CM DP">SJ2CM DP（松江二厂）</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="f"><label>Henlius 项目号 *</label><input id="f_henlius" placeholder="如 HLX37"></div>
+          </div>
+          <div class="form-row">
+            <div class="f"><label>批次数 *</label><input id="f_batchcount" type="number" min="1" max="99" value="1"></div>
+            <div class="f" id="mabLineRow" style="display:none"><label>产线 *</label>
+              <select id="f_mabline">
+                <option value="SJ1DS">SJ1（松江一厂）</option>
+                <option value="SJ2DS">SJ2（松江二厂）</option>
+              </select>
+            </div>
+            <div class="f"><label>需求人</label><input id="f_requester" placeholder="登录后自动填入，本地模式填姓名" title="云端登录后自动绑定为当前账号，无需填写"></div>
+          </div>
+          <div class="form-row" id="specRow" style="display:none">
+            <div class="f"><label>规格 * <span style="color:#94a3b8;font-weight:400">(生产规模)</span></label><input id="f_spec" list="specList" placeholder=""><datalist id="specList"></datalist></div>
+            <div class="f" id="titerWrap"><label>Titer <span style="color:#94a3b8;font-weight:400">(g/L，首次生产必填)</span></label><input id="f_titer" type="number" step="any" placeholder="如 2.5"></div>
+            <div class="f" id="concWrap" style="display:none"><label>制剂批量 *</label><input id="f_conc" placeholder="如 5L / 10000 瓶"></div>
+            <div class="f" id="lpWrap" style="display:none"><label>LP 放行完成日期 <span style="color:#94a3b8;font-weight:400">(可选)</span></label><input id="f_lp" type="date"></div>
+          </div>
+          <div class="hint" id="mabCycleRow" style="display:none;margin:-4px 0 4px">Mab 生产周期默认：种子培养 20 天 + 反应器培养 15 天 + 下游纯化 7 天（合计 42 天）。该天数由生产计划在人工干预时按项目调整，需求提报时无需填写。</div>
+          <div class="form-row">
+            <div class="f" id="f_batchtype_wrap" style="display:none"><label>批次类型 *</label>
+              <select id="f_batchtype"><option value="">请选择</option><option value="Non-GMP">Non-GMP</option><option value="GMP生产">GMP生产</option><option value="放大测试">放大测试（DP，无需包装目检）</option><option value="安慰剂">安慰剂（仅DP）</option></select>
+            </div>
+            <div class="f"><label>项目阶段 *</label>
+              <select id="f_stage"><option value="">请选择</option><option>临床前</option><option>临床I期</option><option>临床II期</option><option>临床III期</option><option>商业化</option><option>PD研究</option></select>
+            </div>
+            <div class="f" id="f_budget_wrap" style="display:none"><label>预算概况 *</label><input id="f_budget" placeholder="如 PGC立项"></div>
+          </div>
+          <div class="form-row" id="vialRow" style="display:none">
+            <div class="f"><label>注射瓶规格 *</label><select id="f_vial"><option value="">请选择</option></select></div>
+            <div class="f chk" style="align-items:flex-end;padding-bottom:8px"><input type="checkbox" id="f_hypertonic"><label for="f_hypertonic">高浓度或高粘度制剂</label></div>
+            <div class="f chk" style="align-items:flex-end;padding-bottom:8px"><input type="checkbox" id="f_dilute"><label for="f_dilute">需要二次稀配</label></div>
+          </div>
+          <div class="form-row" id="scaleRow" style="display:none">
+            <div class="f chk"><input type="checkbox" id="f_scale" checked><label for="f_scale">需要冻干放大测试（自动排 1 批，正式批与其间隔 2 个月）</label></div>
+          </div>
+          <div class="form-row" id="firstRow" style="display:none">
+            <div class="f chk"><input type="checkbox" id="f_first"><label for="f_first">首次生产（需补充项目分子信息）</label></div>
+          </div>
+          <div class="form-row" id="molRow" style="display:none">
+            <div class="f"><label>Molecule Type *</label><input id="f_moltype" placeholder="如 IgG-like"></div>
+            <div class="f"><label>Target *</label><input id="f_target" placeholder="如 CD3"></div>
+          </div>
+          <div class="form-row" id="molRow2" style="display:none">
+            <div class="f"><label>Novelty *</label><input id="f_novelty" placeholder="如 Novel"></div>
+            <div class="f"><label>mAb subtype *</label><input id="f_subtype" placeholder="如 IgG1"></div>
+            <div class="f"><label>Host Cell Line *</label><input id="f_hostcell" placeholder="如 CHO-K1"></div>
+          </div>
+          <div class="form-row">
+            <div class="f chk"><input type="checkbox" id="f_cond"><label for="f_cond">需要条件放行</label></div>
+          </div>
+          <div class="form-row">
+            <div class="f"><label>正式工艺转移完成日期 <span style="color:#dc2626;font-weight:400">（MCB建库必填；Mab/ADC DS/DP首次生产必填）</span>，之后1个月才可投产</label><input id="f_transfer" type="date"></div>
+            <div class="f" id="dueWrap"><label>期望完成日期（交期）*</label><input id="f_due" type="date"></div>
+          </div>
+          <div class="form-row" id="mcbDateRow">
+            <div class="f"><label>同项目 MCB 完成日期（可选，不填则自动匹配已排 MCB）</label><input id="f_mcbdate" type="date"></div>
+          </div>
+          <div class="form-row"><div class="f"><label>备注（选填）</label><input id="f_note" placeholder="如：临床III期样品、需优先等"></div></div>
+          <!-- 设备维护保养专属字段（仅生产计划角色、type=EQP 时可见） -->
+          <div class="form-row plan-only" id="eqpRow" style="display:none">
+            <div class="f"><label>维护产线 *</label>
+              <select id="f_eqpline">
+                <option value="SJ2 CB">SJ2 CB（细胞库）</option>
+                <option value="SJ1DS">SJ1DS（Mab原液·松江一厂）</option>
+                <option value="SJ2DS">SJ2DS（Mab原液·松江二厂）</option>
+                <option value="SJ2 ADC DS">SJ2 ADC DS</option>
+                <option value="SJ2 ADC DP">SJ2 ADC DP</option>
+                <option value="C7CM DP">C7CM DP</option>
+                <option value="SJ2CM DP">SJ2CM DP</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+            <div class="f"><label>维护类型 *</label>
+              <select id="f_eqpkind">
+                <option value="计划保养">计划保养</option>
+                <option value="临时维修">临时维修</option>
+                <option value="年度大修">年度大修</option>
+                <option value="校验验证">校验验证</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row plan-only" id="eqpDateRow" style="display:none">
+            <div class="f"><label>开始日期 *</label><input id="f_eqpstart" type="date"></div>
+            <div class="f"><label>结束日期 *</label><input id="f_eqpend" type="date"></div>
+          </div>
+          <div class="form-row">
+            <button type="button" class="btn primary" id="btnAddReq">➕ 添加需求</button>
+            <button type="button" class="btn" id="btnClearForm">清空表单</button>
+          </div>
+        </form>
+        <div class="hint" style="margin-top:8px">提示：ADC DS 依赖同项目 Mab 批次、DP 依赖上游原液批次，系统会自动匹配同 Henlius 项目号（或历史批次的 AT 项目号）的已排批次。带 * 字段按「需求录入必要信息」矩阵条件显示。</div>
+      </div>
+
+      <div class="card">
+        <h2>需求列表 <span class="tag" id="reqCount">0 条</span></h2>
+        <div class="toolbar">
+          <button class="btn ok req-only" id="btnSchedule">🚀 自动排产</button>
+          <button class="btn req-only" id="btnClearPlan">↺ 清空排产结果（保留需求）</button>
+          <button class="btn sm" id="btnExportReq">⬇️ 导出需求清单 (Excel)</button>
+          <span class="spacer"></span>
+          <span class="hint req-only">排产方向：优先自动正排（最早可开工）；正排排不下时按交期倒排；交期无法满足时<b style="color:#b45309">标黄预警</b></span>
+          <span class="hint plan-only">生产计划角色可在本页删除任意需求（每行「删除」按钮）；批次确认与调整在「📅 排产计划」页</span>
+        </div>
+        <div class="req-tbl scroll-tbl">
+          <table id="reqTable">
+            <thead><tr><th>项目</th><th>类型</th><th>批次</th><th>交期</th><th>批次类型</th><th>优先级</th><th>需求人</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="empty" id="reqEmpty">暂无需求，请由需求方填写并添加</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 排产计划 ============ -->
+  <section class="tab" id="tab-plan">
+    <div class="card">
+      <h2>产线排产甘特图 <span class="tag plan-only">点击批次可人工调整（生产计划）</span><span class="tag req-only">只读视图，调整请切换生产计划角色</span></h2>
+      <div class="toolbar" style="margin-bottom:8px">
+        <span class="hint">产线（多选）：</span>
+        <span class="chk-group" id="ganttLineFilter">
+          <label><input type="checkbox" data-line="" checked>全部</label>
+          <label><input type="checkbox" data-line="SJ2 CB">SJ2 CB</label>
+          <label><input type="checkbox" data-line="SJ1DS">SJ1DS</label>
+          <label><input type="checkbox" data-line="SJ2DS">SJ2DS</label>
+          <label><input type="checkbox" data-line="SJ2 ADC DS">SJ2 ADC DS</label>
+          <label><input type="checkbox" data-line="SJ2 ADC DP">SJ2 ADC DP</label>
+          <label><input type="checkbox" data-line="C7CM DP">C7CM DP</label>
+          <label><input type="checkbox" data-line="SJ2CM DP">SJ2CM DP</label>
+          <label><input type="checkbox" data-line="其他">其他</label>
+        </span>
+        <span class="spacer" style="flex:1"></span>
+        <label class="hint">时间范围 <select id="ganttRange" title="甘特图时间窗口（不影响批次数据）">
+          <option value="all" selected>全部</option>
+          <option value="1m">近1个月</option>
+          <option value="3m">近3个月</option>
+          <option value="6m">近6个月</option>
+          <option value="custom">自定义</option>
+        </select></label>
+        <span id="ganttRangeDates" style="display:none;align-items:center;gap:4px">
+          <input type="date" id="ganttRangeStart" title="窗口开始日期" style="width:130px">
+          <span class="hint">~</span>
+          <input type="date" id="ganttRangeEnd" title="窗口结束日期" style="width:130px">
+        </span>
+        <label class="hint">时间轴密度 <select id="ganttAxisPx" title="甘特图横向像素密度（像素/天）">
+          <option value="1.5">紧凑 (1.5px/天)</option>
+          <option value="2.5" selected>标准 (2.5px/天)</option>
+          <option value="4">宽松 (4px/天)</option>
+        </select></label>
+        <label class="hint">刻度 <select id="ganttAxisUnit" title="时间轴刻度单位">
+          <option value="month" selected>月</option>
+          <option value="week">周</option>
+        </select></label>
+        <span class="hint">甘特图按产线筛选（批次明细筛选不受影响）</span>
+      </div>
+      <div id="gantt"></div>
+      <div class="legend" id="ganttLegend"></div>
+    </div>
+    <div class="card">
+      <h2>批次明细 <span class="tag" id="batchCount">0</span></h2>
+      <div class="toolbar plan-only" style="margin-bottom:10px">
+        <button class="btn ok" id="btnLockPlan">🔒 排产锁定（确认全部待确认批次）</button>
+        <button class="btn" id="btnBatchUnlock">🔓 批量解锁（勾选批次）</button>
+        <button class="btn" id="btnRefreshSched">🔄 刷新自动排产（重排未锁定批次）</button>
+        <span class="hint">确认无误后锁定；锁定批次作为已占用产能，不参与下次自动重排。解锁后可「刷新自动排产」重排全部未锁定批次</span>
+      </div>
+      <div class="filter-bar">
+        <select id="filtType">
+          <option value="">全部类型</option>
+          <option value="MCB">MCB</option><option value="WCB">WCB</option><option value="Mab">Mab</option>
+          <option value="ADC DS">ADC DS</option><option value="ADC DP">ADC DP</option><option value="CM DP">CM DP</option>
+          <option value="冻干放大测试">冻干放大测试</option><option value="APS">APS</option><option value="设备维护">设备维护</option>
+        </select>
+        <select id="filtLine">
+          <option value="">全部产线</option>
+          <option>SJ2 CB</option><option>SJ1DS</option><option>SJ2DS</option><option>SJ2 ADC DS</option>
+          <option>SJ2 ADC DP</option><option>C7CM DP</option><option>SJ2CM DP</option><option>其他</option>
+        </select>
+        <select id="filtStatus">
+          <option value="">全部状态</option>
+          <option value="锁定">锁定</option><option value="自动">自动</option><option value="预警">预警</option><option value="人工">人工</option>
+          <option value="中止">中止</option><option value="失败">失败</option><option value="取消">取消</option>
+        </select>
+        <input id="filtProject" placeholder="搜索项目号" style="width:160px">
+        <span class="spacer" style="flex:1"></span>
+        <button class="btn sm" id="btnExportPlan">导出Excel(.xlsx)</button>
+      </div>
+      <div class="scroll-tbl" style="max-height:520px">
+        <table id="batchTable">
+          <thead><tr>
+            <th class="plan-only" style="width:28px"><input type="checkbox" id="batchSelAll" title="全选/全不选（仅锁定批次）"></th><th>状态</th><th>类型</th><th>项目</th><th>需求人</th><th>批次号</th><th>产线</th><th>开始</th><th>完成</th><th>下罐/灌装</th><th>包装完成</th><th>GMP</th><th>备注</th><th class="plan-only">操作</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="empty" id="batchEmpty">暂无批次，请先在「需求录入」添加需求并自动排产</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 排产分析 ============ -->
+  <section class="tab" id="tab-analysis">
+    <div class="card" style="padding:10px 16px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <h2 style="margin:0">📈 排产分析</h2>
+        <span class="hint">每次「自动排产」及每 2 周自动记录快照，也可手动保存人工快照，可对比日期漂移与月度批次趋势</span>
+        <span class="spacer" style="flex:1"></span>
+        <button class="btn sm plan-only" id="btnManualSnap">📸 保存人工快照</button>
+        <input id="manualSnapNote" class="plan-only" placeholder="快照备注（可选，50字内，如：3月排产会议确认版）" title="人工快照备注，点击「保存人工快照」时随快照记录" style="width:230px;padding:4px 10px;border:1px solid rgba(100,116,139,.35);border-radius:8px;font-size:12px;background:rgba(255,255,255,.85);color:#0f172a;outline:none">
+        <button class="btn sm" id="btnClearSnap">🗑️ 清空快照</button>
+      </div>
+    </div>
+    <!-- 汇总卡片 -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px" id="analysisCards"></div>
+    <!-- 日期漂移对比表 -->
+    <div class="card">
+      <h2>批次日期漂移分析 <span class="tag" id="driftInfo">对比最近两次排产</span></h2>
+      <div class="toolbar" style="margin-bottom:8px">
+        <label class="hint">对比快照
+          <select id="driftSelA" title="基准快照（较早版本）" style="max-width:280px"></select>
+        </label>
+        <span class="hint">→</span>
+        <select id="driftSelB" title="对比快照（较新版本）" style="max-width:280px"></select>
+        <span class="hint" id="driftSummary"></span>
+        <span class="spacer" style="flex:1"></span>
+        <button class="btn sm" id="btnDownloadSnap" title="将全部快照导出为 Excel（快照列表 + 批次明细）">⬇ 下载快照</button>
+      </div>
+      <div class="hint" id="driftUnplanned" style="display:none;background:#fef3c7;color:#92400e;padding:6px 10px;border-radius:8px;margin-bottom:8px"></div>
+      <div class="hint" id="driftHint">快照来源：自动排产（每次排产后）、定期快照（每 2 周自动保存，含人工调整结果）、人工快照（手动保存的关键节点版本）。默认对比最近两次快照，可在上方下拉任选基准与对比版本（含人工快照）。除日期漂移外，对比快照中「新增」的批次（基准无此批次）与「取消」的批次（基准有、对比已移除）也会在表中列出并计入汇总。工具栏「下载快照」可将全部快照导出为 Excel。</div>
+      <div class="scroll-tbl" style="max-height:320px">
+        <table class="tbl" id="driftTable">
+          <thead><tr><th>类型</th><th>项目</th><th>产线</th><th>上次排产</th><th>本次排产</th><th>漂移(天)</th><th>来源</th><th>状态</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="empty" id="driftEmpty" style="display:none">暂无漂移数据（需至少两次排产）</div>
+    </div>
+    <!-- 月度批次趋势 -->
+    <div class="card">
+      <h2>月度批次趋势 <span class="tag">按批次开始日期月份统计</span></h2>
+      <div class="toolbar" style="margin-bottom:8px">
+        <span class="hint">产线筛选：</span>
+        <span class="chk-group" id="trendFilter">
+          <label><input type="checkbox" name="trendLine" value="all" checked>全部</label>
+          <label><input type="checkbox" name="trendLine" value="SJ2 CB">SJ2 CB 细胞库</label>
+          <label><input type="checkbox" name="trendLine" value="SJ1DS">SJ1DS Mab</label>
+          <label><input type="checkbox" name="trendLine" value="SJ2DS">SJ2DS Mab</label>
+          <label><input type="checkbox" name="trendLine" value="SJ2 ADC DS">SJ2 ADC DS</label>
+          <label><input type="checkbox" name="trendLine" value="SJ2 ADC DP">SJ2 ADC DP</label>
+          <label><input type="checkbox" name="trendLine" value="C7CM DP">C7CM DP</label>
+          <label><input type="checkbox" name="trendLine" value="SJ2CM DP">SJ2CM DP</label>
+        </span>
+        <span class="spacer" style="flex:1"></span>
+        <label class="hint" style="display:flex;align-items:center;gap:4px;cursor:pointer" title="勾选后月度批次趋势跟随甘特图时间窗口，甘特图调整范围时同步刷新；取消勾选恢复独立设置"><input type="checkbox" id="trendLink">与甘特图联动</label>
+        <label class="hint">时间范围 <select id="trendRange" title="月度批次趋势时间窗口（按批次开始日期月份统计，默认与甘特图窗口相互独立；勾选「与甘特图联动」后跟随甘特图窗口）">
+          <option value="all" selected>全部</option>
+          <option value="1m">近1个月</option>
+          <option value="3m">近3个月</option>
+          <option value="6m">近6个月</option>
+          <option value="custom">自定义</option>
+        </select></label>
+        <span id="trendRangeDates" style="display:none;align-items:center;gap:4px">
+          <input type="date" id="trendRangeStart" title="窗口开始日期" style="width:130px">
+          <span class="hint">~</span>
+          <input type="date" id="trendRangeEnd" title="窗口结束日期" style="width:130px">
+        </span>
+        <span class="hint">全部生产类型独立堆叠显示 · 可按产线筛选</span>
+      </div>
+      <div id="trendChart"></div>
+    </div>
+    <!-- 排产历史 -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+        <h2 style="margin:0">排产历史记录 <span class="tag">快照管理</span></h2>
+        <span class="hint">勾选快照可批量删除，删除前自动下载备份；清空/删除后立即同步云端，避免刷新后被旧快照回填</span>
+        <span class="spacer" style="flex:1"></span>
+        <button class="btn sm plan-only" id="btnDelSnaps">🗑️ 删除选中（0）</button>
+      </div>
+      <div class="scroll-tbl" style="max-height:260px">
+        <table class="tbl" id="snapTable">
+          <thead><tr><th style="width:30px"><input type="checkbox" id="snapSelAll" class="plan-only" title="全选/取消全选"></th><th>序号</th><th>时间</th><th>来源</th><th>需求数</th><th>批次数</th><th>预警数</th><th>准时率</th><th>操作</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 参考数据 ============ -->
+  <section class="tab" id="tab-ref">
+    <div class="card">
+      <h2>产线情况 <span class="tag">排产逻辑.xlsx · 产线情况</span><button class="btn sm ref-edit-btn plan-only" data-ref-edit="lines">✏️ 编辑</button><button class="btn sm ref-cancel-btn" data-ref-cancel="lines" style="display:none">取消</button></h2>
+      <table class="ref-tbl" id="refLines">
+        <thead><tr><th>#</th><th>产线名称</th><th>缩写</th><th>生产周期</th><th>周期的组成</th><th>生产规格</th><th>批次类型</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h2>制剂产能概况 <span class="tag">推荐最大生产批量/瓶</span><button class="btn sm ref-edit-btn plan-only" data-ref-edit="caps">✏️ 编辑</button><button class="btn sm ref-cancel-btn" data-ref-cancel="caps" style="display:none">取消</button></h2>
+      <table class="ref-tbl" id="refCap">
+        <thead><tr><th>生产线</th><th>剂型</th><th>2mL</th><th>6mL</th><th>10mL</th><th>20mL</th><th>50mL</th><th>工序得率</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h2>人员配置<button class="btn sm ref-edit-btn plan-only" data-ref-edit="staff">✏️ 编辑</button><button class="btn sm ref-cancel-btn" data-ref-cancel="staff" style="display:none">取消</button></h2>
+      <table class="ref-tbl" id="refStaff">
+        <thead><tr><th>产线缩写</th><th>人数</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h2>Mab 生产周期 <span class="tag">项目级：种子培养+反应器培养+下游纯化（生产计划在人工干预时调整）</span></h2>
+      <table class="ref-tbl" id="refMab">
+        <thead><tr><th>项目号</th><th>规格</th><th>种子培养(天)</th><th>反应器培养(天)</th><th>下游纯化(天)</th><th>合计(天)</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="hint" style="margin-top:8px" id="refMabEmpty">暂无 Mab 批次数据（排产后自动生成该表）</div>
+    </div>
+    <div class="card">
+      <h2>需求录入必要信息矩阵 <span class="tag">排产逻辑.xlsx · 需求录入的必要信息</span><button class="btn sm ref-edit-btn plan-only" data-ref-edit="fields">✏️ 编辑</button><button class="btn sm ref-cancel-btn" data-ref-cancel="fields" style="display:none">取消</button></h2>
+      <table class="ref-tbl" id="refFields">
+        <thead><tr><th>#</th><th>信息</th><th>CB 生产</th><th>Mab / ADC DS 生产</th><th>DP 生产</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="hint" style="margin-top:8px">注：Mab/ADC DS/DP 提交时需判断是否为首次生产，首次生产需额外填写 8-12 项分子信息（Mab 另需 Titer）；冻干 DP 需在需求中确认是否进行放大测试；选择二次稀配时制剂生产周期 +1 天（准备 3 天→4 天）。</div>
+    </div>
+    <div class="card">
+      <h2>首次生产项目汇总 <span class="tag">自动汇总自需求录入（勾选「首次生产」的需求）</span></h2>
+      <table class="ref-tbl" id="refFirst">
+        <thead><tr><th>项目号</th><th>类型</th><th>Molecule Type</th><th>Target</th><th>Novelty</th><th>mAb subtype</th><th>Host Cell Line</th><th>Titer</th><th>规格</th><th>备注</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="hint" style="margin-top:8px" id="refFirstEmpty">暂无首次生产需求（需求录入勾选「首次生产」并提交后，其分子信息、项目号与备注自动汇总至此）</div>
+    </div>
+  </section>
+
+  <!-- ============ 规则参数 ============ -->
+  <section class="tab" id="tab-rules">
+    <div class="card">
+      <h2>排产规则参数 <span class="tag">保存后需重新自动排产生效</span></h2>
+      <div class="rules-grid" id="rulesGrid"></div>
+      <div class="toolbar" style="margin-top:14px">
+        <button class="btn primary plan-only" id="btnSaveRules">💾 保存规则</button>
+        <button class="btn plan-only" id="btnResetRules">恢复默认</button>
+        <span class="hint req-only" style="color:#dc2626">⚠️ 规则参数仅「生产计划」角色可查看与修改，请切换角色</span>
+      </div>
+    </div>
+    <div class="card">
+      <h2>规则说明（依据 排产逻辑.xlsx）</h2>
+      <div class="hint">
+        <p>· <b>流程</b>：需求方填写需求 → 自动排产生成草案 → 生产计划确认可行性并可人工调整 → 确认无误后「排产锁定」（历史计划自动视为锁定产能）。</p>
+        <p>· <b>CB</b>：固定周二开工，生产周期 10 天，生产间隔 4 天（上批完成 → 下批开始）；同项目 MCB→WCB 间隔 1 个月（按完成日算）；先有 MCB 再有 WCB。</p>
+        <p>· <b>所有产品</b>：正式工艺转移 1 个月后才可开始生产。</p>
+        <p>· <b>Mab</b>：生产周期 = 种子培养 20 天 + 反应器培养 15 天 + 下游纯化 7 天（合计 42 天，需求提报用默认，各段天数由生产计划在人工干预时按项目调整）；批间开始 ≥8 天，下罐批间 ≥10 天（下罐=开始+种子培养+反应器培养），同产线所有批均为硬约束；同项目 MCB 生产后 1 个月才可开始。</p>
+        <p>· <b>ADC DS</b>：GMP Mab 完成后 2 周、Non-GMP Mab（来源 PD）完成后 1 个月才可生产；LP 放行完成后才可生产；建议在 Mab 下罐后 2 天开始。</p>
+        <p>· <b>DP</b>：制剂周期 = 准备 + 灌装 + 冻干 + 清场 + 目检包装（目检包装默认 10 天，默认水针 3+1+0+1+10=15 天、冻干 3+1+3~4+1+10=18~19 天，各段天数在人工干预时可调）；<b>放大测试批次（冻干放大测试及批次类型=放大测试的需求）不含包装目检时间（目检按 0 天计）</b>；<b>灌装日期自动计算 = 开始日期 + 准备天数，随开始日期/准备天数自动更新</b>；C7CM DP 同产线清场后 2 天、SJ2 ADC DP / SJ2CM DP 清场后 4 天开始下一批；ADC Non-GMP 与同项目 ADC DS 间隔 1 个月、其余间隔 2 周；需二次稀配时制剂准备 3 天→4 天（周期 +1 天）；冻干项目需在需求中确认是否安排放大测试，正式生产与测试批间隔 2 个月。</p>
+        <p>· <b>APS 模拟灌装</b>：占用 8 天、当月内任排。C7CM DP 每年 3/8/12 月、SJ2 ADC DP 每年 3/9 月、SJ2CM DP 每年 8/10 月各 1 批（产线当年有生产时自动生成）。</p>
+        <p>· <b>批次终态（生产计划人工标记）</b>：批次可标记为 <b>中止 / 失败 / 取消</b>。终态批次不再占用产能（槽位可复用），也不参与锁定/重排，仅保留记录便于追溯；可在人工调整中改回「人工」状态或删除。</p>
+        <p>· <b>批量解锁与刷新自动排产</b>：生产计划可在批次表首列勾选多个锁定批次「批量解锁」；「刷新自动排产」按当前需求重新排产所有未锁定批次（锁定批次与终态批次保持不变）。</p>
+        <p>· <b>需求导出</b>：需求列表可一键导出 Excel/CSV（项目、类型、批次类型、交期、状态、规格、阶段、预算、首次生产分子信息等全部填报字段）。</p>
+        <p>· <b>甘特图视图</b>：产线支持多选过滤；时间范围（全部/近1月/近3月/近6月/自定义）与时间轴密度（px/天）、刻度单位（月/周）可调，设置保存在本地。</p>
+        <p>· <b>排产分析</b>：每次「自动排产」记录快照（自动排产），每 2 周自动记录一次定期快照（含人工调整结果），可分析批次日期漂移、月度批次趋势与准时率；快照按来源分别限额保留：自动排产 15 条 / 定期 10 条 / 人工 5 条。</p>
+        <p>· <b>权限说明</b>：「📊 参考数据」与「⚙️ 规则参数」仅「🏭 生产计划」角色可见与操作；需求方角色不显示入口。</p>
+        <p>· <b>参考数据</b>：「产线情况 / 制剂产能 / 人员配置 / 需求字段矩阵」四张表可修订（生产计划角色），保存后本地持久化。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 数据管理 ============ -->
+  <section class="tab" id="tab-data">
+    <div class="card">
+      <h2>数据概览</h2>
+      <div class="hint" id="dataSummary"></div>
+    </div>
+    <div class="card">
+      <h2>数据管理</h2>
+      <div class="toolbar">
+        <button class="btn" id="btnExport">⬇️ 导出全部数据 (Excel)</button>
+        <button class="btn" id="btnImport">⬆️ 导入数据 (Excel/JSON)</button>
+        <input type="file" id="importFile" accept=".xlsx,.json" style="display:none">
+        <button class="btn" id="btnReimportHist">📥 重新导入历史计划（锁定产能）</button>
+        <button class="btn danger" id="btnClearAll">🗑 清空全部数据</button>
+        <button class="btn" id="btnOpLog">📋 操作日志</button>
+      </div>
+      <div id="opLogPanel" style="display:none;margin-top:12px">
+        <div class="scroll-tbl" style="max-height:240px">
+          <table class="tbl" id="opLogTable">
+            <thead><tr><th>时间</th><th>用户</th><th>操作</th><th>详情</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="hint" style="margin-top:6px">最近 100 条关键操作（排产/锁定/调整/删除/导入/清空），保存在本机浏览器，不上传云端。</div>
+      </div>
+      <div class="hint" style="margin-top:12px;line-height:2.2">
+        <p>· <b>导出</b>：将需求、排产批次、规则参数保存为 Excel（.xlsx）文件，可在其它电脑导入使用（同时兼容旧版 JSON 文件导入）。</p>
+        <p>· <b>重新导入历史计划</b>：从内置的 <code>CM排产计划_20260818.xlsx</code> 数据重建全部历史锁定批次（当前批次将被替换）。</p>
+        <p>· <b>文件结构</b>：本系统共 3 个文件——<code>排产系统.html</code>（界面）、<code>scheduling.js</code>（排产引擎）、<code>history_data.js</code>（历史数据）。请放在同一目录，双击 HTML 即可使用。</p>
+        <p>· <b>数据存储</b>：本地优先（localStorage）+ 可选云端共享（CloudBase）。配置环境 ID 后，多人提交的需求实时同步、排产计划云端备份；未配置或网络不可用时自动降级为单机模式。清空浏览器缓存会导致本地数据丢失，请定期导出备份。</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.16.1（云端共享·邮箱登录·权限三档·新账号默认读者）</footer>
+
+<!-- 批次编辑弹窗 -->
+<div class="mask" id="editMask">
+  <div class="modal">
+    <h3 id="editTitle">人工调整批次</h3>
+    <div id="editInfo" style="font-size:12px;color:var(--sub);margin-bottom:10px"></div>
+    <div class="form-row">
+      <div class="f"><label>批次号 <span style="color:#94a3b8;font-weight:400">(人工干预可修订)</span></label><input id="e_batchno" placeholder="如 MB-2026-001"></div>
+    </div>
+    <div class="form-row">
+      <div class="f"><label>开始日期 *</label><input type="date" id="e_start"></div>
+      <div class="f"><label>完成日期 *<span id="eEndHint" style="color:#94a3b8;font-weight:400;display:none">(按周期自动计算)</span></label><input type="date" id="e_end"></div>
+    </div>
+    <div class="form-row">
+      <div class="f"><label>产线 *</label><select id="e_line">
+        <option value="SJ2 CB">SJ2 CB</option><option value="SJ1DS">SJ1DS</option><option value="SJ2DS">SJ2DS</option><option value="SJ2 ADC DS">SJ2 ADC DS</option>
+        <option value="SJ2 ADC DP">SJ2 ADC DP</option><option value="C7CM DP">C7CM DP</option><option value="SJ2CM DP">SJ2CM DP</option>
+        <option value="其他">其他</option>
+      </select></div>
+      <div class="f"><label>批次状态 <span style="color:#94a3b8;font-weight:400">(人工标记终态)</span></label><select id="e_status">
+        <option value="人工">人工</option>
+        <option value="中止">中止</option><option value="失败">失败</option><option value="取消">取消</option>
+      </select></div>
+      <div class="f chk" style="align-items:center;padding-top:20px"><input type="checkbox" id="e_lock"><label for="e_lock">锁定（已确认，不参与下次自动重排）</label></div>
+    </div>
+    <div class="form-row" id="editMabRow" style="display:none">
+      <div class="f"><label>种子培养(天)</label><input type="number" id="e_mabseed" min="1"></div>
+      <div class="f"><label>反应器培养(天)</label><input type="number" id="e_mabreactor" min="1"></div>
+      <div class="f"><label>下游纯化(天)</label><input type="number" id="e_mabpurify" min="1"><span id="e_mabtotal" style="font-size:11px;color:var(--sub)"></span></div>
+    </div>
+    <div class="form-row" id="editDpRow" style="display:none">
+      <div class="f"><label>准备(天)</label><input type="number" id="e_dprep" min="0"></div>
+      <div class="f"><label>灌装(天)</label><input type="number" id="e_dfill" min="0"></div>
+      <div class="f"><label>冻干(天)</label><input type="number" id="e_dfreeze" min="0"></div>
+    </div>
+    <div class="form-row" id="editDpRow2" style="display:none">
+      <div class="f"><label>清场(天)</label><input type="number" id="e_dclear" min="0"></div>
+      <div class="f"><label>包装天数(天)</label><input type="number" id="e_dinspect" min="0" title="目检包装不计入排产周期（完成日期=生产完成）；包装完成日期=完成日期+此天数"></div>
+      <div class="f" style="justify-content:flex-end;padding-bottom:6px"><span id="e_dptotal" style="font-size:11px;color:var(--sub)"></span></div>
+    </div>
+    <div class="form-row"><div class="f"><label>备注</label><input id="e_note"></div></div>
+    <div id="editConflict" style="display:none;font-size:12px;color:var(--err);background:#fee2e2;padding:8px 10px;border-radius:6px;margin-bottom:8px"></div>
+    <div class="actions">
+      <button class="btn danger" id="btnDelBatch">删除批次</button>
+      <span style="flex:1"></span>
+      <button class="btn" id="btnEditCancel">取消</button>
+      <button class="btn primary" id="btnEditSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- 自定义确认弹窗（v2.11.0 ⑱）：替代原生 confirm，兼容微信/企微等内嵌浏览器 -->
+<div id="cfmOverlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:200;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:20px;max-width:430px;width:calc(100% - 40px);box-shadow:0 20px 50px rgba(0,0,0,.25)">
+    <div id="cfmMsg" style="white-space:pre-wrap;font-size:14px;line-height:1.7;color:#0f172a;max-height:50vh;overflow:auto"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+      <button class="btn" id="cfmNo">取消</button>
+      <button class="btn primary" id="cfmOk">确定</button>
+    </div>
+  </div>
+</div>
+
+<script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
+<script src="cloudbase.full.js?v=2152"></script>
+<script src="cloud.js?v=2152"></script>
+<script src="scheduling.js?v=2160"></script>
+<script src="history_data.js"></script>
+<script>
+/* =====================================================
+ * 临床生产智能排产系统 — 应用层 v2.0
+ * 流程：需求方填写需求 → 自动排产（草案）→ 生产计划确认/人工调整 → 排产锁定
+ * ===================================================== */
+(function () {
+  'use strict';
+  var LS_KEY = 'schedule_sys_v1';
+  var Sched = window.Scheduling;
+  var U = Sched.utils;
+  // 包装完成日期：仅正式 DP 批次（ADC DP / CM DP）＝ DP完成日期 + dp.packDays（默认10天，规则页可调）
+  // 排产周期不含目检包装（完成日期=生产完成），包装时间仅体现在此日期；
+  // 旧批次未存 packDate 时按当前规则回算显示；放大测试/APS/其他类型返回空
+  function packDateOf(b){
+    if(b.type!=='ADC DP' && b.type!=='CM DP') return '';
+    if(b.packDate) return b.packDate;
+    if(!b.end) return '';
+    var R = state.rules || Sched.DEFAULTS;
+    var d = (R.dp && R.dp.packDays!=null) ? R.dp.packDays : 10;
+    return U.f(U.add(U.p(b.end), d));
+  }
+  var TYPE_COLOR = {
+    'MCB':'#3b82f6','WCB':'#60a5fa','Mab':'#8b5cf6','ADC DS':'#06b6d4','ADC DP':'#f59e0b',
+    'CM DP':'#22c55e','冻干放大测试':'#94a3b8','APS':'#ec4899','参比品':'#a16207','贴签包装':'#a16207','包装':'#a16207','设备验证':'#a16207','设备维护':'#a16207'
+  };
+  var TYPE_BADGE = {
+    'MCB':'b-blue','WCB':'b-blue','Mab':'b-purple','ADC DS':'b-cyan','ADC DP':'b-orange',
+    'CM DP':'b-green','冻干放大测试':'b-gray','APS':'b-pink','设备维护':'b-brown'
+  };
+  var LINES_ORDER = ['SJ2 CB','SJ1DS','SJ2DS','SJ2 ADC DS','SJ2 ADC DP','C7CM DP','SJ2CM DP','其他'];
+  var VIALS = { 'SJ2 ADC DP': ['6R','10R','20R'], 'C7CM DP': ['2R','6R','10R','20R'], 'SJ2CM DP': ['10R','20R'] };
+  var FNAMES = { spec:'规格', concentration:'制剂批量', titer:'Titer', batchKind:'批次类型', stage:'项目阶段',
+    budget:'预算概况', molType:'Molecule Type', target:'Target', novelty:'Novelty', mabSubtype:'mAb subtype',
+    hostCell:'Host Cell Line', vialSpec:'注射瓶规格' };
+  var FINAL_STATUS = { '中止':1, '失败':1, '取消':1 };
+  function isFinal(b){ return !!FINAL_STATUS[b.status]; }
+  // 参考数据默认值（可修订，保存后持久化到 state.refData）
+  var REF_DEFAULT = {
+    lines: [
+      ['1','松江二厂细胞库制备车间','SJ2 CB','10天','—','—','—'],
+      ['2','松江一厂临床生产原液车间','SJ1DS','42天','上游种子培养20天、反应器培养15天、下游纯化7天','200L或500L','—'],
+      ['3','松江二厂临床生产原液车间','SJ2DS','42天','上游种子培养20天、反应器培养15天、下游纯化7天','200L或500L','—'],
+      ['4','松江二厂临床生产ADC原液车间','SJ2 ADC DS','7天','—','20L、50L、200L反应釜','Non-GMP、GMP生产'],
+      ['5','松江二厂临床生产ADC制剂车间','SJ2 ADC DP','水针15天 / 冻干19天','水针：准备3+灌装1+冻干0+清场1+目检包装10=15天；冻干：准备3+灌装1+冻干4+清场1+目检包装10=19天','6R、10R、20R','Non-GMP、放大测试、GMP生产、安慰剂'],
+      ['6','临床生产制剂车间（C7）','C7CM DP','水针15天 / 冻干18天','水针：准备3+灌装1+冻干0+清场1+目检包装10=15天；冻干：准备3+灌装1+冻干3+清场1+目检包装10=18天','2R、6R、10R、20R','Non-GMP、放大测试、GMP生产、安慰剂'],
+      ['7','松江二厂临床生产制剂车间','SJ2CM DP','水针15天 / 冻干19天','水针：准备3+灌装1+冻干0+清场1+目检包装10=15天；冻干：准备3+灌装1+冻干4+清场1+目检包装10=19天','10R、20R','Non-GMP、放大测试、GMP生产、安慰剂']
+    ],
+    caps: [
+      ['C7','水针','2500','2300','2300','1440','/','0.9'],
+      ['C7','冻干','/','2200','1800','1000','/','0.9'],
+      ['ADC','水针','/','15000','15000','15000','/','0.95'],
+      ['ADC','冻干','/','6700','6700','3600','/','0.95']
+    ],
+    staff: [
+      ['SJ2 CB','3'],['SJ1DS','28'],['SJ2DS','28'],['SJ2 ADC DS','4'],['SJ2 ADC DP','5'],['C7CM DP','7'],['SJ2CM DP','12']
+    ],
+    fields: [
+      ['1','规格','—','✓','✓'],
+      ['2','制剂批量','—','—','✓'],
+      ['3','批次数','—（默认1）','✓','✓'],
+      ['4','Titer','—','首次生产(Mab)时 ✓','—'],
+      ['5','批次类型','—','✓','✓'],
+      ['6','项目阶段','✓','✓','✓'],
+      ['7','预算概况','—','✓','✓'],
+      ['8-12','Molecule Type / Target / Novelty / mAb subtype / Host Cell Line','—','首次生产时 ✓','首次生产时 ✓'],
+      ['13','高浓度或高粘度制剂','—','—','✓'],
+      ['14','制剂是否需要二次稀配','—','—','✓'],
+      ['15','备注（选填）','✓(选填)','✓(选填)','✓(选填)'],
+      ['16','注射瓶规格','—','—','✓']
+    ]
+  };
+
+  var state = { requirements: [], batches: [], rules: null, role: 'requester', user: '',
+    ganttAxis: { px: 2.5, unit: 'month' }, ganttLines: null, ganttRange: { preset: 'all', start: '', end: '' }, trendRange: { preset: 'all', start: '', end: '' }, trendLink: false, refData: null, snapshots: [] };
+  var editingId = null;
+  var refEditKey = null; // 正在编辑的参考数据表 key（lines/caps/staff/fields）
+
+  // ---------- 工具 ----------
+  function $(id){ return document.getElementById(id); }
+  function toast(msg, ms){ var t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(function(){t.classList.remove('show');}, ms||3200); }
+  function uid(){ return 'R'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+  function today(){ return U.f(new Date()); }
+  function esc(s){ return String(s||'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  // v2.13.0/v2.15.0：角色判定双保险——云端已连接时以登录身份为准（权限管理页分配：planner/requester/reader），
+  // 即使有人用 F12 手改 state.role 也无法越权；本地模式（未连云）仍按本地 role 自由切换。
+  var cloudRoleBound = false, cloudIsAdmin = false, cloudRoleCur = ''; // 登录身份下发后置位（cloudRoleCur：云端分配的三档角色）
+  var ROLE_NAMES = { reader:'读者', requester:'需求方', planner:'生产计划' };
+  function isPlanner(){
+    if(cloudRoleBound && !cloudIsAdmin) return false; // 云端身份已绑定且非生产计划 → 无排产管理权（读者/需求方）
+    return state.role==='planner';
+  }
+  // v2.15.0 读者：仅预览，无任何编辑权（云端绑定后不可被 F12 改 state.role 绕过）
+  function isReader(){
+    if(cloudRoleBound && !cloudIsAdmin) return cloudRoleCur==='reader';
+    return state.role==='reader';
+  }
+  // 云端登录身份下发回调（cloud.js hook.setRole）：三档角色 'planner'|'requester'|'reader'（兼容旧版 true/false）
+  function onCloudRole(role){
+    if(role===true) role='planner';
+    else if(role===false) role='requester'; // 旧版布尔兼容（false=已登录非管理员→需求方）
+    else if(role==null) role='reader';      // 未下发身份 → 最简权限（仅预览）
+    if(ROLE_NAMES[role]==null) role='reader'; // v2.15.1：非法角色值兜底为读者（最简权限）
+    cloudRoleBound = true; cloudRoleCur = role; cloudIsAdmin = (role==='planner');
+    if((state.role||'requester') !== role){ state.role = role; save(); }
+    applyRole();
+    toast(role==='planner' ? '👤 已按登录身份启用「🏭 生产计划」角色'
+      : role==='reader' ? '👤 已按登录身份设为「📖 读者」角色（仅预览需求/排产计划/排产分析）'
+      : '👤 已按登录身份设为「📋 需求方」角色（调整/锁定/删除等排产管理需生产计划权限）');
+  }
+  window.__setCloudRole = onCloudRole; // 测试钩子：模拟云端登录身份下发（三档角色字符串或旧版布尔）
+  // v2.14.0：登录用户名下发（cloud.js hook.setUser）——需求人自动绑定登录账号，无需人工填写；
+  // 匿名登录时下发空串，需求人回退为手填；本地模式（未连云）不触发，保持手填
+  var cloudUserBound = false; // 云端用户名已下发（含匿名空串）
+  function onCloudUser(name){
+    cloudUserBound = true;
+    name = name || '';
+    state.user = name;
+    var el = $('f_requester');
+    if(el){
+      el.readOnly = !!name;                 // 有账号 → 只读防篡改；匿名 → 可手填
+      el.placeholder = name ? '' : '姓名（匿名登录，请填写）';
+      if(document.activeElement !== el) el.value = name; // 用户正在输入时不覆盖
+    }
+    save(); renderReq(); // 删除按钮按「本人」权限刷新
+  }
+  window.__setCloudUser = onCloudUser; // 测试钩子：模拟云端登录用户名下发
+
+  // ---------- v2.15.0 权限管理（仅生产计划角色）----------
+  // 各账号角色存云端 permissions 集合（cloud.js fetchPerms/setPerm 读写）；
+  // 未登记新邮箱默认「读者」（v2.15.1 收紧，须管理员分配角色后才可填报需求）；白名单管理员恒为「生产计划」；匿名登录恒为「读者」。
+  var PERM_DESC = { reader:'📖 读者（仅预览）', requester:'📋 需求方（填报需求）', planner:'🏭 生产计划（排产管理）' };
+  function openPermMgmt(){
+    if(!isPlanner()){ toast('仅「生产计划」角色可管理权限'); return; }
+    if(!window.CloudSync || !window.CloudSync.isReady()){ toast('权限管理需要连接云端（本地模式无账号体系）'); return; }
+    if(document.getElementById('permOverlay')) return; // 已打开
+    var ov = document.createElement('div');
+    ov.id = 'permOverlay';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:300;display:flex;align-items:center;justify-content:center;font-family:inherit';
+    ov.innerHTML =
+      '<div style="background:#fff;border-radius:16px;padding:32px;width:min(980px,96vw);max-height:92vh;overflow:auto;box-shadow:0 16px 50px rgba(0,0,0,.22);color:#0f172a">' +
+        '<div style="font-size:22px;font-weight:700;margin-bottom:10px">🛡️ 权限管理</div>' +
+        '<div style="font-size:15.5px;color:#64748b;margin-bottom:20px;line-height:1.7">给各账号分配角色：<b>读者</b>仅预览 / <b>需求方</b>可填报需求 / <b>生产计划</b>可排产管理。未登记的新账号默认为「读者」，须在此分配角色后方可填报需求；修改后对方页面会自动生效（或刷新后生效）。</div>' +
+        '<div style="font-size:16px;color:#334155;margin-bottom:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b>新增账号：</b>' +
+          '<input id="permNewEmail" type="email" placeholder="邮箱（须先在控制台创建该用户）" style="flex:1;min-width:240px;padding:11px 14px;border:1px solid #cbd5e1;border-radius:10px;font-size:15px;outline:none">' +
+          '<select id="permNewRole" style="padding:11px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:15px">' +
+            '<option value="reader" selected>📖 读者（仅预览）</option><option value="requester">📋 需求方</option><option value="planner">🏭 生产计划</option></select>' +
+          '<button id="permAddBtn" style="padding:11px 24px;border:none;border-radius:10px;background:#2563eb;color:#fff;font-size:15px;cursor:pointer">分配</button></div>' +
+        '<div id="permList" style="font-size:16px;color:#64748b">加载中…</div>' +
+        '<div id="permErr" style="font-size:15px;color:#dc2626;min-height:20px;margin-top:10px"></div>' +
+        '<button id="permClose" style="width:100%;margin-top:14px;padding:13px;border:none;border-radius:10px;background:#f1f5f9;color:#475569;font-size:16px;cursor:pointer">关闭</button>' +
+      '</div>';
+    document.body.appendChild(ov);
+    function close(){ ov.remove(); }
+    ov.addEventListener('click', function(ev){ if(ev.target===ov) close(); });
+    $('permClose').addEventListener('click', close);
+    function perr(msg){ var e=$('permErr'); if(e) e.textContent=msg||''; }
+    function savePerm(email, role, selEl){
+      window.CloudSync.setPerm(email, role).then(function(ok){
+        if(ok){ perr(''); toast('✅ 已将 '+email+' 设为「'+ROLE_NAMES[role]+'」'); }
+        else { perr('写入云端失败（未知原因，请检查网络后重试）'); if(selEl) selEl.dataset.rollback && (selEl.value = selEl.dataset.rollback); }
+      }).catch(function(e){ perr('分配失败：'+(e&&e.message||e)); if(selEl) selEl.dataset.rollback && (selEl.value = selEl.dataset.rollback); });
+    }
+    $('permAddBtn').addEventListener('click', function(){
+      var email = ($('permNewEmail').value||'').trim().toLowerCase();
+      var role = $('permNewRole').value;
+      if(!email || email.indexOf('@')<0){ perr('请输入有效邮箱'); return; }
+      savePerm(email, role);
+      $('permNewEmail').value='';
+      setTimeout(function(){ // 写入云端后稍等重拉列表（云端读有延迟）
+        window.CloudSync.fetchPerms().then(renderList).catch(function(){ renderList([]); });
+      }, 600);
+    });
+    function rowHtml(email, role, fixed){
+      var opts = ['reader','requester','planner'].map(function(r){
+        return '<option value="'+r+'"'+(r===role?' selected':'')+'>'+PERM_DESC[r]+'</option>';
+      }).join('');
+      return '<div style="display:flex;align-items:center;gap:16px;padding:14px 6px;border-bottom:1px solid #e2e8f0;flex-wrap:wrap">' +
+        '<span style="flex:1 1 auto;min-width:280px;white-space:nowrap;font-size:16px;color:#0f172a">'+esc(email)+(fixed?' <span style="font-size:13px;color:#7c3aed;white-space:nowrap">（白名单管理员，固定生产计划）</span>':'')+'</span>' +
+        (fixed ? '<span style="flex:0 0 auto;font-size:15.5px;color:#334155;white-space:nowrap">🏭 生产计划</span>'
+               : '<select data-perm-email="'+esc(email)+'" style="flex:0 0 auto;min-width:170px;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:15px;background:#fff">'+opts+'</select>') +
+        '</div>';
+    }
+    function bindSelects(){
+      ov.querySelectorAll('select[data-perm-email]').forEach(function(sel){
+        sel.dataset.rollback = sel.value;
+        sel.addEventListener('change', function(){ savePerm(sel.dataset.permEmail, sel.value, sel); sel.dataset.rollback = sel.value; });
+      });
+    }
+    function renderList(permRows){
+      var box = $('permList'); if(!box) return;
+      var html = '';
+      // 白名单管理员置顶（固定生产计划，不可改）
+      ['shunchao_zhang@henlius.com'].forEach(function(a){ html += rowHtml(a, 'planner', true); });
+      var seen = { 'shunchao_zhang@henlius.com': true };
+      (permRows||[]).forEach(function(p){
+        var em = String(p.email||'').toLowerCase();
+        if(!em || seen[em]) return;
+        seen[em] = true;
+        html += rowHtml(em, ROLE_NAMES[p.role]!=null ? p.role : 'reader', false);
+      });
+      box.innerHTML = html + '<div style="font-size:13px;color:#94a3b8;margin-top:12px;line-height:1.6">提示：账号需先在腾讯云控制台「身份验证→用户管理」中创建，再在此分配角色。</div>';
+      bindSelects();
+    }
+    window.CloudSync.fetchPerms().then(renderList).catch(function(){ renderList([]); });
+  }
+  window.__openPermMgmt = openPermMgmt; // 测试钩子
+
+  // ---------- 确认弹窗（v2.11.0 ⑱）与 Excel 组件按需加载（㉒） ----------
+  // uiConfirm(msg, cb)：替代原生 confirm——微信/企微等内嵌浏览器会静默拦截 confirm 造成「点了没反应」。
+  // 优先级：window.__askConfirm 测试钩子（同步）→ 页内自定义模态（异步队列）。
+  var _cfmQ = [];
+  function uiConfirm(msg, cb){
+    if(typeof window.__askConfirm === 'function'){
+      var r = window.__askConfirm(msg);
+      if(r && typeof r.then === 'function'){ r.then(function(v){ cb(!!v); }); return; }
+      cb(!!r); return; // 测试/降级路径：同步回调
+    }
+    _cfmQ.push({ m: msg, cb: cb });
+    if(_cfmQ.length === 1) _cfmShow();
+  }
+  function _cfmShow(){
+    var it = _cfmQ[0]; if(!it) return;
+    $('cfmMsg').textContent = it.m;
+    $('cfmOverlay').style.display = 'flex';
+  }
+  function _cfmResolve(ok){
+    var it = _cfmQ.shift();
+    $('cfmOverlay').style.display = 'none';
+    try{ if(it && it.cb) it.cb(ok); }catch(e){ console.warn('[cfm] 回调异常：', e); }
+    _cfmShow(); // 队列中下一条
+  }
+  // ensureXlsx(cb)：XLSX 已加载 → 同步回调；未加载 → 注入 script 拉取（952KB 不再随首屏加载）
+  var _xlsxQ = null;
+  function ensureXlsx(cb){
+    if(typeof XLSX !== 'undefined'){ cb(true); return; }
+    if(_xlsxQ){ _xlsxQ.push(cb); return; }
+    _xlsxQ = [cb];
+    var s = document.createElement('script');
+    s.src = 'xlsx.full.min.js?v=2152';
+    s.onload = function(){ var q = _xlsxQ; _xlsxQ = null; q.forEach(function(f){ f(true); }); };
+    s.onerror = function(){ var q = _xlsxQ; _xlsxQ = null; q.forEach(function(f){ f(false); }); toast('⚠️ Excel 组件加载失败，请检查网络后重试', 5000); };
+    document.head.appendChild(s);
+  }
+
+  // ---------- 存储 ----------
+  // _echoSave：云端数据应用到本地引发的保存（applyPlan/applyReqs → afterSync 链路）不算本地新修改，不标脏
+  var _echoSave = false;
+  function save(){
+    try{
+      localStorage.setItem(LS_KEY, JSON.stringify(state));
+      if(!_echoSave) localStorage.setItem(LS_KEY+'_dirty', '1'); // 本地新修改标记，云端推送成功后由 cloud.js 清除（v2.10.0）
+    }
+    catch(e){ toast('保存失败：'+e.message); }
+    if(window.CloudSync) window.CloudSync.onSaved(); // 云端计划同步（节流）
+  }
+  function load(){
+    try{
+      var raw = localStorage.getItem(LS_KEY);
+      if(raw){ state = JSON.parse(raw); if(!state.rules) state.rules=null; if(!state.role) state.role='requester'; if(state.user==null) state.user='';
+        if(!state.ganttAxis) state.ganttAxis={ px:2.5, unit:'month' };
+        if(state.ganttLines==null) state.ganttLines=null;
+        if(!state.ganttRange) state.ganttRange={ preset:'all', start:'', end:'' };
+        if(!state.trendRange) state.trendRange={ preset:'all', start:'', end:'' };
+        if(state.trendLink==null) state.trendLink=false;
+        if(!state.refData) state.refData=null;
+        if(!state.snapshots) state.snapshots=[];
+        return true; }
+    }catch(e){ console.warn(e); }
+    return false;
+  }
+  function resetToHistory(){
+    var hist = window.HISTORY_BATCHES || {CB:[],DS:[],DP:[]};
+    var keep = { role: state.role||'requester', user: state.user||'', ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, ganttRange: state.ganttRange||{preset:'all',start:'',end:''}, trendRange: state.trendRange||{preset:'all',start:'',end:''}, trendLink: !!state.trendLink, refData: state.refData||null, snapshots: state.snapshots||[] };
+    state = { requirements: [], batches: importHistory(hist), rules: null, role: keep.role, user: keep.user,
+      ganttAxis: keep.ganttAxis, ganttLines: keep.ganttLines, ganttRange: keep.ganttRange, trendRange: keep.trendRange, trendLink: keep.trendLink, refData: keep.refData, snapshots: keep.snapshots };
+    save(); renderAll(); renderRules();
+  }
+  // 历史遗留数据修复：批次 id 唯一化（旧版本跨次排产复用 NB1/NB2...，会导致人工调整命中错误批次）
+  function dedupeBatchIds(){
+    var seen = {}, n = 1000;
+    state.batches.forEach(function(b){
+      var id = b.id || '';
+      if(seen[id]){
+        while(seen['NB'+(n++)]) {}
+        b.id = 'NB'+(n-1);
+      }
+      seen[b.id] = true;
+    });
+  }
+
+  // 历史数据 → 批次
+  function importHistory(H){
+    var out = [], seq = 1;
+    (H.CB||[]).forEach(function(r){
+      if(!r['计划开始日期']) return;
+      out.push({ id:'H'+(seq++), type:r['种类']==='WCB'?'WCB':'MCB', line:'SJ2 CB', start:r['计划开始日期'], end:r['计划完成日期'],
+        project:r['Henlius项目号']||'', henlius:'', batchNo:r['批次号']||'', gmp:false, priority:'中',
+        locked:true, status:'锁定', source:'历史', note:r['备注']||'' });
+    });
+    (H.DS||[]).forEach(function(r){
+      if(!r['计划开始日期']) return;
+      var t = r['种类']==='ADC' ? 'ADC DS' : (r['种类']==='Mab' ? 'Mab' : null);
+      if(!t) return;
+      out.push({ id:'H'+(seq++), type:t, line: t==='Mab'?'SJ1DS':'SJ2 ADC DS', start:r['计划开始日期'], end:r['计划完成日期'],
+        harvestDate:r['下罐日期']||null, project:r['Henlius项目号']||'', henlius:'', batchNo:r['Aton批号']||'',
+        gmp:r['是否为GMP批次']==='Y', priority:'中', locked:true, status:'锁定', source:'历史', note:r['备注']||'' });
+    });
+    (H.DP||[]).forEach(function(r){
+      if(!r['计划开始日期']) return;
+      var t=r['种类'], type, line;
+      if(t==='ADC'){ type='ADC DP'; line='SJ2 ADC DP'; }
+      else if(t==='Mab'){ type='CM DP'; line = r['车间']==='SJ2' ? 'SJ2CM DP' : (r['车间']==='C7' ? 'C7CM DP' : '其他'); }
+      else if(t==='APS'){ type='APS'; line = r['车间']==='SJ2' ? 'SJ2CM DP' : (r['车间']==='C7' ? 'C7CM DP' : '其他'); }
+      else if(t==='放大测试'){ type='冻干放大测试'; line = r['车间']==='SJ2' ? 'SJ2CM DP' : (r['车间']==='C7' ? 'C7CM DP' : '其他'); }
+      else if(t==='参比品'||t==='贴签包装'||t==='包装'||t==='设备验证'){ type=t; line='其他'; }
+      else { type=t||'其他'; line='其他'; }
+      out.push({ id:'H'+(seq++), type:type, line:line, start:r['计划开始日期'], end:r['计划完成日期'],
+        fillDate:r['灌装日期']||null, project:r['Henlius项目号']||'', henlius:'', batchNo:r['Aton批号']||'',
+        gmp:r['是否为GMP批次']==='Y', priority:'中', locked:true, status:'锁定', source:'历史', note:r['备注']||'' });
+    });
+    return out;
+  }
+
+  // ---------- 需求表单 ----------
+  function rebuildSpec(t){
+    var opts = [], ph = '';
+    if(t==='Mab'){ opts=['200L','500L']; ph='200L 或 500L'; }
+    else if(t==='ADC DS'){ opts=['20L反应釜','50L反应釜','200L反应釜']; ph='20L / 50L / 200L 反应釜'; }
+    else if(t==='DP'){ ph='生产规格/批量说明'; }
+    $('specList').innerHTML = opts.map(function(o){ return '<option value="'+o+'">'; }).join('');
+    $('f_spec').placeholder = ph;
+  }
+  function rebuildVials(){
+    var line = $('f_dpline').value;
+    var vs = VIALS[line] || [];
+    $('f_vial').innerHTML = '<option value="">请选择</option>' + vs.map(function(v){ return '<option>'+v+'</option>'; }).join('');
+  }
+  function updateScaleRow(){
+    $('scaleRow').style.display = ($('f_type').value==='DP' && $('f_dosage').value==='冻干') ? '' : 'none';
+  }
+  function updateMolRow(){
+    var show = ($('f_type').value!=='CB') && $('f_first').checked;
+    $('molRow').style.display = show ? '' : 'none';
+    $('molRow2').style.display = show ? '' : 'none';
+  }
+  function onTypeChange(){
+    var t = $('f_type').value;
+    var isCB = t==='CB', isDP = t==='DP', isDS = (t==='Mab'||t==='ADC DS'), isEQP = t==='EQP';
+    var isProduct = !isEQP; // 产品需求 vs 设备维护
+    $('f_cbkind_wrap').style.display = isCB ? '' : 'none';
+    $('dpRow').style.display = isDP ? '' : 'none';
+    $('specRow').style.display = (isCB || isEQP) ? 'none' : '';
+    $('titerWrap').style.display = isDS ? '' : 'none';
+    $('concWrap').style.display = isDP ? '' : 'none';
+    $('lpWrap').style.display = (t==='ADC DS') ? '' : 'none';
+    $('mabCycleRow').style.display = (t==='Mab') ? '' : 'none';
+    $('f_batchtype_wrap').style.display = (isCB || isEQP) ? 'none' : '';
+    $('f_budget_wrap').style.display = (isCB || isEQP) ? 'none' : '';
+    $('vialRow').style.display = isDP ? '' : 'none';
+    $('firstRow').style.display = (isCB || isEQP) ? 'none' : '';
+    $('mabLineRow').style.display = (t==='Mab') ? '' : 'none'; // v2.16.0：Mab DS 原液可选产线 SJ1/SJ2
+    $('mcbDateRow').style.display = (t==='Mab') ? '' : 'none'; // v2.16.0：同项目MCB完成日期仅 Mab 显示（DP/ADC DS 已删除）
+    $('eqpRow').style.display = isEQP ? '' : 'none';
+    $('eqpDateRow').style.display = isEQP ? '' : 'none';
+    // 设备维护时隐藏产品专属字段（Henlius项目号、批次数、工艺转移+交期、需求人保留但标签不同）
+    var henliusF = $('f_henlius').closest('.f');
+    if(henliusF) henliusF.style.display = isProduct ? '' : 'none';
+    var batchF = $('f_batchcount').closest('.f');
+    if(batchF) batchF.style.display = isProduct ? '' : 'none';
+    var transferRow = $('f_transfer').closest('.form-row');
+    if(transferRow) transferRow.style.display = isProduct ? '' : 'none';
+    if(isDP){
+      $('f_dpkind').value='CM';
+      onDpKindChange();
+      updateScaleRow();
+    }
+    updateMolRow();
+    rebuildSpec(t);
+  }
+  function onDpKindChange(){
+    if($('f_dpkind').value==='ADC'){
+      $('f_dpline').innerHTML = '<option value="SJ2 ADC DP">SJ2 ADC DP（松江二厂）</option>';
+    } else {
+      $('f_dpline').innerHTML = '<option value="C7CM DP">C7CM DP（C7车间）</option><option value="SJ2CM DP">SJ2CM DP（松江二厂）</option>';
+    }
+    rebuildVials();
+  }
+  function readForm(){
+    var t = $('f_type').value;
+    var isDS = (t==='Mab'||t==='ADC DS');
+    // 设备维护保养：精简需求对象
+    if(t==='EQP'){
+      return {
+        id: uid(),
+        type: 'EQP',
+        maintLine: $('f_eqpline').value,
+        maintKind: $('f_eqpkind').value,
+        maintStart: $('f_eqpstart').value,
+        maintEnd: $('f_eqpend').value,
+        atProject: '设备维护',
+        henliusProject: '',
+        dueDate: $('f_eqpend').value, // 交期=结束日期（仅用于排序/显示）
+        batchCount: 1,
+        gmp: false, batchKind: '', spec: '', concentration: '', titer: '',
+        stage: '', budget: '', firstProduction: false,
+        molType: '', target: '', novelty: '', mabSubtype: '', hostCell: '',
+        hypertonic: false, secondaryDilution: false, vialSpec: '', scaleTest: true,
+        lpReleaseDate: '', conditionalRelease: false, processTransferDate: '', mcbDate: '',
+        priority: '中',
+        requester: $('f_requester').value.trim() || state.user || '',
+        note: $('f_note').value.trim() || $('f_eqpkind').value,
+        createdAt: new Date().toISOString()
+      };
+    }
+    var r = {
+      id: uid(),
+      type: t,
+      cbKind: t==='CB' ? $('f_cbkind').value : 'MCB',
+      dpKind: t==='DP' ? $('f_dpkind').value : 'CM',
+      dosage: t==='DP' ? $('f_dosage').value : '水针',
+      dpLine: t==='DP' ? $('f_dpline').value : '',
+      mabLine: t==='Mab' ? ($('f_mabline').value || 'SJ1DS') : '', // v2.16.0：Mab 产线选择 SJ1/SJ2
+      atProject: $('f_henlius').value.trim(), // AT项目号字段已移除，以 Henlius 项目号作为项目标识
+      henliusProject: $('f_henlius').value.trim(),
+      batchCount: parseInt($('f_batchcount').value,10)||1,
+      dueDate: $('f_due').value,
+      gmp: t==='CB' || $('f_batchtype').value==='GMP生产', // 细胞库建库（MCB/WCB）均为 GMP 批次
+      batchKind: t==='CB' ? '' : $('f_batchtype').value,
+      spec: t==='CB' ? '' : $('f_spec').value.trim(),
+      concentration: t==='DP' ? $('f_conc').value.trim() : '',
+      titer: isDS ? $('f_titer').value : '',
+      stage: $('f_stage').value,
+      budget: t==='CB' ? '' : $('f_budget').value.trim(),
+      firstProduction: (isDS||t==='DP') ? $('f_first').checked : false,
+      molType: '', target: '', novelty: '', mabSubtype: '', hostCell: '',
+      hypertonic: t==='DP' && $('f_hypertonic').checked,
+      secondaryDilution: t==='DP' && $('f_dilute').checked,
+      vialSpec: t==='DP' ? $('f_vial').value : '',
+      scaleTest: t==='DP' ? $('f_scale').checked : true,
+      lpReleaseDate: t==='ADC DS' ? ($('f_lp').value||'') : '',
+      conditionalRelease: $('f_cond').checked,
+      processTransferDate: $('f_transfer').value || '',
+      mcbDate: $('f_mcbdate').value || '',
+      priority: '中', // v2.16.0：需求录入已删除优先级填写，统一默认「中」
+      requester: $('f_requester').value.trim(),
+      note: $('f_note').value.trim(),
+      createdAt: new Date().toISOString()
+    };
+    if(r.firstProduction){
+      r.molType=$('f_moltype').value.trim(); r.target=$('f_target').value.trim();
+      r.novelty=$('f_novelty').value.trim(); r.mabSubtype=$('f_subtype').value.trim(); r.hostCell=$('f_hostcell').value.trim();
+    }
+    return r;
+  }
+  function validateReq(r){
+    var errs=[];
+    // 设备维护保养：仅需产线、开始/结束日期、维护类型
+    if(r.type==='EQP'){
+      if(!r.maintLine) errs.push('维护产线');
+      if(!r.maintStart) errs.push('开始日期');
+      if(!r.maintEnd) errs.push('结束日期');
+      if(r.maintStart && r.maintEnd && r.maintEnd < r.maintStart) errs.push('结束日期不能早于开始日期');
+      if(!r.maintKind) errs.push('维护类型');
+      return errs;
+    }
+    if(!r.henliusProject) errs.push('Henlius项目号');
+    if(!r.dueDate) errs.push('交期');
+    if(!r.stage) errs.push(FNAMES.stage);
+    // 正式工艺转移完成日期：MCB 建库必填；Mab/ADC DS/DP 首次生产必填（WCB 无需填写）
+    if(r.type==='CB' && r.cbKind==='MCB' && !r.processTransferDate) errs.push('正式工艺转移完成日期');
+    if((r.type==='Mab'||r.type==='ADC DS'||r.type==='DP') && r.firstProduction && !r.processTransferDate) errs.push('正式工艺转移完成日期');
+    if(r.type==='CB'){
+      // v2.16.0：备注改为选填（CB 仅需项目阶段）
+    } else {
+      if(!r.spec) errs.push(FNAMES.spec);
+      if(!r.batchKind) errs.push(FNAMES.batchKind);
+      if(!r.budget) errs.push(FNAMES.budget);
+      if(r.type==='DP'){
+        if(!r.concentration) errs.push(FNAMES.concentration);
+        if(!r.vialSpec) errs.push(FNAMES.vialSpec);
+        if(r.dpKind==='CM' && !r.dpLine) errs.push('产线');
+      }
+      if(r.firstProduction){
+        ['molType','target','novelty','mabSubtype','hostCell'].forEach(function(k){ if(!r[k]) errs.push(FNAMES[k]); });
+        // 首次生产时 Mab 需额外填写 Titer（需求录入说明4/5）
+        if(r.type==='Mab' && (r.titer===''||r.titer==null)) errs.push(FNAMES.titer);
+      }
+    }
+    return errs;
+  }
+  function clearFormFields(){
+    ['f_due','f_transfer','f_mcbdate','f_note','f_spec','f_conc','f_titer','f_lp','f_budget',
+     'f_moltype','f_target','f_novelty','f_subtype','f_hostcell','f_eqpstart','f_eqpend'].forEach(function(i){ $(i).value=''; });
+    $('f_batchcount').value='1'; $('f_batchtype').value=''; $('f_stage').value=''; $('f_vial').value='';
+    $('f_mabline').value='SJ1DS';
+    $('f_cond').checked=false; $('f_first').checked=false; $('f_hypertonic').checked=false;
+    $('f_dilute').checked=false; $('f_scale').checked=true;
+    $('f_eqpline').value='SJ2 CB'; $('f_eqpkind').value='计划保养';
+    updateMolRow();
+  }
+  function addReq(){
+    if(isReader()){ toast('📖 读者权限仅可预览，无法新增需求'); return; }
+    var r = readForm();
+    var bad = validateReq(r);
+    if(bad.length){ toast('请填写：'+bad.join('、')); return; }
+    if(!r.requester && state.user) r.requester = state.user; // 需求人默认取当前用户
+    state.requirements.push(r);
+    save(); renderAll(); // v2.16.0：改用 renderAll，同步刷新冲突横幅与首次生产汇总表
+    if(window.CloudSync) window.CloudSync.pushReq(r); // 需求同步云端
+    toast('已添加需求，可点击「自动排产」');
+    clearFormFields();
+  }
+  // 本人校验：登录账号绑定了需求人时，仅需求人为本人的需求可删除（匿名/本地模式不限制）
+  function canDelReq(r){
+    return !state.user || !r.requester || r.requester===state.user;
+  }
+  function delReq(id){
+    if(isReader()){ toast('📖 读者权限仅可预览，无法删除需求'); return; }
+    var r = state.requirements.find(function(x){return x.id===id;});
+    if(r && !isPlanner() && !canDelReq(r)){ toast('该需求由「'+r.requester+'」提交，仅本人可删。解决：用该需求人的账号登录，或切换「🏭 生产计划」角色'); return; }
+    uiConfirm('删除该需求及其排产批次？', function(ok){
+      if(!ok) return;
+      state.requirements = state.requirements.filter(function(r){return r.id!==id;});
+      state.batches = state.batches.filter(function(b){return b.reqId!==id;});
+      save(); renderAll();
+      if(window.CloudSync) window.CloudSync.delReqCloud(id); // 同步删除云端需求
+    });
+  }
+  function editReq(id){
+    if(isReader()){ toast('📖 读者权限仅可预览，无法编辑需求'); return; }
+    var r = state.requirements.find(function(x){return x.id===id;});
+    if(!r) return;
+    $('f_type').value=r.type; onTypeChange();
+    if(r.type==='EQP'){
+      $('f_eqpline').value=r.maintLine||'SJ2 CB';
+      $('f_eqpkind').value=r.maintKind||'计划保养';
+      $('f_eqpstart').value=r.maintStart||'';
+      $('f_eqpend').value=r.maintEnd||'';
+    }
+    if(r.type==='CB') $('f_cbkind').value=r.cbKind;
+    if(r.type==='DP'){
+      $('f_dpkind').value=r.dpKind||'CM'; onDpKindChange();
+      $('f_dosage').value=r.dosage||'水针'; updateScaleRow();
+      $('f_dpline').value=r.dpLine||'C7CM DP'; rebuildVials();
+      $('f_vial').value=r.vialSpec||'';
+      $('f_hypertonic').checked=!!r.hypertonic; $('f_dilute').checked=!!r.secondaryDilution;
+      $('f_scale').checked=r.scaleTest!==false;
+      $('f_conc').value=r.concentration||'';
+    }
+    if(r.type==='Mab'||r.type==='ADC DS'){ $('f_titer').value=(r.titer!=null?r.titer:''); }
+    if(r.type==='Mab'){ $('f_mabline').value = r.mabLine || 'SJ1DS'; }
+    if(r.type==='ADC DS'){ $('f_lp').value=r.lpReleaseDate||''; }
+    if(r.type!=='CB'){
+      $('f_spec').value=r.spec||''; $('f_batchtype').value=r.batchKind||''; $('f_budget').value=r.budget||'';
+      $('f_first').checked=!!r.firstProduction; updateMolRow();
+      $('f_moltype').value=r.molType||''; $('f_target').value=r.target||''; $('f_novelty').value=r.novelty||'';
+      $('f_subtype').value=r.mabSubtype||''; $('f_hostcell').value=r.hostCell||'';
+    }
+    $('f_stage').value=r.stage||'';
+    $('f_henlius').value=r.henliusProject||r.atProject||'';
+    $('f_batchcount').value=r.batchCount; $('f_due').value=r.dueDate;
+    $('f_cond').checked=!!r.conditionalRelease;
+    $('f_transfer').value=r.processTransferDate||''; $('f_mcbdate').value=r.mcbDate||'';
+    $('f_requester').value=r.requester||''; $('f_note').value=r.note||'';
+    // 进入编辑模式：换按钮
+    var btn=$('btnAddReq');
+    btn.dataset.editId=id;
+    btn.textContent='💾 保存修改';
+    window.scrollTo({top:0,behavior:'smooth'});
+    toast('正在编辑需求 '+r.atProject+'，修改后点「保存修改」');
+  }
+  function submitForm(){
+    var editId = $('btnAddReq').dataset.editId;
+    if(editId){
+      var idx = state.requirements.findIndex(function(x){return x.id===editId;});
+      if(idx<0) return;
+      var nr = readForm(); nr.id=editId; nr.createdAt=state.requirements[idx].createdAt;
+      nr.priority = state.requirements[idx].priority || '中'; // 编辑保留原优先级（表单已删除优先级填写）
+      var bad = validateReq(nr);
+      if(bad.length){ toast('请填写：'+bad.join('、')); return; }
+      state.requirements[idx]=nr;
+      // 该需求旧批次删除，重排时重新生成
+      state.batches = state.batches.filter(function(b){return b.reqId!==editId;});
+      $('btnAddReq').dataset.editId='';
+      $('btnAddReq').textContent='➕ 添加需求';
+      save(); renderAll();
+      if(window.CloudSync) window.CloudSync.pushReq(nr); // 需求修改同步云端
+      toast('需求已更新，请重新自动排产');
+    } else {
+      addReq();
+    }
+  }
+
+  // ---------- 自动排产 ----------
+  // 收到其他用户新需求：顶部提示条 + 一键排产（不自动重排，避免覆盖人工调整过的草案）
+  function showNewReqBanner(n){
+    var b = $('newReqBanner');
+    if(!b) return;
+    b.innerHTML = '<b>📥 收到其他用户新需求 '+n+' 条（当前状态：待排产）</b>'+
+      '<button class="btn sm ok" id="bannerSchedBtn">🚀 立即排产</button>'+
+      '<span class="hint">重排未锁定批次，锁定批次不受影响</span>';
+    b.classList.add('show');
+    $('bannerSchedBtn').onclick = function(){
+      b.classList.remove('show');
+      // 生产计划角色停留在排产页时也能直接触发（与「刷新自动排产」等价）
+      doSchedule();
+    };
+  }
+  function doSchedule(){
+    if(isReader()){ toast('📖 读者权限仅可预览，无法执行排产'); return; }
+    var nb = $('newReqBanner'); if(nb) nb.classList.remove('show'); // 已处理，隐藏提示条
+    if(!state.requirements.length){ toast('请先添加需求'); return; }
+    if(!state.requirements.some(function(r){return r.dueDate;})){
+      toast('部分需求缺少交期，请补充'); return;
+    }
+    var locked = state.batches.filter(function(b){return b.locked || isFinal(b);}); // 锁定批次作为已占用产能；终态批次保留记录（引擎自动跳过其产能占用）
+    // 已锁定的正式批不再重复生成：按需求扣除已锁数量
+    var reqs2 = [];
+    state.requirements.forEach(function(r){
+      var lockedFormal = state.batches.filter(function(b){
+        return b.reqId===r.id && b.locked && b.type!=='冻干放大测试';
+      }).length;
+      var remain = (parseInt(r.batchCount,10)||1) - lockedFormal;
+      if(remain<=0) return;
+      var nr = Object.assign({}, r);
+      nr.batchCount = remain;
+      reqs2.push(nr);
+    });
+    if(!reqs2.length){ toast('所有需求的批次均已锁定，无需重新排产'); return; }
+    var sched = new Sched(state.rules);
+    // 批次 id 全局唯一：从当前最大 NB 编号后继续（引擎每次排产默认从 NB1 起，跨次排产会与已锁定批次 id 冲突）
+    var maxN = 0;
+    state.batches.forEach(function(b){ var m = /^NB(\d+)$/.exec(b.id||''); if(m) maxN = Math.max(maxN, parseInt(m[1],10)); });
+    var res = sched.schedule(reqs2, locked, maxN + 1);
+    state.batches = locked.concat(res.batches);
+    // 保存排产快照（用于排产分析：日期漂移/月度趋势/历史记录；source=auto 自动排产 / periodic 每2周定期 / manual 人工保存）
+    if(!state.snapshots) state.snapshots = [];
+    state.snapshots.push({
+      id: 'snap'+Date.now(),
+      time: new Date().toISOString(),
+      source: 'auto',
+      reqCount: state.requirements.length,
+      warningCount: res.warnings.length,
+      batches: snapshotBatches()
+    });
+    // 按来源限额保留快照（auto 15 / periodic 10 / manual 5）
+    trimSnapshots();
+    save(); renderAll();
+    // 告警横幅
+    var warnBanner = $('warnBanner');
+    if(res.warnings.length){
+      var msgs = {}, order = [];
+      res.warnings.forEach(function(w){ if(!(w.msg in msgs)){msgs[w.msg]=0;order.push(w.msg);} msgs[w.msg]++; });
+      warnBanner.innerHTML = '<b>⚠️ 排产提醒（'+res.warnings.length+' 条）：</b><ul>' +
+        order.map(function(m){return '<li>'+esc(m)+'（×'+msgs[m]+'）</li>';}).join('') + '</ul>';
+      warnBanner.classList.add('show');
+    } else {
+      warnBanner.classList.remove('show');
+    }
+    toast('排产完成：生成 '+res.batches.length+' 个草案批次，待生产计划确认');
+    addOp('重新排产', '生成 '+res.batches.length+' 个草案批次'); save();
+  }
+  // 快照批次白名单字段构建（三处快照共用；预构建 reqId→dueDate 映射避免 O(批次×需求) 查找）
+  // 操作审计日志（v2.10.0 引入，v2.11.0 ㉑上云）：本机持久化最近 100 条 + 异步推送云端 op_logs 集合（多人可见）
+  function addOp(action, detail){
+    if(!state.opLog) state.opLog = [];
+    state.opLog.push({ t: today()+' '+new Date().toTimeString().slice(0,8), u: state.user || '', a: action, d: (detail||'').slice(0,60) });
+    if(state.opLog.length > 100) state.opLog = state.opLog.slice(-100);
+    if(window.CloudSync && window.CloudSync.pushOpLog) window.CloudSync.pushOpLog(state.opLog[state.opLog.length-1]);
+  }
+  // 操作日志面板表格渲染（v2.11.0 ㉑：本地+云端合并展示，isMerged 表示含云端记录）
+  function _renderOpLog(logs, isMerged){
+    var tbEl = $('opLogTable');
+    var tb = tbEl ? tbEl.querySelector('tbody') : null;
+    if(!tb) return;
+    tb.innerHTML = '';
+    if(!logs.length){
+      tb.innerHTML = '<tr><td colspan="4" class="empty">暂无操作记录</td></tr>';
+      return;
+    }
+    logs.forEach(function(x){
+      var tr = document.createElement('tr');
+      var byHtml = x.by ? ' <span style="font-size:11px;color:var(--sub)" title="操作者账号">'+esc(x.by)+'</span>' : ''; // v2.12.0 方案A：邮箱登录后可追溯到人
+      tr.innerHTML = '<td style="white-space:nowrap">'+esc(x.t||'')+'</td><td>'+esc(x.u||'-')+byHtml+'</td><td><span class="tag">'+esc(x.a||'')+'</span></td><td style="font-size:12px;color:var(--sub)">'+esc(x.d||'')+'</td>';
+      tb.appendChild(tr);
+    });
+    if(isMerged) toast('已合并云端操作记录（多人协作可见）');
+  }
+  function snapshotBatches(){
+    var dueMap = {};
+    state.requirements.forEach(function(r){ dueMap[r.id] = r.dueDate || ''; });
+    return state.batches.map(function(b){
+      return { id:b.id, reqId:b.reqId, type:b.type, line:b.line||'其他', start:b.start, end:b.end,
+        project:b.project||'', status:b.status, dueDate: dueMap[b.reqId]||'' };
+    });
+  }
+  // 快照分类限额（v2.11.0 ⑳收紧：auto 10 / periodic 5 / manual 4，总上限 19）
+  // 原 v2.9.x 的 15/10/5（总 30）在 250+ 批次时约 990KB，逼近云端单文档上限导致推送失败；
+  // 收紧后最坏约 690KB，配合 trimSnapshots 的体积兜底与 cloud.js 800KB 预警形成三重防护。
+  // 按来源分别保留最新 N 条，避免频繁「自动排产」把关键的人工/定期快照挤出窗口。
+  var SNAP_CAP = { auto:10, periodic:5, manual:4 };
+  function trimSnapshots(){
+    if(!state.snapshots) state.snapshots = [];
+    var dropped = 0;
+    Object.keys(SNAP_CAP).forEach(function(src){
+      var idxs = [];
+      state.snapshots.forEach(function(s,i){ if((s.source||'auto')===src) idxs.push(i); });
+      if(idxs.length > SNAP_CAP[src]){
+        var drop = {};
+        idxs.slice(0, idxs.length - SNAP_CAP[src]).forEach(function(i){ drop[i] = 1; });
+        state.snapshots = state.snapshots.filter(function(s,i){ return !drop[i]; });
+        dropped++;
+      }
+    });
+    // 体积兜底：计划数据（批次+快照）JSON 超 ~700KB 时，优先淘汰最旧的 auto 快照（manual/periodic 不动，auto 至少保留 3 份）
+    function planSize(){ try{ return JSON.stringify({ b: state.batches, s: state.snapshots }).length; }catch(e){ return 0; } }
+    while(planSize() > 700 * 1024){
+      var idx = -1, autoN = 0;
+      for(var i=0;i<state.snapshots.length;i++){
+        if((state.snapshots[i].source||'auto')==='auto'){ autoN++; if(idx<0) idx=i; }
+      }
+      if(idx<0 || autoN<=3) break;
+      state.snapshots.splice(idx,1); dropped++;
+    }
+    if(dropped) toast('已自动清理旧快照（控制云端体积，人工/定期快照不受影响）');
+    return dropped;
+  }
+  // 每 2 周定期保存一次快照（source=periodic）：捕捉自动排产之后的人工调整结果（改日期/锁定/终态等）
+  function maybeSavePeriodicSnapshot(){
+    if(!state.batches.length) return false;
+    if(!state.snapshots) state.snapshots = [];
+    var lastPeriodic = null;
+    for(var i=state.snapshots.length-1; i>=0; i--){
+      if((state.snapshots[i].source||'auto') === 'periodic'){ lastPeriodic = state.snapshots[i]; break; }
+    }
+    var now = Date.now();
+    if(lastPeriodic){
+      var gapDays = (now - new Date(lastPeriodic.time).getTime()) / 86400000;
+      if(gapDays < 14) return false; // 距上次定期快照不足 2 周，跳过
+    } else if(state.snapshots.length){
+      // 无定期快照时：若最后一条快照（任意类型）距今不足 14 天也跳过，避免初始密集快照
+      var lastAny = state.snapshots[state.snapshots.length-1];
+      if((now - new Date(lastAny.time).getTime()) / 86400000 < 14) return false;
+    }
+    var warnN = state.batches.filter(function(b){return b.status==='预警';}).length;
+    state.snapshots.push({
+      id: 'snap'+now,
+      time: new Date().toISOString(),
+      source: 'periodic',
+      reqCount: state.requirements.length,
+      warningCount: warnN,
+      batches: snapshotBatches()
+    });
+    trimSnapshots();
+    save();
+    return true;
+  }
+  // 手动保存人工快照（source=manual）：关键节点版本存档（如人工调整后、会议确认后），参与漂移分析
+  // 备注来自卡片内嵌输入框 manualSnapNote（v2.9.4 起替代原生 prompt，保存后自动清空）
+  function saveManualSnapshot(){
+    if(!state.batches.length){ toast('当前无批次数据，无法保存快照'); return; }
+    var noteEl = $('manualSnapNote');
+    var note = ((noteEl && noteEl.value) || '').trim().slice(0, 50);
+    if(!state.snapshots) state.snapshots = [];
+    var warnN = state.batches.filter(function(b){return b.status==='预警';}).length;
+    state.snapshots.push({
+      id: 'snap'+Date.now(),
+      time: new Date().toISOString(),
+      source: 'manual',
+      note: note,
+      reqCount: state.requirements.length,
+      warningCount: warnN,
+      batches: snapshotBatches()
+    });
+    trimSnapshots();
+    save(); renderAnalysis();
+    if(noteEl) noteEl.value = '';
+    addOp('人工快照', note || '无备注'); save();
+    toast('人工快照已保存' + (note ? '：'+note : ''));
+  }
+  function clearPlan(){
+    if(isReader()){ toast('📖 读者权限仅可预览，无法清空排产结果'); return; }
+    state.batches = state.batches.filter(function(b){return b.locked || isFinal(b);});
+    save(); renderAll(); toast('已清空自动排产草案（保留锁定批次、终态批次与需求）');
+  }
+
+  // ---------- 确认与锁定（生产计划） ----------
+  function lockPlan(){
+    var pend = state.batches.filter(function(b){ return !b.locked && !isFinal(b); });
+    if(!pend.length){ toast('没有待确认的批次'); return; }
+    uiConfirm('确认锁定 '+pend.length+' 个待确认批次？\n锁定后作为已占用产能，不再参与下次自动重排。', function(ok){
+      if(!ok) return;
+      pend.forEach(function(b){ b.locked=true; b.status='锁定'; });
+      addOp('批量锁定', pend.length+' 个批次'); save(); renderAll();
+      toast('已锁定 '+pend.length+' 个批次，排产确认完成');
+    });
+  }
+  function confirmBatch(id){
+    var b = state.batches.find(function(x){return x.id===id;});
+    if(!b || b.locked || isFinal(b)) return;
+    b.locked=true; b.status='锁定';
+    addOp('确认批次', b.id+'（'+(b.project||b.type||'')+'）'); save(); renderAll();
+    toast('批次已确认锁定');
+  }
+  function unlockBatch(id){
+    var b = state.batches.find(function(x){return x.id===id;});
+    if(!b || !b.locked || b.source==='历史') return;
+    uiConfirm('解锁后该批次将恢复为待确认状态，确定继续？', function(ok){
+      if(!ok) return;
+      b.locked=false; b.status='人工';
+      addOp('解锁批次', b.id); save(); renderAll();
+      toast('已解锁，该批次恢复为待确认');
+    });
+  }
+  // 批量解锁：按批次表勾选框解锁多个锁定批次
+  function batchUnlockSelected(){
+    if(!isPlanner()){ toast('仅生产计划角色可解锁批次'); return; }
+    var boxes = document.querySelectorAll('#batchTable tbody input[data-sel]:checked');
+    var ids = Array.prototype.map.call(boxes, function(c){ return c.dataset.sel; });
+    if(!ids.length){ toast('请先勾选需要解锁的锁定批次（首列选择框）'); return; }
+    uiConfirm('解锁选中的 '+ids.length+' 个批次？\n解锁后恢复为待确认状态；可点击「刷新自动排产」按当前需求重新排产。', function(ok){
+      if(!ok) return;
+      ids.forEach(function(id){
+        var b = state.batches.find(function(x){return x.id===id;});
+        if(b && b.locked && b.source!=='历史'){ b.locked=false; b.status='人工'; b.warning=''; }
+      });
+      save(); renderAll();
+      toast('已批量解锁 '+ids.length+' 个批次，恢复为待确认');
+    });
+  }
+  // 需求状态（派生）：待排产 / 待确认 / 已锁定（终态批次视为已定案，不阻塞需求）
+  function reqStatus(r){
+    var bs = state.batches.filter(function(b){ return b.reqId===r.id; });
+    if(!bs.length) return '待排产';
+    return bs.every(function(b){ return b.locked || isFinal(b); }) ? '已锁定' : '待确认';
+  }
+  // v2.16.1：交期差异提醒（需求录入页横幅）——各需求已排批次的最晚完成日期 vs 期望完成日期，晚于交期即提醒
+  function renderDueInfo(){
+    var el = $('dueBanner'); if(!el) return;
+    var late = [], onTime = 0;
+    state.requirements.forEach(function(r){
+      if(!r.dueDate) return;
+      var bs = state.batches.filter(function(b){ return b.reqId === r.id && b.end && !isFinal(b); });
+      if(!bs.length) return; // 待排产（尚无批次）无排产时间，暂不对比
+      var lastEnd = bs[0].end;
+      bs.forEach(function(b){ if(b.end > lastEnd) lastEnd = b.end; });
+      var d = Math.round((U.p(lastEnd) - U.p(r.dueDate)) / 86400000);
+      if(d > 0){
+        var lineMap = {};
+        bs.forEach(function(b){ lineMap[b.line || '-'] = 1; });
+        late.push({ req: r, lastEnd: lastEnd, days: d, lines: Object.keys(lineMap).join('、'), n: bs.length });
+      } else onTime++;
+    });
+    if(!late.length){ el.classList.remove('show'); el.innerHTML = ''; return; }
+    late.sort(function(a,b){ return b.days - a.days; }); // 晚得最多的排前面
+    function desc(it){
+      var r = it.req;
+      return '<b>'+esc(r.henliusProject||r.atProject||r.id)+'</b>（'+esc(r.type)+' · '+esc(it.lines)+' · '+it.n+'批）最晚完成 '+(it.lastEnd||'?')+'，期望完成 '+(r.dueDate||'?')+'，<b>晚 '+it.days+' 天</b>';
+    }
+    var MAX = 8;
+    var shown = late.slice(0, MAX);
+    el.innerHTML = '<b>⚠️ 交期差异提醒：'+late.length+' 项排产完成晚于期望完成日期</b>'+
+      '<ul>'+shown.map(function(it){ return '<li>'+desc(it)+'</li>'; }).join('')+'</ul>'+
+      (late.length > MAX ? '<div style="margin-top:4px">… 其余 '+(late.length-MAX)+' 项见「📅 排产计划」批次明细</div>' : '')+
+      (onTime > 0 ? '<div style="margin-top:4px">另有 '+onTime+' 项已排需求不晚于期望完成日期。</div>' : '')+
+      '<div style="margin-top:4px">处理建议：在「📅 排产计划」中人工调整批次日期提前，或与需求方协商顺延期望完成日期。</div>';
+    el.classList.add('show');
+  }
+
+  // ---------- 渲染：统计 ----------
+  function renderStats(){
+    $('stReq').textContent = state.requirements.length;
+    $('stBatch').textContent = state.batches.length;
+    $('stLock').textContent = state.batches.filter(function(b){return b.locked;}).length;
+    $('stPending').textContent = state.batches.filter(function(b){return !b.locked && !isFinal(b);}).length;
+    $('stWarn').textContent = state.batches.filter(function(b){return b.status==='预警';}).length;
+  }
+
+  // ---------- 渲染：需求列表 ----------
+  function renderReq(){
+    renderDueInfo(); // v2.16.1：交期差异提醒随需求列表刷新
+    $('reqCount').textContent = state.requirements.length+' 条';
+    var tb = $('reqTable').querySelector('tbody');
+    tb.innerHTML='';
+    $('reqEmpty').style.display = state.requirements.length ? 'none' : '';
+    state.requirements.slice().reverse().forEach(function(r){
+      var tr=document.createElement('tr');
+      var isEQP = r.type==='EQP';
+      var typeTxt = isEQP ? '设备维护' : (r.type==='CB' ? r.cbKind : (r.type==='DP' ? r.dpKind+' '+r.dosage : r.type));
+      var kindTxt = isEQP ? (r.maintKind||'-') : (r.batchKind || (r.gmp?'GMP生产':'Non-GMP'));
+      var st = reqStatus(r);
+      var stBadge = st==='已锁定' ? 'b-green' : (st==='待确认' ? 'b-orange' : 'b-gray');
+      var tip = isEQP
+        ? '维护产线:'+(r.maintLine||'-')+' ｜ 维护类型:'+(r.maintKind||'-')+' ｜ '+r.maintStart+'~'+r.maintEnd+(r.note?' ｜ 备注:'+r.note:'')
+        : '规格:'+(r.spec||'-')+' ｜ 阶段:'+(r.stage||'-')+' ｜ 批次类型:'+(kindTxt||'-')+
+          (r.type==='Mab'?' ｜ 周期:种子20+反应器15+纯化7天(默认,人工干预可调)':'')+
+          (r.titer!==''&&r.titer!=null?' ｜ Titer:'+r.titer:'')+(r.concentration?' ｜ 浓度:'+r.concentration:'')+
+          (r.vialSpec?' ｜ 瓶规格:'+r.vialSpec:'')+(r.budget?' ｜ 预算:'+r.budget:'')+
+          (r.firstProduction?' ｜ 首次生产'+
+            (r.molType?' ｜ Molecule Type:'+r.molType:'')+
+            (r.target?' ｜ Target:'+r.target:'')+
+            (r.novelty?' ｜ Novelty:'+r.novelty:'')+
+            (r.mabSubtype?' ｜ mAb subtype:'+r.mabSubtype:'')+
+            (r.hostCell?' ｜ Host Cell Line:'+r.hostCell:''):'')+(r.note?' ｜ 备注:'+r.note:'');
+      tr.innerHTML = '<td title="'+esc(tip)+'"><b>'+esc(isEQP ? (r.maintKind||'设备维护') : (r.henliusProject||r.atProject||'-'))+'</b></td>'+
+        '<td>'+esc(typeTxt)+'</td>'+
+        '<td>'+r.batchCount+' 批</td>'+
+        '<td>'+esc(r.dueDate||'-')+'</td>'+
+        '<td>'+esc(kindTxt||'-')+'</td>'+
+        '<td><span class="pri '+(r.priority==='高'?'high':r.priority==='低'?'low':'mid')+'">'+esc(r.priority)+'</span></td>'+
+        '<td>'+esc(r.requester||'-')+'</td>'+
+        '<td><span class="badge '+stBadge+'">'+st+'</span></td>'+
+        '<td>'+(isReader()
+          ? '<span class="hint" style="font-size:11px;cursor:help" title="读者权限仅可预览">👀 只读</span>'
+          : (isPlanner()
+          ? '<button class="btn sm danger" data-act="del" data-id="'+r.id+'" title="生产计划角色可删除任意需求">删除</button>'
+          : '<button class="btn sm" data-act="edit" data-id="'+r.id+'">编辑</button> '+
+            (canDelReq(r)?'<button class="btn sm danger" data-act="del" data-id="'+r.id+'" title="仅需求人本人可删除">删除</button>'
+              :'<span class="hint" style="font-size:11px;cursor:help;border-bottom:1px dotted" data-act="delhint" data-id="'+r.id+'" title="删除方法：① 用该需求人的账号登录（需求人自动绑定登录账号）；② 或切换到「🏭 生产计划」角色后可删除任意需求">🔒 仅'+esc(r.requester)+'可删</span>')))+'</td>';
+      tb.appendChild(tr);
+    });
+  }
+
+  // ---------- 渲染：甘特图 ----------
+  // 产线多选：ganttLines=null 表示全部；否则为选中产线数组
+  function ganttSelectedLines(){
+    if(state.ganttLines) return state.ganttLines;
+    return LINES_ORDER;
+  }
+  function syncGanttCheckboxes(){
+    var boxes = document.querySelectorAll('#ganttLineFilter input[data-line]');
+    var sel = ganttSelectedLines();
+    boxes.forEach(function(c){
+      var v = c.dataset.line;
+      c.checked = (v==='' && state.ganttLines===null) || (v!=='' && sel.indexOf(v)>=0);
+    });
+  }
+  function renderGantt(){
+    var wrap = $('gantt');
+    var sel = ganttSelectedLines();
+    var bs = state.batches.filter(function(b){ return sel.indexOf(b.line||'其他')>=0; });
+    if(!bs.length){ wrap.innerHTML='<div class="empty">暂无批次</div>'; renderLegend(); return; }
+    var minD=null, maxD=null;
+    bs.forEach(function(b){
+      var s=U.p(b.start), e=U.p(b.end);
+      if(!s||!e) return;
+      if(!minD||s<minD) minD=s;
+      if(!maxD||e>maxD) maxD=e;
+    });
+    if(!minD){ wrap.innerHTML='<div class="empty">暂无有效批次</div>'; return; }
+    var batchMin = new Date(minD.getFullYear(), minD.getMonth(), 1);
+    var batchMax = U.add(maxD, 15);
+    minD = batchMin; maxD = batchMax;
+    // 时间范围窗口（ganttRange）：all=全部 / 1m/3m/6m=近N月 / custom=自定义起止
+    var rg = state.ganttRange || { preset:'all', start:'', end:'' };
+    if(rg.preset === '1m' || rg.preset === '3m' || rg.preset === '6m'){
+      var backM = { '1m':1, '3m':3, '6m':6 }[rg.preset];
+      var t0 = new Date();
+      var wStart = new Date(t0.getFullYear(), t0.getMonth()-backM, 1);
+      if(wStart > minD) minD = wStart; // 窗口左界不早于批次最早月；右界保持批次最晚+15
+    } else if(rg.preset === 'custom'){
+      if(rg.start){ var cs = U.p(rg.start); if(cs && cs > minD) minD = cs; }
+      if(rg.end){ var ce = U.p(rg.end); if(ce && ce < maxD) maxD = ce; }
+    }
+    if(maxD <= minD) maxD = U.add(minD, 30); // 兜底：窗口倒置时给 30 天视野
+    var axis = state.ganttAxis || { px:2.5, unit:'month' };
+    var PX = axis.px, unit = axis.unit;
+    var total = U.diff(maxD, minD);
+    var ganttW = Math.max(total * PX, 200);
+    var html = '<div class="gantt-wrap"><div class="g-head"><div class="g-label">产线 \\'+(unit==='week'?'周':'月份')+'</div><div class="g-body" style="width:'+ganttW+'px">';
+    // 时间轴刻度（月/周）
+    if(unit==='week'){
+      var wk = new Date(minD);
+      while(wk <= maxD){
+        var wl = U.diff(wk, minD)*PX;
+        var ww = 7*PX;
+        html += '<div class="g-week" style="left:'+wl+'px;width:'+ww+'px">'+String(wk.getMonth()+1).padStart(2,'0')+'-'+String(wk.getDate()).padStart(2,'0')+'</div>';
+        wk = U.add(wk, 7);
+      }
+    } else {
+      var m = new Date(minD);
+      while(m <= maxD){
+        var l = U.diff(m, minD)*PX;
+        var w = (U.diff(new Date(m.getFullYear(), m.getMonth()+1, 1), m))*PX;
+        html += '<div class="g-month" style="left:'+l+'px;width:'+w+'px">'+m.getFullYear()+'-'+String(m.getMonth()+1).padStart(2,'0')+'</div>';
+        m = new Date(m.getFullYear(), m.getMonth()+1, 1);
+      }
+    }
+    // 今日标线
+    var todayD = new Date();
+    if(todayD >= minD && todayD <= maxD){
+      html += '<div class="g-today" style="left:'+U.diff(todayD, minD)*PX+'px"></div>';
+    }
+    html += '</div></div>';
+    // 周末底纹（仅月视图密度>=3px/天时渲染，避免过密）
+    var weekendHtml = '';
+    if(PX >= 3){
+      var wd = new Date(minD);
+      while(wd <= maxD){
+        if(wd.getDay()===0 || wd.getDay()===6){
+          weekendHtml += '<div class="g-weekend" style="left:'+U.diff(wd, minD)*PX+'px;width:'+PX+'px"></div>';
+        }
+        wd = U.add(wd, 1);
+      }
+    }
+    // 每行（仅渲染选中产线；"其他"产线即使无批次也保留空行）
+    sel.forEach(function(line){
+      var lbsAll = bs.filter(function(b){ return (b.line||'其他')===line; });
+      // 时间窗口内的批次（用于行计数/利用率/bar 渲染；窗口边缘交叉的批次裁剪显示）
+      var lbs = lbsAll.filter(function(b){
+        var s=U.p(b.start), e=U.p(b.end);
+        return s && e && e >= minD && s <= maxD;
+      });
+      if(!lbs.length && line!=='其他') return;
+      html += '<div class="g-line"><div class="g-label">'+line+'<span style="font-weight:400;color:var(--sub);margin-left:4px">'+lbs.length+'批</span></div><div class="g-body" style="width:'+ganttW+'px">'+weekendHtml;
+      lbs.forEach(function(b){
+        var s=U.p(b.start), e=U.p(b.end);
+        if(!s||!e) return;
+        // 窗口裁剪：bar 超出窗口的部分截断显示
+        var s2 = s < minD ? minD : s;
+        var e2 = e > maxD ? maxD : e;
+        var l = U.diff(s2, minD)*PX, w = (U.diff(e2,s2)+1)*PX;
+        var cls = 'g-bar'+(b.locked?' locked':'')+(b.status==='预警'?' warn':'')+(isFinal(b)?' dead':'');
+        var color = TYPE_COLOR[b.type] || '#a8a29e';
+        // bar 文字：项目号 + 类型缩写
+        var typeAbbr = {'MCB':'MCB','WCB':'WCB','Mab':'Mab','ADC DS':'ADS','ADC DP':'ADP','CM DP':'CDP','冻干放大测试':'TEST','APS':'APS','设备维护':'维护','参比品':'参比','贴签包装':'贴签','包装':'包装','设备验证':'验证'}[b.type] || b.type;
+        var label = (b.project||'') + (typeAbbr ? ' '+typeAbbr : '');
+        if(b.type==='APS') label = 'APS';
+        html += '<div class="'+cls+'" data-id="'+b.id+'" style="left:'+l+'px;width:'+Math.max(w-1,10)+'px;background:'+color+'" title="'+esc(b.type+' '+b.project+' '+(b.requester?('需求人:'+b.requester+' '):'')+b.start+'~'+b.end+(packDateOf(b)?(' [包装完成:'+packDateOf(b)+']'):'')+(b.warning?' [预警]':'')+(isFinal(b)?' ['+b.status+']':''))+'">'+esc(label)+'</div>';
+      });
+      html += '</div></div>';
+    });
+    html += '<div style="height:10px"></div></div>';
+    wrap.innerHTML = html;
+    // 点击批次（仅生产计划角色可调整）
+    wrap.querySelectorAll('.g-bar').forEach(function(el){
+      el.addEventListener('click', function(){
+        if(!isPlanner()){ toast('请切换到「生产计划」角色进行人工调整'); return; }
+        openEdit(el.dataset.id);
+      });
+    });
+    renderLegend();
+  }
+  function renderLegend(){
+    var L = document.createElement('div');
+    var items = [['MCB','#3b82f6'],['WCB','#60a5fa'],['Mab','#8b5cf6'],['ADC DS','#06b6d4'],['ADC DP','#f59e0b'],['CM DP','#22c55e'],['冻干放大测试','#94a3b8'],['APS','#ec4899'],['设备维护','#a16207']];
+    var html = items.map(function(x){return '<span><i style="background:'+x[1]+'"></i>'+x[0]+'</span>';}).join('');
+    html += '<span><i style="background:#fff;border:2px solid #475569"></i>锁定批次</span>';
+    html += '<span><i style="background:#fff;border:2px solid #dc2626"></i>交期预警</span>';
+    html += '<span><i style="background:#94a3b8;border:1px dashed #64748b;opacity:.5"></i>终态(中止/失败/取消)</span>';
+    html += '<span><i style="background:#dc2626;width:2px;height:14px"></i>今日</span>';
+    html += '<span><i style="background:rgba(148,163,184,.18)"></i>周末</span>';
+    L.innerHTML = html;
+    $('ganttLegend').innerHTML = '';
+    $('ganttLegend').appendChild(L);
+  }
+
+  // ---------- 渲染：日期漂移（可任选两次快照对比，默认最近两次） ----------
+  function renderDrift(){
+    // 未排产需求提示：需求列表中有、但批次表无对应批次（按 reqId 关联）的需求，尚未参与排产与快照对比
+    var upEl = $('driftUnplanned');
+    if(upEl){
+      var batReqIds = {};
+      (state.batches||[]).forEach(function(b){ if(b.reqId) batReqIds[b.reqId] = 1; });
+      var unplanned = (state.requirements||[]).filter(function(r){ return r.type!=='EQP' && !batReqIds[r.id]; });
+      if(unplanned.length){
+        var names = unplanned.slice(0,5).map(function(r){ return esc(r.henliusProject || r.project || r.id); }).join('、');
+        upEl.style.display = '';
+        upEl.innerHTML = '⚠️ 有 <b>'+unplanned.length+'</b> 个需求尚未排产（'+names+(unplanned.length>5?' 等':'')+'），未计入下方对比。请先「重新排产」生成批次后再查看。';
+      } else {
+        upEl.style.display = 'none';
+      }
+    }
+    var snaps = state.snapshots || [];
+    var driftTb = $('driftTable'), driftEmpty = $('driftEmpty');
+    var selA = $('driftSelA'), selB = $('driftSelB');
+    if(!driftTb || !selA || !selB) return;
+    driftTb.querySelector('tbody').innerHTML = '';
+    // 填充快照选择器（快照列表未变时保留当前选择；新增/淘汰快照后重置为默认「最近两次」）
+    function optLabel(s, i){
+      return '#'+(i+1)+' '+(s.time||'').slice(0,10)+' '+snapSrcName(s.source)+(s.note?'（'+s.note+'）':'');
+    }
+    var listKey = snaps.map(function(s){ return (s.time||'')+'|'+(s.source||'')+'|'+(s.note||''); }).join(';');
+    var curA = selA.value, curB = selB.value;
+    if(listKey !== renderDrift._key){ curA = ''; curB = ''; renderDrift._key = listKey; }
+    var opts = snaps.map(function(s,i){ return '<option value="'+i+'">'+esc(optLabel(s,i))+'</option>'; }).join('');
+    selA.innerHTML = opts; selB.innerHTML = opts;
+    var iA = parseInt(curA,10), iB = parseInt(curB,10);
+    if(!(iA>=0 && iA<snaps.length)) iA = Math.max(0, snaps.length-2);
+    if(!(iB>=0 && iB<snaps.length)) iB = Math.max(0, snaps.length-1);
+    if(iA === iB && snaps.length >= 2){ iA = (iB-1 >= 0) ? iB-1 : iB+1; } // 基准与对比不能是同一个快照
+    selA.value = String(iA); selB.value = String(iB);
+    if(snaps.length < 2){
+      driftEmpty.style.display = '';
+      $('driftInfo').textContent = '需至少两次快照';
+      $('driftSummary').innerHTML = '';
+      return;
+    }
+    driftEmpty.style.display = 'none';
+    var prev = snaps[iA], last = snaps[iB];
+    // 若反向选择（基准晚于对比），按时间自动交换，保证「上次 → 本次」方向正确
+    if(new Date(prev.time).getTime() > new Date(last.time).getTime()){ var tmp = prev; prev = last; last = tmp; }
+    $('driftInfo').textContent = (prev.time||'').slice(0,10)+' → '+(last.time||'').slice(0,10)+'（'+snapSrcName(prev.source)+' → '+snapSrcName(last.source)+'）';
+    // 按 reqId+type+line 匹配：找日期漂移、新增批次（对比有、基准无）、取消批次（基准有、对比无）
+    var driftRows = [], addedRows = [], removedRows = [];
+    var prevIdx = {};
+    (prev.batches||[]).forEach(function(pb){ if(pb.reqId) prevIdx[pb.reqId+'|'+pb.type+'|'+pb.line] = pb; });
+    (last.batches||[]).forEach(function(nb){
+      if(!nb.reqId) return;
+      var match = prevIdx[nb.reqId+'|'+nb.type+'|'+nb.line];
+      if(!match){ addedRows.push(nb); return; }
+      var dStart = U.diff(U.p(nb.start), U.p(match.start));
+      var dEnd = U.diff(U.p(nb.end), U.p(match.end));
+      if(dStart !== 0 || dEnd !== 0){
+        driftRows.push({ nb:nb, match:match, dStart:dStart, dEnd:dEnd });
+      }
+    });
+    (prev.batches||[]).forEach(function(pb){
+      if(!pb.reqId) return;
+      if(!(last.batches||[]).some(function(nb){ return nb.reqId===pb.reqId && nb.type===pb.type && nb.line===pb.line; })){
+        removedRows.push(pb);
+      }
+    });
+    driftRows.sort(function(a,b){ return Math.abs(b.dStart)+Math.abs(b.dEnd) - Math.abs(a.dStart)-Math.abs(a.dEnd); });
+    function byStart(a, b){ return (new Date(a.start||0).getTime()) - (new Date(b.start||0).getTime()); }
+    addedRows.sort(byStart); removedRows.sort(byStart);
+    // 汇总：变动批次数 / 平均漂移天数（开始与完成两端均值）/ 漂移≥7天批次数 / 新增批次 / 取消批次
+    var n = driftRows.length, sumDrift = 0, sev = 0;
+    driftRows.forEach(function(x){
+      sumDrift += Math.abs(x.dStart) + Math.abs(x.dEnd);
+      if(Math.abs(x.dStart) >= 7 || Math.abs(x.dEnd) >= 7) sev++;
+    });
+    var sumTxt = n
+      ? ('变动 <b>'+n+'</b> 个批次 · 平均漂移 <b>'+(Math.round(sumDrift/(2*n)*10)/10)+'</b> 天 · 漂移≥7天 <b style="color:#dc2626">'+sev+'</b> 个')
+      : '批次日期无变化';
+    if(addedRows.length) sumTxt += ' · 新增 <b style="color:#16a34a">'+addedRows.length+'</b> 个';
+    if(removedRows.length) sumTxt += ' · 取消 <b style="color:#c2410c">'+removedRows.length+'</b> 个';
+    $('driftSummary').innerHTML = sumTxt;
+    function srcChainTd(){ return '<td style="font-size:11px;color:var(--sub)">'+snapSrcName(prev.source)+' → '+snapSrcName(last.source)+'</td>'; }
+    function stTd(b){ return '<td><span class="st '+(b.status==='预警'?'warn':(b.locked?'lock':'auto'))+'">'+esc(b.status||'-')+'</span></td>'; }
+    driftRows.forEach(function(x){
+      var tr = document.createElement('tr');
+      var driftColor = (Math.abs(x.dStart)>=7 || Math.abs(x.dEnd)>=7) ? '#dc2626' : (Math.abs(x.dStart)>=1 ? '#f59e0b' : '#22c55e');
+      tr.innerHTML =
+        '<td><span class="badge '+(TYPE_BADGE[x.nb.type]||'b-gray')+'">'+esc(x.nb.type)+'</span></td>'+
+        '<td>'+esc(x.nb.project||'-')+'</td>'+
+        '<td>'+esc(x.nb.line)+'</td>'+
+        '<td style="color:var(--sub)">'+x.match.start+' ~ '+x.match.end+'</td>'+
+        '<td>'+x.nb.start+' ~ '+x.nb.end+'</td>'+
+        '<td style="color:'+driftColor+';font-weight:600">'+(x.dStart>0?'+':'')+x.dStart+' / '+(x.dEnd>0?'+':'')+x.dEnd+'</td>'+
+        srcChainTd()+
+        stTd(x.nb);
+      driftTb.querySelector('tbody').appendChild(tr);
+    });
+    // 新增批次：对比快照新增（基准无此批次）
+    addedRows.forEach(function(nb){
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><span class="badge b-green">新增</span></td>'+
+        '<td>'+esc(nb.project||'-')+'</td>'+
+        '<td>'+esc(nb.line)+'</td>'+
+        '<td style="color:var(--sub)">—</td>'+
+        '<td>'+nb.start+' ~ '+nb.end+'</td>'+
+        '<td style="color:#16a34a;font-weight:600">新增</td>'+
+        srcChainTd()+
+        stTd(nb);
+      driftTb.querySelector('tbody').appendChild(tr);
+    });
+    // 取消批次：基准有、对比已移除
+    removedRows.forEach(function(pb){
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><span class="badge b-orange">取消</span></td>'+
+        '<td>'+esc(pb.project||'-')+'</td>'+
+        '<td>'+esc(pb.line)+'</td>'+
+        '<td>'+pb.start+' ~ '+pb.end+'</td>'+
+        '<td style="color:var(--sub)">—</td>'+
+        '<td style="color:#c2410c;font-weight:600">取消</td>'+
+        srcChainTd()+
+        stTd(pb);
+      driftTb.querySelector('tbody').appendChild(tr);
+    });
+    if(!driftRows.length && !addedRows.length && !removedRows.length) driftEmpty.style.display = '';
+  }
+
+  // ---------- 渲染：排产分析 ----------
+  function renderAnalysis(){
+    var snaps = state.snapshots || [];
+    var cardsEl = $('analysisCards'); if(!cardsEl) return;
+    var cur = snaps[snaps.length-1];
+    // 汇总卡片
+    var totalBatches = state.batches.length;
+    var lockCount = state.batches.filter(function(b){return b.locked;}).length;
+    var warnCount = state.batches.filter(function(b){return b.status==='预警';}).length;
+    // 准时率：完成日期 ≤ 对应需求交期
+    var onTime = 0, checked = 0;
+    state.batches.forEach(function(b){
+      if(!b.reqId || !b.start) return;
+      var req = state.requirements.find(function(r){return r.id===b.reqId;});
+      if(req && req.dueDate){
+        checked++;
+        if(U.p(b.end) <= U.p(req.dueDate)) onTime++;
+      }
+    });
+    var onTimePct = checked > 0 ? Math.round(onTime/checked*100) : 0;
+    cardsEl.innerHTML =
+      card('排产次数', snaps.length, '#3b82f6')+
+      card('当前批次数', totalBatches, '#8b5cf6')+
+      card('锁定批次', lockCount, '#22c55e')+
+      card('交期预警', warnCount, '#f59e0b')+
+      card('准时率', onTimePct+'%', onTimePct>=80?'#22c55e':'#dc2626')+
+      card('快照记录', snaps.length+' 条', '#06b6d4');
+    // 日期漂移：可任选两次快照对比（默认最近两次；auto=自动排产 / periodic=每2周定期，含人工调整结果）
+    renderDrift();
+    // 月度批次趋势
+    renderTrend();
+    // 排产历史记录
+    var snapTb = $('snapTable').querySelector('tbody');
+    snapTb.innerHTML = '';
+    if(!snaps.length){ snapTb.innerHTML = '<tr><td colspan="9" class="empty">暂无排产记录</td></tr>'; return; }
+    snaps.slice().reverse().forEach(function(s, idx){
+      var seq = snaps.length - idx;
+      var sOnTime = 0, sChecked = 0;
+      s.batches.forEach(function(b){ if(b.dueDate){ sChecked++; if(U.p(b.end) <= U.p(b.dueDate)) sOnTime++; } });
+      var sPct = sChecked > 0 ? Math.round(sOnTime/sChecked*100) : 100;
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><input type="checkbox" class="snap-chk plan-only" data-id="'+esc(s.id)+'"'+(_snapSel[s.id]?' checked':'')+' title="选择此快照用于删除"></td>'+
+        '<td>#'+seq+'</td>'+
+        '<td>'+esc(s.time.replace('T',' ').slice(0,16))+(s.note?'<div style="font-size:11px;color:var(--sub)">📝 '+esc(s.note)+'</div>':'')+'</td>'+
+        '<td><span class="tag" style="'+(s.source==='periodic'?'background:#ecfdf5;color:#059669':(s.source==='manual'?'background:#fff7ed;color:#c2410c':''))+'">'+snapSrcName(s.source)+'</span></td>'+
+        '<td>'+s.reqCount+'</td>'+
+        '<td>'+s.batches.length+'</td>'+
+        '<td style="color:'+(s.warningCount>0?'#dc2626':'var(--sub)')+'">'+s.warningCount+'</td>'+
+        '<td><span style="color:'+(sPct>=80?'#22c55e':'#f59e0b')+'">'+sPct+'%</span></td>'+
+        '<td>'+(seq===snaps.length?'<span class="tag">最新</span>':'')+'</td>';
+      snapTb.appendChild(tr);
+    });
+    updateDelSnapsBtn(); // 按勾选持久状态恢复删除按钮计数与禁用态（重绘不清空勾选，v2.10.1）
+  }
+  // 快照多选删除：删除按钮计数/禁用态
+  function updateDelSnapsBtn(){
+    var btn = $('btnDelSnaps'); if(!btn) return;
+    var n = document.querySelectorAll('.snap-chk:checked').length;
+    btn.textContent = '🗑️ 删除选中（'+n+'）';
+    btn.classList.toggle('dim', n === 0); // v2.11.0 ㉓：不再 disabled——零勾选可点击并 toast 提示，避免「点了完全没反应」
+  }
+  // 快照勾选状态（id→true）：跨渲染持久。远端实时同步会触发 renderAll 重绘快照表，
+  // 若勾选不持久，正在勾选删除的用户会被重绘清空勾选、删除按钮被禁用，点击「无反应」（v2.10.1 修复）
+  var _snapSel = {};
+  // 删除选中的快照（多版本选择删除）：备份 → 移除 → 本地持久化 → 立即同步云端（防旧快照回填）
+  // v2.11.0：回调式 autoBackup + try-catch，任何环节失败都有明确提示，不再静默中止
+  function deleteSnapshots(ids){
+    var snaps = state.snapshots || [];
+    if(!ids || !ids.length){ toast('请先勾选要删除的快照'); return; }
+    var idSet = {};
+    ids.forEach(function(id){ idSet[id] = 1; });
+    var kept = snaps.filter(function(s){ return !idSet[s.id]; });
+    var removed = snaps.length - kept.length;
+    if(!removed) return;
+    autoBackup(function(bok){
+      if(!bok) return; // 备份失败（Excel 组件缺失/下载异常）→ 中止，避免无备份删除
+      try{
+        state.snapshots = kept; addOp('删除快照', removed+' 份'); save();
+        ids.forEach(function(id){ delete _snapSel[id]; }); // 清掉已删快照的勾选记录
+        if(window.CloudSync && window.CloudSync.forcePushPlan) window.CloudSync.forcePushPlan(); // 立即覆盖云端快照
+        renderAnalysis();
+        toast('已删除 '+removed+' 份快照');
+      }catch(e){
+        toast('⚠️ 删除失败：'+e.message+'（数据可能未同步，请勿关闭页面）', 6000);
+      }
+    });
+  }
+  function snapSrcName(src){
+    if(src === 'periodic') return '定期快照';
+    if(src === 'manual') return '人工快照';
+    if(src === 'auto') return '自动排产';
+    return '自动排产'; // 旧版快照（v2.6.0 及之前）均为排产触发
+  }
+  // 月度批次趋势：按开始日期月份统计批次数量，全部生产类型分开显示（堆叠柱，TYPE_COLOR 配色），支持产线多选
+  function renderTrend(){
+    var el = $('trendChart'); if(!el) return;
+    var catBoxes = Array.prototype.slice.call(document.querySelectorAll('#trendFilter input[name="trendLine"]:checked'));
+    var cats = catBoxes.map(function(b){ return b.value; });
+    var isAll = cats.indexOf('all') >= 0 || cats.length === 0; // v2.16.1：多选产线；空选视为全部
+    var CAT_NAMES = { 'SJ2 CB':'SJ2 CB 细胞库', 'SJ1DS':'SJ1DS Mab', 'SJ2DS':'SJ2DS Mab', 'SJ2 ADC DS':'SJ2 ADC DS', 'SJ2 ADC DP':'SJ2 ADC DP', 'C7CM DP':'C7CM DP', 'SJ2CM DP':'SJ2CM DP' }; // 产线筛选
+    // 全部生产类型（固定顺序）；CM DP 按产线拆分为 C7/SJ2 两条；未列出的类型统一归「其他」
+    var TYPES = ['MCB','WCB','Mab','ADC DS','ADC DP','CM DP·C7','CM DP·SJ2','冻干放大测试','APS','设备维护'];
+    var DISP = { 'Mab':'MabDS' }; // 显示名映射：Mab → MabDS
+    // 按批次取堆叠段 key：CM DP 按批次产线（b.line）拆分
+    var segKey = function(b){
+      if(b.type === 'CM DP') return b.line === 'SJ2CM DP' ? 'CM DP·SJ2' : 'CM DP·C7';
+      return TYPES.indexOf(b.type) >= 0 ? b.type : '其他';
+    };
+    // 时间范围窗口：默认独立（trendRange）；勾选「与甘特图联动」(trendLink) 后跟随甘特图窗口（ganttRange）
+    // all=全部 / 1m/3m/6m=近N月 / custom=自定义起止（按批次开始日期所在月份过滤）
+    var rg = state.trendLink ? (state.ganttRange||{ preset:'all', start:'', end:'' }) : (state.trendRange || { preset:'all', start:'', end:'' });
+    var wStartK = '', wEndK = '';
+    if(rg.preset === '1m' || rg.preset === '3m' || rg.preset === '6m'){
+      var t0 = new Date(), backM = { '1m':1, '3m':3, '6m':6 }[rg.preset];
+      var wd = new Date(t0.getFullYear(), t0.getMonth()-backM, 1);
+      wStartK = wd.getFullYear()+'-'+String(wd.getMonth()+1).padStart(2,'0');
+    } else if(rg.preset === 'custom'){
+      if(rg.start) wStartK = String(rg.start).slice(0,7);
+      if(rg.end) wEndK = String(rg.end).slice(0,7);
+    }
+    var bs = state.batches.filter(function(b){
+      if(!b.start) return false;
+      if(!isAll && cats.indexOf(b.line||'其他') < 0) return false; // v2.16.1：按多选产线筛选
+      var k = b.start.slice(0,7);
+      if(wStartK && k < wStartK) return false;
+      if(wEndK && k > wEndK) return false;
+      return true;
+    });
+    if(!bs.length){ el.innerHTML = '<div class="empty">暂无批次（'+(isAll?'全部产线':cats.map(function(c){ return CAT_NAMES[c]||c; }).join('、'))+'）</div>'; return; }
+    // 按月聚合：每种生产类型独立计数
+    var months = {}, keys = [];
+    bs.forEach(function(b){
+      var k = (b.start||'').slice(0,7);
+      if(!/^\d{4}-\d{2}$/.test(k)) return;
+      if(!months[k]){ months[k] = {}; keys.push(k); }
+      var tk = segKey(b);
+      months[k][tk] = (months[k][tk]||0) + 1;
+    });
+    keys.sort();
+    if(!keys.length){ el.innerHTML = '<div class="empty">批次缺少有效开始日期</div>'; return; }
+    // 图表内出现的类型（保持固定顺序，只显示有数据的）
+    var usedTypes = [];
+    TYPES.concat(['其他']).forEach(function(t){
+      var has = keys.some(function(k){ return (months[k][t]||0) > 0; });
+      if(has) usedTypes.push(t);
+    });
+    // C7/SJ2 两条 CM DP 产线配色（同绿色系深浅区分）
+    var colorOf = function(t){
+      if(t === 'CM DP·C7') return '#16a34a';
+      if(t === 'CM DP·SJ2') return '#86efac';
+      if(t === '其他') return '#a8a29e';
+      return TYPE_COLOR[t] || '#a8a29e';
+    };
+    var maxV = 0;
+    keys.forEach(function(k){
+      var t = 0; usedTypes.forEach(function(s){ t += months[k][s]||0; });
+      if(t > maxV) maxV = t;
+    });
+    var CH = 150; // 图表主体高度
+    var html = '<div style="display:flex;align-items:flex-end;gap:4px;padding:0 4px;overflow-x:auto">';
+    keys.forEach(function(k){
+      var total = 0; usedTypes.forEach(function(s){ total += months[k][s]||0; });
+      // 堆叠柱：自下而上按固定类型顺序堆叠，每段带类型 tooltip
+      var segs = '';
+      usedTypes.forEach(function(s){
+        var v = months[k][s]||0;
+        if(!v) return;
+        var h = maxV > 0 ? Math.max(Math.round(v/maxV*CH), 4) : 0;
+        segs += '<div title="'+esc(DISP[s]||s)+'：'+v+' 批" style="width:100%;height:'+h+'px;background:'+colorOf(s)+'"></div>';
+      });
+      html += '<div style="flex:1;min-width:44px;display:flex;flex-direction:column;align-items:center;gap:2px">'+
+        '<div style="font-size:10px;font-weight:700;color:#334155">'+total+'</div>'+
+        '<div title="'+k+' 共 '+total+' 批" style="display:flex;flex-direction:column-reverse;align-items:center;width:70%;max-width:18px;height:'+CH+'px;justify-content:flex-start">'+segs+'</div>'+
+        '<div style="font-size:9px;color:var(--sub);white-space:nowrap">'+k+'</div>'+
+      '</div>';
+    });
+    html += '</div>';
+    html += '<div class="legend" style="margin-top:8px;flex-wrap:wrap">'+usedTypes.map(function(t){
+      return '<span><i style="background:'+colorOf(t)+'"></i>'+esc(DISP[t]||t)+'</span>';
+    }).join('')+'</div>';
+    el.innerHTML = html;
+  }
+  // 联动开关：联动时禁用趋势图独立范围控件（避免两处设置打架）
+  function syncTrendRangeDisabled(){
+    var sel = $('trendRange'), s = $('trendRangeStart'), e = $('trendRangeEnd');
+    if(!sel) return;
+    var dis = !!state.trendLink;
+    sel.disabled = dis;
+    if(s) s.disabled = dis;
+    if(e) e.disabled = dis;
+    sel.title = dis ? '已联动甘特图时间窗口：调整甘特图范围即可同步；取消勾选「与甘特图联动」可独立设置'
+      : '月度批次趋势时间窗口（按批次开始日期月份统计，默认与甘特图窗口相互独立）';
+  }
+  function card(title, value, color){
+    return '<div class="card" style="padding:14px 16px;text-align:center">'+
+      '<div style="font-size:22px;font-weight:700;color:'+(color||'#3b82f6')+'">'+value+'</div>'+
+      '<div style="font-size:11px;color:var(--sub);margin-top:2px">'+title+'</div></div>';
+  }
+
+  // ---------- 渲染：批次明细 ----------
+  function renderBatches(){
+    var tb = $('batchTable').querySelector('tbody');
+    tb.innerHTML='';
+    var ft = $('filtType').value, fl = $('filtLine').value, fs = $('filtStatus').value, fp = ($('filtProject').value||'').toLowerCase();
+    var list = state.batches.filter(function(b){
+      if(ft && b.type!==ft) return false;
+      if(fl && (b.line||'其他')!==fl) return false;
+      if(fs && b.status!==fs) return false;
+      if(fp && !(b.project||'').toLowerCase().includes(fp)) return false;
+      return true;
+    });
+    list.sort(function(a,b){ return U.p(a.start)-U.p(b.start); });
+    $('batchCount').textContent = list.length+' / '+state.batches.length;
+    $('batchEmpty').style.display = list.length ? 'none' : '';
+    var stCls = {'锁定':'lock','自动':'auto','预警':'warn','人工':'manual','中止':'dead','失败':'fail','取消':'cancel'};
+    list.forEach(function(b){
+      var tr=document.createElement('tr');
+      var ops = '—';
+      // 批量解锁选择框：仅生产计划角色、锁定中的非历史批次可选
+      var canSel = isPlanner() && b.locked && b.source!=='历史';
+      var selTd = '<td class="plan-only" style="text-align:center">'+(canSel?'<input type="checkbox" data-sel="'+b.id+'" title="勾选后可批量解锁">':'')+'</td>';
+      if(isPlanner()){
+        if(b.source==='历史'){
+          ops = '<span style="color:var(--sub)">历史锁定</span>';
+        } else if(isFinal(b)){
+          // 终态批次：可调整（改状态/日期）与删除，不再确认/解锁
+          ops = '<button class="btn sm plan-only" data-act="edit" data-id="'+b.id+'">调整</button> '+
+                '<button class="btn sm danger plan-only" data-act="del" data-id="'+b.id+'">删除</button>';
+        } else if(b.locked){
+          ops = '<button class="btn sm plan-only" data-act="edit" data-id="'+b.id+'">调整</button> '+
+                '<button class="btn sm plan-only" data-act="unlock" data-id="'+b.id+'">解锁</button>';
+        } else {
+          ops = '<button class="btn sm plan-only" data-act="edit" data-id="'+b.id+'">调整</button> '+
+                '<button class="btn sm ok plan-only" data-act="confirm" data-id="'+b.id+'">确认</button>';
+        }
+      }
+      tr.innerHTML =
+        selTd+
+        '<td><span class="st '+(stCls[b.status]||'auto')+'">'+esc(b.status)+'</span></td>'+
+        '<td><span class="badge '+(TYPE_BADGE[b.type]||'b-gray')+'">'+esc(b.type)+'</span></td>'+
+        '<td><b>'+esc(b.project||'-')+'</b>'+(b.henlius?'<br><span style="color:var(--sub);font-size:11px">'+esc(b.henlius)+'</span>':'')+'</td>'+
+        '<td>'+esc(b.requester||'-')+'</td>'+
+        '<td style="color:var(--sub)">'+esc(b.batchNo||'-')+'</td>'+
+        '<td>'+esc(b.line||'-')+'</td>'+
+        '<td>'+esc(b.start)+'</td><td>'+esc(b.end)+'</td>'+
+        '<td style="color:var(--sub)">'+(b.harvestDate?'下罐 '+esc(b.harvestDate):(b.fillDate?'灌装 '+esc(b.fillDate):'-'))+'</td>'+
+        '<td style="color:var(--sub)">'+esc(packDateOf(b)||'-')+'</td>'+
+        '<td>'+(b.gmp?'<span class="b-green">GMP</span>':'<span class="b-gray">非GMP</span>')+'</td>'+
+        '<td style="max-width:220px;white-space:normal;color:var(--sub)">'+esc(b.warning||b.note||'')+'</td>'+
+        '<td class="plan-only">'+ops+'</td>';
+      tb.appendChild(tr);
+    });
+  }
+
+  // ---------- 人工调整（编辑弹窗，生产计划角色） ----------
+  function openEdit(id){
+    if(!isPlanner()){ toast('请切换到「生产计划」角色进行人工调整'); return; }
+    var b = state.batches.find(function(x){return x.id===id;});
+    if(!b) return;
+    editingId = id;
+    var isHist = b.source==='历史';
+    var R = state.rules || JSON.parse(JSON.stringify(Sched.DEFAULTS));
+    var isMab = b.type==='Mab';
+    var isDP = (b.line==='SJ2 ADC DP'||b.line==='C7CM DP'||b.line==='SJ2CM DP');
+    $('editTitle').textContent = (isHist?'查看历史锁定批次：':'人工调整：')+b.type+' '+(b.project||'');
+    var pkd = ((state.rules||Sched.DEFAULTS).dp||{}).packDays!=null?((state.rules||Sched.DEFAULTS).dp||{}).packDays:10;
+    var insp = (b.dpSegs && b.dpSegs.inspect>0) ? b.dpSegs.inspect : pkd; // 本批次包装天数（默认取规则值）
+    $('editInfo').innerHTML = (b.reqId?'已关联需求':'自动生成/历史批次')+' ｜ 当前状态：'+b.status+
+      (b.mabPhases?' ｜ 周期构成：'+b.mabPhases:'')+
+      (b.dpSegs?(function(){
+        var sum4 = (b.dpSegs.prep||0)+(b.dpSegs.fill||0)+(b.dpSegs.freeze||0)+(b.dpSegs.clear||0);
+        // 新口径：周期=四段（不含目检包装）；旧数据 total 含包装时按旧口径展示
+        return ' ｜ 周期构成：准备'+b.dpSegs.prep+'+灌装'+b.dpSegs.fill+'+冻干'+b.dpSegs.freeze+'+清场'+b.dpSegs.clear+
+          (b.dpSegs.total===sum4?'（合计'+sum4+'天，不含目检包装）':'+目检包装'+b.dpSegs.inspect+'（合计'+b.dpSegs.total+'天，旧口径含包装）');
+      })():'')+
+      (isDP?(packDateOf(b)?' ｜ 包装完成日期 '+packDateOf(b)+'（完成+'+insp+'天，可改规则/本弹窗包装天数调整）':''):'')+
+      (isHist?' ｜ <b>历史锁定批次，仅可查看</b>':'');
+    $('e_batchno').value = b.batchNo||'';
+    $('e_start').value = b.start||'';
+    $('e_end').value = b.end||'';
+    $('e_line').value = b.line||'其他';
+    $('e_lock').checked = !!b.locked;
+    $('e_note').value = b.note||'';
+    // 状态下拉：保留当前状态（若为自动态）+ 人工 + 终态选项
+    var stSel = $('e_status');
+    var cur = b.status || '人工';
+    var opts = [];
+    ['锁定','自动','预警','人工','中止','失败','取消'].forEach(function(s){ if(s===cur || s==='人工' || s==='中止' || s==='失败' || s==='取消') opts.push(s); });
+    stSel.innerHTML = opts.map(function(s){ return '<option'+(s===cur?' selected':'')+'>'+s+'</option>'; }).join('');
+    if(isFinal(b)){
+      $('e_lock').disabled = true;
+      $('e_lock').checked = false; // 终态批次不锁定（不占产能）
+      $('e_start').disabled = true; $('e_line').disabled = true; // 终态仅可改状态/备注/删除
+    }
+    // 周期调整行（按批次类型显示）
+    $('editMabRow').style.display = isMab ? '' : 'none';
+    $('editDpRow').style.display = isDP ? '' : 'none';
+    $('editDpRow2').style.display = isDP ? '' : 'none';
+    $('eEndHint').style.display = (isMab||isDP) ? '' : 'none';
+    if(isMab){
+      $('e_mabseed').value = b.mabSeed!=null?b.mabSeed:((R.mab&&R.mab.seedDays!=null)?R.mab.seedDays:20);
+      $('e_mabreactor').value = b.mabReactor!=null?b.mabReactor:((R.mab&&R.mab.reactorDays!=null)?R.mab.reactorDays:15);
+      $('e_mabpurify').value = b.mabPurify!=null?b.mabPurify:((R.mab&&R.mab.purifyDays!=null)?R.mab.purifyDays:7);
+    }
+    if(isDP){
+      var sg = b.dpSegs || { prep:3, fill:1, freeze:(b.dosage==='冻干'?(b.line==='C7CM DP'?3:4):0), clear:1, inspect:pkd };
+      $('e_dprep').value=sg.prep; $('e_dfill').value=sg.fill; $('e_dfreeze').value=sg.freeze;
+      $('e_dclear').value=sg.clear; $('e_dinspect').value=sg.inspect!=null?sg.inspect:pkd; // 包装天数（不进周期）
+    }
+    updateEditTotals();
+    ['e_batchno','e_start','e_line','e_note','e_lock'].forEach(function(i){ $(i).disabled = isHist; });
+    ['e_status'].forEach(function(i){ $(i).disabled = isHist; });
+    ['e_mabseed','e_mabreactor','e_mabpurify','e_dprep','e_dfill','e_dfreeze','e_dclear','e_dinspect'].forEach(function(i){ $(i).disabled = isHist; });
+    if(isFinal(b) && !isHist){ // 终态批次锁定相关字段保持禁用
+      $('e_lock').disabled = true;
+      $('e_start').disabled = true; $('e_line').disabled = true;
+      $('e_lock').checked = false;
+    }
+    // Mab/DP 完成日期由周期组成自动计算，不可手改
+    $('e_end').disabled = isHist || isMab || isDP;
+    $('btnEditSave').style.display = isHist ? 'none' : '';
+    $('btnDelBatch').style.display = isHist ? 'none' : '';
+    $('editConflict').style.display='none';
+    $('editMask').classList.add('on');
+  }
+  function nv(x){ var v = parseInt(x,10); return isNaN(v) ? 0 : v; }
+  function updateEditTotals(){
+    var ms = nv($('e_mabseed').value)+nv($('e_mabreactor').value)+nv($('e_mabpurify').value);
+    $('e_mabtotal').textContent = ms ? '合计 '+ms+' 天（下罐=开始+种子+反应器）' : '';
+    // DP 周期=准备+灌装+冻干+清场（不含目检包装）；包装天数单独驱动包装完成日期
+    var p4 = nv($('e_dprep').value)+nv($('e_dfill').value)+nv($('e_dfreeze').value)+nv($('e_dclear').value);
+    var insp = nv($('e_dinspect').value);
+    var fillTxt = '', packTxt = '';
+    var sD = $('e_start').value, prep = nv($('e_dprep').value);
+    if(sD && prep>=0 && p4){
+      try{
+        fillTxt = ' ｜ 灌装日期 '+U.f(U.add(U.p(sD), prep));
+        if(insp>0) packTxt = ' ｜ 包装完成 '+U.f(U.add(U.add(U.p(sD), p4-1), insp)); // 完成=开始+周期-1，包装完成=完成+包装天数
+      }catch(e){}
+    }
+    $('e_dptotal').textContent = p4 ? '周期合计 '+p4+' 天（不含包装）'+fillTxt+packTxt : '';
+  }
+  function closeEdit(){ $('editMask').classList.remove('on'); editingId=null; }
+  function saveEdit(){
+    if(!isPlanner()){ toast('仅生产计划角色可调整批次'); return; }
+    var b = state.batches.find(function(x){return x.id===editingId;});
+    if(!b) return;
+    var s = $('e_start').value, e = $('e_end').value, line = $('e_line').value;
+    var newStatus = $('e_status').value;
+    var wasFinal = isFinal(b);
+    // 终态流转：
+    //  - 标记为终态（中止/失败/取消）：不占产能、不锁定，保存日期/备注即可，跳过冲突校验
+    //  - 终态恢复为人工：解除终态，重新走普通校验流程
+    if(newStatus==='中止'||newStatus==='失败'||newStatus==='取消'){
+      b.status = newStatus;
+      b.locked = false;
+      b.warning = '';
+      b.note = $('e_note').value;
+      save(); renderAll(); closeEdit();
+      toast('批次已标记为「'+newStatus+'」，不再占用产能（可删除或调整恢复）');
+      return;
+    }
+    if(!s){ toast('请填写开始日期'); return; }
+    var isMab = b.type==='Mab';
+    var isDP = (b.line==='SJ2 ADC DP'||b.line==='C7CM DP'||b.line==='SJ2CM DP');
+    // 周期重算：Mab=种子+反应器+纯化；DP=准备+灌装+冻干+清场（不含目检包装）
+    if(isMab){
+      var seed = nv($('e_mabseed').value), reactor = nv($('e_mabreactor').value), purify = nv($('e_mabpurify').value);
+      if(!(seed>0&&reactor>0&&purify>0)){ toast('Mab 种子/反应器/纯化天数需均大于 0'); return; }
+      e = U.f(U.add(U.p(s), seed+reactor+purify-1));
+      $('e_end').value = e;
+      b.mabSeed=seed; b.mabReactor=reactor; b.mabPurify=purify;
+      b.mabPhases = '种子培养'+seed+'天 + 反应器培养'+reactor+'天 + 下游纯化'+purify+'天（合计'+(seed+reactor+purify)+'天）';
+      b.harvestDate = U.f(U.add(U.p(s), seed+reactor)); // 下罐=开始+种子+反应器
+    } else if(isDP){
+      // DP 周期=准备+灌装+冻干+清场（不含目检包装）；包装天数单独驱动包装完成日期
+      var dp = [nv($('e_dprep').value), nv($('e_dfill').value), nv($('e_dfreeze').value), nv($('e_dclear').value)];
+      var insp = nv($('e_dinspect').value);
+      var dsum = dp[0]+dp[1]+dp[2]+dp[3];
+      if(dsum<=0){ toast('制剂周期各段天数合计需大于 0'); return; }
+      e = U.f(U.add(U.p(s), dsum-1));
+      $('e_end').value = e;
+      b.dpSegs = { prep:dp[0], fill:dp[1], freeze:dp[2], clear:dp[3], inspect:insp, total:dsum };
+      b.fillDate = U.f(U.add(U.p(s), dp[0])); // 灌装日期自动根据开始时间计算并更新
+      // 包装完成日期 = 完成日期 + 本批次包装天数（仅正式 DP 批次；包装天数不进排产周期）
+      if(b.type==='ADC DP'||b.type==='CM DP'){
+        if(insp>0) b.packDate = U.f(U.add(U.p(e), insp));
+        else b.packDate = '';
+      }
+    }
+    if(!e){ toast('请填写完成日期'); return; }
+    if(U.p(e) < U.p(s)){ toast('完成日期不能早于开始日期'); return; }
+    // 批次号修订（唯一性校验）
+    var bn = $('e_batchno').value.trim();
+    if(bn){
+      var dup = state.batches.some(function(x){ return x.id!==editingId && x.batchNo && x.batchNo===bn; });
+      if(dup){ toast('批次号「'+bn+'」已存在，请更换'); return; }
+    }
+    // 校验冲突（排除自身）
+    var others = state.batches.filter(function(x){return x.id!==editingId;}).map(function(x){return {b:x};});
+    var sched = new Sched(state.rules);
+    var conflict = sched.conflicts(line, U.p(s), U.p(e), {occ:others});
+    var warnBox = $('editConflict');
+    if(conflict && !$('e_lock').checked){
+      warnBox.textContent = '⚠️ 该时段与其它批次冲突（产线占用/间隔约束），如仍要保存请勾选锁定并再次保存。';
+      warnBox.style.display='block';
+      return;
+    }
+    b.start=s; b.end=e; b.line=line;
+    b.batchNo = bn;
+    b.locked = $('e_lock').checked;
+    b.note = $('e_note').value;
+    // 状态下拉优先（人工/自动态），其次按锁定/冲突派生
+    if(newStatus==='人工' || newStatus==='自动' || newStatus==='预警' || wasFinal){
+      b.status = '人工';
+      if(!b.locked && conflict){ b.status='预警'; b.warning='人工调整后仍与其它批次冲突'; }
+      else if(b.locked){ b.status='锁定'; b.warning=''; }
+      else b.warning='';
+    } else if(!b.locked && conflict){ b.status='预警'; b.warning='人工调整后仍与其它批次冲突'; }
+    else if(b.locked){ b.status='锁定'; b.warning=''; }
+    else if(b.status==='锁定'){ b.status='人工'; }
+    else if(b.status==='自动'||b.status==='预警'){ b.status='人工'; }
+    addOp('人工调整', b.id+'：'+s+'~'+e+(b.locked?'（锁定）':'')); save(); renderAll(); closeEdit();
+    toast('已保存调整'+(conflict?'（存在冲突，请关注）':''));
+  }
+  function delBatch(){
+    if(!isPlanner()){ toast('仅生产计划角色可删除批次'); return; }
+    uiConfirm('删除该批次？', function(ok){
+      if(!ok) return;
+      state.batches = state.batches.filter(function(x){return x.id!==editingId;});
+      addOp('删除批次', editingId); save(); renderAll(); closeEdit();
+      toast('批次已删除');
+    });
+  }
+  function delBatchDirect(id){
+    if(!isPlanner()){ toast('仅生产计划角色可删除批次'); return; }
+    var b = state.batches.find(function(x){return x.id===id;});
+    if(!b) return;
+    uiConfirm('删除该批次？'+(isFinal(b)?'（终态批次）':''), function(ok){
+      if(!ok) return;
+      state.batches = state.batches.filter(function(x){return x.id!==id;});
+      save(); renderAll();
+      toast('批次已删除');
+    });
+  }
+
+  // ---------- 规则参数页 ----------
+  function ruleField(label, key, val, tip){
+    return '<div class="f"><label>'+label+(tip?' <span style="color:#94a3b8;font-weight:400">('+tip+')</span>':'')+'</label>'+
+      '<input type="number" data-rule="'+key+'" value="'+val+'" step="1"></div>';
+  }
+  function renderRules(){
+    var R = state.rules || JSON.parse(JSON.stringify(Sched.DEFAULTS));
+    var g = $('rulesGrid');
+    var html = '<div class="card" style="grid-column:1/-1;margin:0"><h2 style="font-size:13px">CB 细胞库</h2><div class="rules-grid">';
+    html += ruleField('开工星期(getDay，0=周日,2=周二)','cb.weekday',R.cb.weekday);
+    html += ruleField('生产周期(天)','cb.cycle',R.cb.cycle);
+    html += ruleField('生产间隔：上批完成→下批开始(天)','cb.gap',R.cb.gap);
+    html += ruleField('MCB→WCB间隔(天)','mcbWcbGapDays',R.mcbWcbGapDays);
+    html += '</div></div>';
+    html += '<div class="card" style="grid-column:1/-1;margin:0"><h2 style="font-size:13px">通用 / Mab / ADC DS</h2><div class="rules-grid">';
+    html += ruleField('工艺转移后间隔(天)','processTransferGapDays',R.processTransferGapDays);
+    html += ruleField('Mab 批间开始间隔(天)','mab.minStartGap',R.mab.minStartGap);
+    html += ruleField('Mab 种子培养(天)','mab.seedDays',R.mab.seedDays!=null?R.mab.seedDays:20);
+    html += ruleField('Mab 反应器培养(天)','mab.reactorDays',R.mab.reactorDays!=null?R.mab.reactorDays:15);
+    html += ruleField('Mab 下游纯化(天)','mab.purifyDays',R.mab.purifyDays!=null?R.mab.purifyDays:7);
+    html += ruleField('Mab 下罐间隔(天)','mab.harvestGap',R.mab.harvestGap);
+    html += ruleField('Mab 下罐偏移(开始后第几天,无下罐日的历史批兜底)','mab.harvestOffset',R.mab.harvestOffset);
+    html += ruleField('ADC DS 下罐后(天)','adcDs.harvestAfterDays',R.adcDs.harvestAfterDays);
+    html += ruleField('ADC DS GMP-Mab完成后(天)','adcDs.gmpMabDays',R.adcDs.gmpMabDays);
+    html += ruleField('ADC DS Non-GMP Mab完成后(天)','adcDs.nonGmpMabDays',R.adcDs.nonGmpMabDays);
+    html += '</div></div>';
+    html += '<div class="card" style="grid-column:1/-1;margin:0"><h2 style="font-size:13px">DP 制剂</h2><div class="rules-grid">';
+    html += ruleField('C7CM DP 清场后间隔(天)','dp.clearGapC7',R.dp.clearGapC7);
+    html += ruleField('SJ2 DP产线清场后间隔(天)','dp.clearGapSJ2',R.dp.clearGapSJ2);
+    html += ruleField('二次稀配增加周期(天)','dp.diluteExtraDays',R.dp.diluteExtraDays);
+    html += ruleField('DP 包装天数(天)（包装完成=完成日期+此天数，不计入排产周期）','dp.packDays',R.dp.packDays!=null?R.dp.packDays:10);
+    html += ruleField('ADC Non-GMP 与ADC DS间隔(天)','adcDp.nonGmpGapDays',R.adcDp.nonGmpGapDays);
+    html += ruleField('ADC 其余与ADC DS间隔(天)','adcDp.otherGapDays',R.adcDp.otherGapDays);
+    html += ruleField('冻干与放大测试间隔(天)','freezeDry.testGapDays',R.freezeDry.testGapDays);
+    html += ruleField('APS 占用(天)','aps.cycle',R.aps.cycle);
+    html += '</div></div>';
+    html += '<div class="card" style="grid-column:1/-1;margin:0"><h2 style="font-size:13px">APS 月份（各产线，用逗号分隔，如 3,8,12）</h2><div class="rules-grid">';
+    ['C7CM DP','SJ2 ADC DP','SJ2CM DP'].forEach(function(l){
+      html += '<div class="f"><label>'+l+' APS 月份</label><input data-rule="aps.months.'+l+'" value="'+((R.aps.months[l]||[]).join(','))+'" style="width:100%"></div>';
+    });
+    html += '</div></div>';
+    g.innerHTML = html;
+  }
+  function readRules(){
+    var R = JSON.parse(JSON.stringify(Sched.DEFAULTS));
+    document.querySelectorAll('[data-rule]').forEach(function(inp){
+      var key = inp.dataset.rule, v = inp.value.trim();
+      var parts = key.split('.');
+      var obj = R;
+      for(var i=0;i<parts.length-1;i++){ obj = obj[parts[i]]; }
+      obj[parts[parts.length-1]] = v==='' ? null : Number(v);
+      if(Number.isNaN(obj[parts[parts.length-1]])) obj[parts[parts.length-1]] = v;
+    });
+    // APS months 从字符串转数组
+    ['C7CM DP','SJ2 ADC DP','SJ2CM DP'].forEach(function(l){
+      var inp = document.querySelector('[data-rule="aps.months.'+l+'"]');
+      R.aps.months[l] = (inp.value||'').split(/[,，]/).map(function(x){return parseInt(x.trim(),10);}).filter(function(x){return x>=1&&x<=12;});
+    });
+    return R;
+  }
+  function saveRules(){
+    state.rules = readRules();
+    save();
+    toast('规则已保存，请重新「自动排产」生效');
+  }
+  function resetRules(){
+    state.rules = null; save(); renderRules(); toast('已恢复默认规则');
+  }
+
+  // ---------- 数据管理 ----------
+  function renderData(){
+    var lock = state.batches.filter(function(b){return b.locked;}).length;
+    var warn = state.batches.filter(function(b){return b.status==='预警';}).length;
+    var fin = state.batches.filter(isFinal).length;
+    $('dataSummary').innerHTML =
+      '需求：<b>'+state.requirements.length+'</b> 条 ｜ 批次：<b>'+state.batches.length+'</b> 批（锁定 '+lock+' ｜ 待确认 '+(state.batches.length-lock-fin)+' ｜ 预警 '+warn+' ｜ 终态(中止/失败/取消) '+fin+'）<br>'+
+      '规则：<b>'+(state.rules ? '自定义' : '默认（排产逻辑.xlsx）')+'</b> ｜ 甘特图：密度 '+((state.ganttAxis||{}).px||2.5)+'px/天 · 刻度 '+((state.ganttAxis||{}).unit||'month')+' ｜ 存储位置：浏览器 localStorage';
+  }
+  // 参考数据：4 张可修订表（产线情况/制剂产能/人员配置/需求矩阵），数据存 state.refData
+  var REF_TABLES = [
+    { key:'lines',  id:'refLines',  cols:7 },
+    { key:'caps',   id:'refCap',    cols:8 },
+    { key:'staff',  id:'refStaff',  cols:2 },
+    { key:'fields', id:'refFields', cols:5 }
+  ];
+  function refData(){ return state.refData || REF_DEFAULT; }
+  function renderRef(){
+    REF_TABLES.forEach(function(t){
+      var tb = $(t.id).querySelector('tbody');
+      var rows = refData()[t.key];
+      var editing = (refEditKey===t.key);
+      tb.innerHTML = rows.map(function(row){
+        var cells = '';
+        for(var i=0;i<t.cols;i++){
+          var v = row[i]==null ? '' : String(row[i]);
+          cells += editing
+            ? '<td><input data-cell="'+i+'" value="'+esc(v)+'"></td>'
+            : '<td>'+esc(v)+'</td>';
+        }
+        return '<tr>'+cells+'</tr>';
+      }).join('');
+      // 编辑按钮状态
+      var btn = document.querySelector('[data-ref-edit="'+t.key+'"]');
+      if(btn) btn.textContent = editing ? '💾 保存' : '✏️ 编辑';
+      var cancel = document.querySelector('[data-ref-cancel="'+t.key+'"]');
+      if(cancel) cancel.style.display = editing ? '' : 'none';
+      document.querySelector('#tab-ref #refLines'); // noop
+    });
+    renderRefFirst(); // v2.16.0：首次生产项目汇总（自动生成）
+  }
+  // v2.16.0：首次生产项目汇总——需求录入中勾选「首次生产」的需求，项目号+分子信息+备注自动汇总
+  function renderRefFirst(){
+    var tb = $('refFirst'); if(!tb) return;
+    var rows = state.requirements.filter(function(r){ return !!r.firstProduction; });
+    tb.querySelector('tbody').innerHTML = rows.map(function(r){
+      var typeTxt = r.type==='DP' ? ((r.dpKind||'CM')+' '+(r.dosage||'')) : (r.type==='CB' ? (r.cbKind||'MCB') : r.type);
+      return '<tr><td><b>'+esc(r.henliusProject||r.atProject||'-')+'</b></td><td>'+esc(typeTxt)+'</td>'+
+        '<td>'+esc(r.molType||'-')+'</td><td>'+esc(r.target||'-')+'</td><td>'+esc(r.novelty||'-')+'</td>'+
+        '<td>'+esc(r.mabSubtype||'-')+'</td><td>'+esc(r.hostCell||'-')+'</td>'+
+        '<td>'+esc((r.titer!=null&&r.titer!=='')?r.titer:'-')+'</td><td>'+esc(r.spec||'-')+'</td>'+
+        '<td>'+esc(r.note||'-')+'</td></tr>';
+    }).join('');
+    var emp = $('refFirstEmpty');
+    if(emp) emp.style.display = rows.length ? 'none' : '';
+  }
+  function toggleRefEdit(key){
+    if(refEditKey===key){
+      // 保存：收集 input 值
+      var t = REF_TABLES.find(function(x){return x.key===key;});
+      var rows = [];
+      $(t.id).querySelectorAll('tbody tr').forEach(function(tr){
+        var row = [];
+        tr.querySelectorAll('input[data-cell]').forEach(function(inp){
+          row[parseInt(inp.dataset.cell,10)] = inp.value;
+        });
+        rows.push(row);
+      });
+      if(!state.refData) state.refData = JSON.parse(JSON.stringify(REF_DEFAULT));
+      state.refData[key] = rows;
+      refEditKey = null;
+      save(); renderRef();
+      toast('参考数据已保存');
+    } else {
+      if(!isPlanner()){ toast('请切换到「生产计划」角色进行修订'); return; }
+      refEditKey = key;
+      renderRef();
+    }
+  }
+  function cancelRefEdit(){
+    refEditKey = null;
+    renderRef();
+  }
+  // 参考数据：Mab 生产周期（项目号+规格+三段天数，来自 Mab 批次；人工调整后自动同步）
+  function renderRefMab(){
+    var tb = $('refMab').querySelector('tbody');
+    tb.innerHTML = '';
+    var empty = $('refMabEmpty');
+    var R = state.rules || JSON.parse(JSON.stringify(Sched.DEFAULTS));
+    var dSeed = (R.mab&&R.mab.seedDays!=null)?R.mab.seedDays:20;
+    var dReactor = (R.mab&&R.mab.reactorDays!=null)?R.mab.reactorDays:15;
+    var dPurify = (R.mab&&R.mab.purifyDays!=null)?R.mab.purifyDays:7;
+    var map = {};
+    state.batches.forEach(function(b){
+      if(b.type!=='Mab') return;
+      var req = b.reqId ? state.requirements.find(function(r){ return r.id===b.reqId; }) : null;
+      var proj = b.henlius || b.project || '';
+      var spec = (req && req.spec) ? req.spec : '';
+      var key = proj + '|' + spec;
+      if(!map[key]) map[key] = { proj: proj, spec: spec, seed: dSeed, reactor: dReactor, purify: dPurify };
+      if(b.mabSeed!=null) map[key].seed = b.mabSeed;
+      if(b.mabReactor!=null) map[key].reactor = b.mabReactor;
+      if(b.mabPurify!=null) map[key].purify = b.mabPurify;
+    });
+    var keys = Object.keys(map);
+    keys.forEach(function(k){
+      var r = map[k];
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td><b>'+esc(r.proj||'-')+'</b></td><td>'+esc(r.spec||'-')+'</td><td>'+r.seed+'</td><td>'+r.reactor+'</td><td>'+r.purify+'</td><td>'+(r.seed+r.reactor+r.purify)+'</td>';
+      tb.appendChild(tr);
+    });
+    empty.style.display = keys.length ? 'none' : '';
+  }
+  // ---------- Excel 导入导出（SheetJS）----------
+  // 记录数组 ↔ sheet：首行=字段名（键并集），布尔保留类型，对象/数组 JSON 字符串编码，导入时自动还原
+  function toSheet(records){
+    var keys = [];
+    records.forEach(function(r){ Object.keys(r||{}).forEach(function(k){ if(keys.indexOf(k)<0) keys.push(k); }); });
+    var aoa = [keys];
+    records.forEach(function(r){
+      aoa.push(keys.map(function(k){
+        var v = (r||{})[k];
+        if(v != null && typeof v === 'object') return JSON.stringify(v);
+        return (v === undefined || v === null) ? '' : v;
+      }));
+    });
+    return XLSX.utils.aoa_to_sheet(aoa);
+  }
+  function fromSheet(ws){
+    var rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:''});
+    if(!rows.length) return [];
+    var keys = rows[0];
+    return rows.slice(1).filter(function(row){ return row.some(function(c){ return c !== '' && c != null; }); }).map(function(row){
+      var o = {};
+      keys.forEach(function(k, i){
+        var v = row[i];
+        if(v === '' || v == null) return;
+        if(typeof v === 'string' && (v.charAt(0)==='{' || v.charAt(0)==='[')){
+          try { v = JSON.parse(v); } catch(e){ /* 保留原字符串 */ }
+        }
+        o[k] = v;
+      });
+      return o;
+    });
+  }
+  function saveXlsx(wb, filename){
+    var u8 = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+    var blob = new Blob([u8], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    setTimeout(function(){URL.revokeObjectURL(a.href);}, 1000);
+  }
+  // 构建完整数据工作簿（需求 + 批次 + 配置），导出与自动备份共用
+  function buildWorkbook(){
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, toSheet(state.requirements), '需求');
+    XLSX.utils.book_append_sheet(wb, toSheet(state.batches), '排产批次');
+    var cfg = [['key','value'],
+      ['role', state.role||''], ['user', state.user||''],
+      ['ganttAxis', JSON.stringify(state.ganttAxis||{px:2.5,unit:'month'})],
+      ['ganttLines', state.ganttLines==null?'':JSON.stringify(state.ganttLines)],
+      ['ganttRange', JSON.stringify(state.ganttRange||{preset:'all',start:'',end:''})],
+      ['trendRange', JSON.stringify(state.trendRange||{preset:'all',start:'',end:''})],
+      ['trendLink', state.trendLink?'1':'0'],
+      ['rules', state.rules==null?'':JSON.stringify(state.rules)],
+      ['refData', state.refData==null?'':JSON.stringify(state.refData)],
+      ['snapshots', JSON.stringify(state.snapshots||[])]];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(cfg), '配置');
+    return wb;
+  }
+  // 危险操作（清空/重置/导入/删快照）前自动下载带时间戳的完整备份，文件可直接通过「导入」恢复
+  // cb(true)=备份完成（或无数据可备），cb(false)=备份失败（调用方应中止操作）
+  // v2.11.0：XLSX 按需加载（回调风格，已加载时同步执行）；saveXlsx 异常不再静默中止而是明确提示
+  function autoBackup(cb){
+    ensureXlsx(function(ok){
+      if(!ok){ cb(false); return; }
+      if(!state.requirements.length && !state.batches.length && !(state.snapshots||[]).length){ cb(true); return; } // 无数据无需备份
+      try{
+        var n = new Date();
+        var ts = today().replace(/-/g,'')+'_'+String(n.getHours()).padStart(2,'0')+String(n.getMinutes()).padStart(2,'0')+String(n.getSeconds()).padStart(2,'0');
+        saveXlsx(buildWorkbook(), '排产系统自动备份_'+ts+'.xlsx');
+        toast('已自动下载备份「排产系统自动备份_'+ts+'.xlsx」，可用于恢复');
+        cb(true);
+      }catch(e){
+        toast('⚠️ 自动备份失败：'+e.message+'，操作已中止', 5000);
+        cb(false);
+      }
+    });
+  }
+  function exportData(){
+    ensureXlsx(function(ok){
+      if(!ok) return;
+      try{ saveXlsx(buildWorkbook(), '排产系统数据_'+today()+'.xlsx'); toast('已导出 Excel 数据文件'); }
+      catch(e){ toast('导出失败：'+e.message); }
+    });
+  }
+  // 导出全部快照为 Excel：Sheet1 快照列表（时间/来源/备注/需求数/预警数/批次数）+ Sheet2 批次明细
+  function downloadSnapshots(){
+    ensureXlsx(function(ok){
+      if(!ok) return;
+      var snaps = state.snapshots || [];
+      if(!snaps.length){ toast('暂无快照可下载'); return; }
+      function srcName(s){ return s==='auto'?'自动排产':(s==='periodic'?'定期快照':(s==='manual'?'人工快照':(s||'未知'))); }
+      var list = [['序号','快照时间','来源','备注','需求数','预警数','批次数']];
+      var rows = [['快照时间','来源','备注','批次ID','需求ID','项目','工序','产线','开始','结束','状态','到期日']];
+      snaps.forEach(function(s, i){
+        list.push([i+1, (s.time||'').slice(0,16).replace('T',' '), srcName(s.source), s.note||'', s.reqCount||0, s.warningCount||0, (s.batches||[]).length]);
+        (s.batches||[]).forEach(function(b){
+          rows.push([(s.time||'').slice(0,16).replace('T',' '), srcName(s.source), s.note||'', b.id||'', b.reqId||'', b.project||'', b.type||'', b.line||'', b.start||'', b.end||'', b.status||'', b.dueDate||'']);
+        });
+      });
+      try{
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(list), '快照列表');
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '批次明细');
+        saveXlsx(wb, '排产快照_'+today()+'.xlsx');
+        toast('已下载快照数据（共 '+snaps.length+' 份快照）');
+      }catch(e){ toast('快照导出失败：'+e.message); }
+    });
+  }
+  function importData(file){
+    // 导入是覆盖式操作：先确认，再自动备份当前数据（v2.10.0 起与清空/重置同级别防护；v2.11.0 ⑱改自定义弹窗+回调式备份）
+    uiConfirm('导入将用文件数据覆盖当前全部数据（需求、排产批次、快照记录）。\n系统会先自动下载当前数据的备份。确定继续？', function(cok){
+      if(!cok) return;
+      autoBackup(function(bok){
+        if(!bok) return;
+        _doImport(file);
+      });
+    });
+  }
+  function _doImport(file){
+    var isJson = /\.json$/i.test(file.name||'');
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{
+        var d;
+        if(isJson){
+          d = JSON.parse(reader.result);
+        } else {
+          if(typeof XLSX === 'undefined') throw new Error('Excel 组件未加载');
+          var wb = XLSX.read(reader.result, {type:'array'});
+          var iReq = wb.SheetNames.indexOf('需求'), iBat = wb.SheetNames.indexOf('排产批次'), iCfg = wb.SheetNames.indexOf('配置');
+          if(iReq < 0 || iBat < 0) throw new Error('缺少「需求」或「排产批次」工作表');
+          d = { requirements: fromSheet(wb.Sheets[wb.SheetNames[iReq]]), batches: fromSheet(wb.Sheets[wb.SheetNames[iBat]]) };
+          if(iCfg >= 0){
+            XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[iCfg]], {header:1}).forEach(function(row){
+              if(!row || !row[0]) return;
+              var k = row[0], v = row[1];
+              if(k==='rules' || k==='ganttAxis' || k==='ganttLines' || k==='ganttRange' || k==='trendRange' || k==='refData' || k==='snapshots'){ try { d[k] = v ? JSON.parse(v) : null; } catch(e){ d[k] = null; } }
+              else if(k==='trendLink'){ d.trendLink = (v==='1' || v===1 || v===true); }
+              else d[k] = v;
+            });
+          }
+        }
+        if(!d.requirements || !d.batches) throw new Error('格式不正确');
+        state = d;
+        if(!state.role) state.role='requester';
+        if(state.user==null) state.user='';
+        if(!state.ganttAxis) state.ganttAxis={ px:2.5, unit:'month' };
+        if(state.ganttLines==null) state.ganttLines=null;
+        if(!state.ganttRange) state.ganttRange={ preset:'all', start:'', end:'' };
+        if(!state.trendRange) state.trendRange={ preset:'all', start:'', end:'' };
+        if(!state.refData) state.refData=null;
+        if(!state.snapshots) state.snapshots=[];
+        _snapSel = {}; // 快照已被导入数据整体替换，勾选记录失效
+        if(typeof state.trendLink === 'string') state.trendLink = state.trendLink==='1';
+        if(state.trendLink==null) state.trendLink=false;
+        $('trendLink').checked = !!state.trendLink;
+        syncTrendRangeDisabled();
+        save(); applyRole(); renderAll();
+        addOp('导入数据', '需求 '+d.requirements.length+' 条 / 批次 '+d.batches.length+' 批（'+(file.name||'')+'）'); save();
+        // v2.11.0 ⑲：云模式下同步导入结果——清空云端需求集合后逐条补传，防止旧需求在下次打开时「复活」
+        if(window.CloudSync && window.CloudSync.isReady && window.CloudSync.isReady()){
+          if(window.CloudSync.delAllReqs) window.CloudSync.delAllReqs();
+          state.requirements.forEach(function(r){ if(window.CloudSync.pushReq) window.CloudSync.pushReq(r); });
+          toast('导入成功：需求 '+d.requirements.length+' 条，批次 '+d.batches.length+' 批（已同步云端）');
+        } else {
+          toast('导入成功：需求 '+d.requirements.length+' 条，批次 '+d.batches.length+' 批');
+        }
+      }catch(e){ toast('导入失败：'+e.message); }
+    };
+    if(isJson) reader.readAsText(file); else reader.readAsArrayBuffer(file);
+  }
+  function exportCSV(){
+    ensureXlsx(function(ok){
+      if(!ok) return;
+      try{
+        var rows = [['状态','类型','项目','需求人','批次号','产线','开始','完成','下罐/灌装','包装完成','GMP','备注']];
+        state.batches.forEach(function(b){
+          rows.push([b.status, b.type, b.project, b.requester||'', b.batchNo||'', b.line, b.start, b.end, b.harvestDate||b.fillDate||'', packDateOf(b)||'', b.gmp?'Y':'N', (b.warning||b.note||'').replace(/\n/g,' ')]);
+        });
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '排产批次');
+        saveXlsx(wb, '排产批次_'+today()+'.xlsx');
+      }catch(e){ toast('导出失败：'+e.message); }
+    });
+  }
+  // 需求填报信息导出（Excel/CSV）
+  function exportReqCSV(){
+    ensureXlsx(function(ok){
+      if(!ok) return;
+      if(!state.requirements.length){ toast('暂无需求可导出'); return; }
+      var rows = [['项目号','类型','批次类型','批次数','交期','优先级','需求人','状态','规格','项目阶段','预算','首次生产','Molecule Type','Target','Novelty','mAb subtype','Host Cell Line','二次稀配','注射瓶规格','Titer','制剂批量','备注','提交时间']];
+      state.requirements.forEach(function(r){
+        var isEQP = r.type==='EQP';
+        var typeTxt = isEQP ? '设备维护' : (r.type==='CB' ? r.cbKind : (r.type==='DP' ? r.dpKind+' '+r.dosage : r.type));
+        rows.push([
+          isEQP ? (r.maintKind||'设备维护') : (r.henliusProject||r.atProject||''),
+          typeTxt, isEQP ? (r.maintKind||'-') : (r.batchKind||(r.gmp?'GMP生产':'Non-GMP')), r.batchCount,
+          isEQP ? (r.maintStart+'~'+r.maintEnd) : (r.dueDate||''),
+          r.priority||'', r.requester||'', reqStatus(r),
+          isEQP ? (r.maintLine||'') : (r.spec||''),
+          r.stage||'', r.budget||'', r.firstProduction?'是':'否',
+          r.molType||'', r.target||'', r.novelty||'', r.mabSubtype||'', r.hostCell||'',
+          r.secondaryDilution?'是':'否', r.vialSpec||'', (r.titer===''||r.titer==null)?'':r.titer,
+          r.concentration||'', (r.note||'').replace(/\n/g,' '), (r.createdAt||'').slice(0,10)
+        ]);
+      });
+      try{
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '需求清单');
+        saveXlsx(wb, '需求清单_'+today()+'.xlsx');
+        toast('已导出需求清单（'+state.requirements.length+' 条）');
+      }catch(e){ toast('导出失败：'+e.message); }
+    });
+  }
+
+  // ---------- 角色切换 ----------
+  function applyRole(){
+    var role = state.role||'requester';
+    document.body.classList.toggle('role-requester', role==='requester');
+    document.body.classList.toggle('role-planner', role==='planner');
+    document.body.classList.toggle('role-reader', role==='reader'); // v2.15.0：读者（仅预览）
+    document.querySelectorAll('#roleSwitch button').forEach(function(b){
+      b.classList.toggle('on', b.dataset.role===role);
+    });
+    // v2.13.0/v2.15.0：云端身份已绑定且非生产计划 → 隐藏「生产计划」切换按钮（角色跟随登录账号）；
+    // 读者身份绑定时「需求方」按钮也隐藏（读者无填报权，不可自行切回）
+    var pb = document.querySelector('#roleSwitch button[data-role="planner"]');
+    if(pb) pb.style.display = (cloudRoleBound && !cloudIsAdmin) ? 'none' : '';
+    var rb = document.querySelector('#roleSwitch button[data-role="requester"]');
+    if(rb) rb.style.display = (cloudRoleBound && !cloudIsAdmin && cloudRoleCur==='reader') ? 'none' : '';
+    // v2.15.0：权限管理入口仅生产计划角色可见
+    var permBtn = $('btnPermMgmt');
+    if(permBtn) permBtn.style.display = (role==='planner') ? '' : 'none';
+    // 设备维护保养选项仅生产计划角色可选（部分浏览器 option CSS 隐藏不可靠，用 JS 兜底）
+    var eqpOpt = $('f_type').querySelector('option[value="EQP"]');
+    if(eqpOpt) eqpOpt.style.display = (role==='planner') ? '' : 'none';
+    if(role!=='planner' && $('f_type').value==='EQP'){ $('f_type').value='CB'; onTypeChange(); }
+    // 「参考数据」「规则参数」「数据管理」仅生产计划角色可见（nav 按钮 JS 兜底）
+    ['ref','rules','data'].forEach(function(t){
+      var nb = document.querySelector('nav button[data-tab="'+t+'"]');
+      if(nb) nb.style.display = (role==='planner') ? '' : 'none';
+    });
+    // 非生产计划角色若正停留在 ref/rules/data 页，跳回需求录入
+    if(role!=='planner'){
+      var activeNav = document.querySelector('nav button.on');
+      if(activeNav && (activeNav.dataset.tab==='ref' || activeNav.dataset.tab==='rules' || activeNav.dataset.tab==='data')){
+        document.querySelectorAll('nav button').forEach(function(b){ b.classList.remove('on'); });
+        document.querySelectorAll('section.tab').forEach(function(s){ s.classList.remove('on'); });
+        var reqBtn = document.querySelector('nav button[data-tab="req"]');
+        if(reqBtn) reqBtn.classList.add('on');
+        $('tab-req').classList.add('on');
+      }
+    }
+    renderReq(); renderBatches();
+  }
+
+  // ---------- 总渲染 ----------
+  function renderAll(){
+    renderStats(); renderReq(); renderGantt(); renderBatches(); renderData(); renderRef(); renderRefMab(); renderAnalysis();
+    syncGanttCheckboxes();
+  }
+  // 远端同步后的安全渲染：用户正在输入时暂缓重绘，等 blur 再刷新（数据已同步，仅界面延迟）
+  var _pendingRender = null;
+  function safeRenderAll(){
+    var ae = document.activeElement;
+    var editing = ae && document.body.contains(ae) && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) && !ae.disabled && !ae.readOnly;
+    if(editing){
+      if(!_pendingRender){
+        toast('📡 云端有更新，界面将在完成当前编辑后刷新');
+        _pendingRender = ae;
+        ae.addEventListener('blur', function(){
+          _pendingRender = null;
+          renderAll();
+        }, { once:true });
+      }
+      return;
+    }
+    renderAll();
+  }
+
+  // ---------- 事件绑定 ----------
+  function bind(){
+    $('f_type').addEventListener('change', onTypeChange);
+    $('f_dpkind').addEventListener('change', onDpKindChange);
+    $('f_dosage').addEventListener('change', updateScaleRow);
+    $('f_first').addEventListener('change', updateMolRow);
+    $('f_dpline').addEventListener('change', rebuildVials);
+    $('btnAddReq').addEventListener('click', submitForm);
+    $('btnClearForm').addEventListener('click', function(){
+      clearFormFields();
+      ['f_henlius'].forEach(function(i){$(i).value='';});
+      $('f_requester').value = state.user || ''; // v2.14.0：需求人绑定登录账号——取消编辑后恢复为当前账号（本地模式为空）
+      $('btnAddReq').dataset.editId=''; $('btnAddReq').textContent='➕ 添加需求';
+    });
+    $('reqTable').addEventListener('click', function(ev){
+      var btn = ev.target.closest('[data-act]');
+      if(!btn) return;
+      if(btn.dataset.act==='edit') editReq(btn.dataset.id);
+      else if(btn.dataset.act==='delhint'){
+        var rr = state.requirements.find(function(x){return x.id===btn.dataset.id;});
+        if(rr) toast('该需求由「'+(rr.requester||'-')+'」提交。删除方法：用该需求人的账号登录（需求人自动绑定登录账号），或切换到「🏭 生产计划」角色后可删除任意需求');
+      }
+      else delReq(btn.dataset.id);
+    });
+    $('btnSchedule').addEventListener('click', doSchedule);
+    $('btnClearPlan').addEventListener('click', clearPlan);
+    $('btnLockPlan').addEventListener('click', lockPlan);
+    $('btnBatchUnlock').addEventListener('click', batchUnlockSelected);
+    $('btnRefreshSched').addEventListener('click', function(){
+      if(!state.requirements.length){ toast('请先添加需求'); return; }
+      doSchedule(); // 刷新自动排产：按当前需求重新排产所有未锁定批次（锁定/终态批次保持不变）
+    });
+    $('btnExportReq').addEventListener('click', exportReqCSV);
+    $('btnExportPlan').addEventListener('click', exportCSV);
+    // 批次表全选（仅锁定批次）：控制所有可选勾选框
+    $('batchSelAll').addEventListener('change', function(){
+      var boxes = document.querySelectorAll('#batchTable tbody input[data-sel]');
+      Array.prototype.forEach.call(boxes, function(c){ c.checked = $('batchSelAll').checked; });
+    });
+    ['filtType','filtLine','filtStatus'].forEach(function(i){ $(i).addEventListener('change', renderBatches); });
+    $('filtProject').addEventListener('input', renderBatches);
+    $('batchTable').addEventListener('click', function(ev){
+      var btn = ev.target.closest('button[data-act]');
+      if(!btn) return;
+      if(btn.dataset.act==='edit') openEdit(btn.dataset.id);
+      else if(btn.dataset.act==='confirm') confirmBatch(btn.dataset.id);
+      else if(btn.dataset.act==='unlock') unlockBatch(btn.dataset.id);
+      else if(btn.dataset.act==='del') delBatchDirect(btn.dataset.id);
+    });
+    $('btnEditCancel').addEventListener('click', closeEdit);
+    $('btnEditSave').addEventListener('click', saveEdit);
+    $('btnDelBatch').addEventListener('click', delBatch);
+    ['e_mabseed','e_mabreactor','e_mabpurify','e_dprep','e_dfill','e_dfreeze','e_dclear','e_dinspect','e_start'].forEach(function(i){
+      $(i).addEventListener('input', updateEditTotals);
+    });
+    // 甘特图：产线多选（勾选「全部」=显示全部；勾选具体产线=仅显示这些产线）
+    document.querySelectorAll('#ganttLineFilter input[data-line]').forEach(function(c){
+      c.addEventListener('change', function(){
+        var all = document.querySelector('#ganttLineFilter input[data-line=""]');
+        var others = Array.prototype.slice.call(document.querySelectorAll('#ganttLineFilter input[data-line]')).filter(function(x){ return x.dataset.line!==''; });
+        if(this.dataset.line===''){
+          if(this.checked){ state.ganttLines = null; others.forEach(function(x){ x.checked = false; }); }
+          else { state.ganttLines = []; }
+        } else {
+          if(all.checked) all.checked = false;
+          state.ganttLines = others.filter(function(x){ return x.checked; }).map(function(x){ return x.dataset.line; });
+          if(!state.ganttLines.length) state.ganttLines = null; // 全部取消 → 视为全部
+        }
+        save(); renderGantt(); syncGanttCheckboxes();
+      });
+    });
+    $('ganttAxisPx').addEventListener('change', function(){
+      state.ganttAxis = state.ganttAxis || { px:2.5, unit:'month' };
+      state.ganttAxis.px = parseFloat(this.value) || 2.5;
+      save(); renderGantt();
+    });
+    $('ganttAxisUnit').addEventListener('change', function(){
+      state.ganttAxis = state.ganttAxis || { px:2.5, unit:'month' };
+      state.ganttAxis.unit = this.value;
+      save(); renderGantt();
+    });
+    // 甘特图时间范围窗口
+    $('ganttRange').addEventListener('change', function(){
+      state.ganttRange = state.ganttRange || { preset:'all', start:'', end:'' };
+      state.ganttRange.preset = this.value;
+      if(this.value === 'custom'){ $('ganttRangeDates').style.display = 'flex'; }
+      else { $('ganttRangeDates').style.display = 'none'; }
+      save(); renderGantt();
+      if(state.trendLink) renderTrend(); // 联动模式：甘特图窗口变化同步刷新趋势图
+    });
+    $('ganttRangeStart').addEventListener('change', function(){
+      state.ganttRange = state.ganttRange || { preset:'custom', start:'', end:'' };
+      state.ganttRange.start = this.value;
+      save(); renderGantt();
+      if(state.trendLink) renderTrend();
+    });
+    $('ganttRangeEnd').addEventListener('change', function(){
+      state.ganttRange = state.ganttRange || { preset:'custom', start:'', end:'' };
+      state.ganttRange.end = this.value;
+      save(); renderGantt();
+      if(state.trendLink) renderTrend();
+    });
+    // 月度批次趋势：产线多选（勾「全部」清空具体产线；勾具体产线取消「全部」；取消最后一个具体产线恢复「全部」）
+    document.querySelectorAll('#trendFilter input[name="trendLine"]').forEach(function(r){
+      r.addEventListener('change', function(){
+        var boxes = Array.prototype.slice.call(document.querySelectorAll('#trendFilter input[name="trendLine"]'));
+        var allBox = boxes.filter(function(o){ return o.value === 'all'; })[0];
+        if(this.checked){
+          if(this.value === 'all'){ boxes.forEach(function(o){ if(o.value !== 'all') o.checked = false; }); }
+          else if(allBox) allBox.checked = false;
+        } else if(!boxes.some(function(o){ return o.checked && o.value !== 'all'; })){
+          if(allBox) allBox.checked = true; // 具体产线全部取消 → 恢复「全部」
+        }
+        renderTrend();
+      });
+    });
+    // 月度批次趋势：与甘特图联动开关（勾选后趋势图窗口跟随甘特图，独立范围控件禁用）
+    $('trendLink').addEventListener('change', function(){
+      state.trendLink = this.checked;
+      syncTrendRangeDisabled();
+      save(); renderTrend();
+      toast(this.checked ? '趋势图已联动甘特图时间窗口' : '趋势图时间范围已恢复独立');
+    });
+    // 月度批次趋势：时间范围窗口
+    $('trendRange').addEventListener('change', function(){
+      state.trendRange = state.trendRange || { preset:'all', start:'', end:'' };
+      state.trendRange.preset = this.value;
+      if(this.value === 'custom'){ $('trendRangeDates').style.display = 'flex'; }
+      else { $('trendRangeDates').style.display = 'none'; }
+      save(); renderTrend();
+    });
+    $('trendRangeStart').addEventListener('change', function(){
+      state.trendRange = state.trendRange || { preset:'custom', start:'', end:'' };
+      state.trendRange.start = this.value;
+      save(); renderTrend();
+    });
+    $('trendRangeEnd').addEventListener('change', function(){
+      state.trendRange = state.trendRange || { preset:'custom', start:'', end:'' };
+      state.trendRange.end = this.value;
+      save(); renderTrend();
+    });
+    // 参考数据：编辑/保存/取消
+    document.querySelectorAll('[data-ref-edit]').forEach(function(btn){
+      btn.addEventListener('click', function(){ toggleRefEdit(btn.dataset.refEdit); });
+    });
+    document.querySelectorAll('[data-ref-cancel]').forEach(function(btn){
+      btn.addEventListener('click', function(){ cancelRefEdit(); });
+    });
+    $('editMask').addEventListener('click', function(ev){ if(ev.target===this) closeEdit(); });
+    $('roleSwitch').addEventListener('click', function(ev){
+      var btn = ev.target.closest('button[data-role]');
+      if(!btn) return;
+      // v2.13.0/v2.15.0：云端身份已绑定时，非生产计划不可切换到「生产计划」；读者也不可自行切回「需求方」
+      if(cloudRoleBound && !cloudIsAdmin && btn.dataset.role==='planner'){
+        toast('⛔ 角色已绑定登录账号：当前账号为「'+ (ROLE_NAMES[cloudRoleCur]||'需求方') +'」权限，排产管理请联系生产计划人员（'+'shunchao_zhang@henlius.com'+'）');
+        return;
+      }
+      if(cloudRoleBound && !cloudIsAdmin && cloudRoleCur==='reader'){
+        toast('⛔ 读者权限由管理员在「权限管理」中分配，无法自行切换角色');
+        return;
+      }
+      state.role = btn.dataset.role;
+      save(); applyRole();
+      toast(btn.dataset.role==='planner' ? '已切换到「生产计划」角色：可确认可行性、人工调整与排产锁定' : '已切换到「需求方」角色：可填写需求并自动排产');
+    });
+    $('btnPermMgmt').addEventListener('click', openPermMgmt); // v2.15.0：权限管理入口
+    $('btnSaveRules').addEventListener('click', saveRules);
+    $('btnResetRules').addEventListener('click', resetRules);
+    $('btnExport').addEventListener('click', exportData);
+    $('btnImport').addEventListener('click', function(){ $('importFile').click(); });
+    $('importFile').addEventListener('change', function(){ if(this.files[0]) importData(this.files[0]); this.value=''; });
+    $('btnReimportHist').addEventListener('click', function(){
+      uiConfirm('重新导入历史计划将替换当前所有批次与需求，确定继续？系统将先自动下载备份。', function(ok){
+        if(!ok) return;
+        autoBackup(function(bok){ if(bok) resetToHistory(); });
+      });
+    });
+    // 自定义确认弹窗按钮（v2.11.0 ⑱）
+    $('cfmOk').addEventListener('click', function(){ _cfmResolve(true); });
+    $('cfmNo').addEventListener('click', function(){ _cfmResolve(false); });
+    document.addEventListener('keydown', function(ev){ if(ev.key==='Escape' && _cfmQ.length) _cfmResolve(false); });
+    // 操作日志面板：toggle 显示（v2.11.0 ㉑：云端 op_logs 合并展示）
+    if($('btnOpLog')) $('btnOpLog').addEventListener('click', function(){
+      var panel = $('opLogPanel');
+      if(panel.style.display === 'none'){
+        _renderOpLog((state.opLog||[]).slice().reverse(), false);
+        panel.style.display = '';
+        // 异步拉取云端操作日志，与本地合并去重后重渲染（拉取失败静默降级为仅本地）
+        if(window.CloudSync && window.CloudSync.fetchOpLogs && window.CloudSync.isReady && window.CloudSync.isReady()){
+          window.CloudSync.fetchOpLogs().then(function(remote){
+            if(!remote || !remote.length || panel.style.display === 'none') return;
+            var seen = {}, merged = [];
+            (state.opLog||[]).forEach(function(x){ var k = x.t+'|'+x.u+'|'+x.a+'|'+x.d; seen[k] = 1; merged.push(x); });
+            remote.forEach(function(x){
+              if(!x || !x.t) return;
+              var k = x.t+'|'+x.u+'|'+x.a+'|'+x.d;
+              if(!seen[k]){ seen[k] = 1; merged.push(x); }
+            });
+            merged.sort(function(a,b){ return (b.t||'').localeCompare(a.t||''); });
+            _renderOpLog(merged.slice(0,100), true);
+          }).catch(function(){});
+        }
+      } else {
+        panel.style.display = 'none';
+      }
+    });
+    $('btnClearAll').addEventListener('click', function(){
+      uiConfirm('⚠️ 清空全部数据（需求、批次、规则），此操作不可恢复！系统将先自动下载备份（含快照）。确定继续？', function(ok){
+        if(!ok) return;
+        autoBackup(function(bok){
+          if(!bok) return; // 备份失败（Excel 组件缺失等）→ 中止，避免无备份清空
+          var _who = state.user||''; // 清空后 state 重建，先留用户名
+          state = { requirements: [], batches: [], rules: null, role: state.role||'requester', user: state.user||'',
+            ganttAxis: state.ganttAxis||{px:2.5,unit:'month'}, ganttLines: state.ganttLines||null, ganttRange: state.ganttRange||{preset:'all',start:'',end:''}, trendRange: state.trendRange||{preset:'all',start:'',end:''}, trendLink: !!state.trendLink, refData: state.refData||null, snapshots: state.snapshots||[] };
+          _snapSel = {}; // 数据已清空，勾选记录失效
+          addOp('清空全部数据', '操作人：'+(_who||'未署名')); save();
+          // v2.11.0 ⑲：云模式下立即清空云端——删除 requests 全部文档 + 推送空计划，防止下次打开旧需求「复活」
+          if(window.CloudSync && window.CloudSync.isReady && window.CloudSync.isReady()){
+            if(window.CloudSync.delAllReqs) window.CloudSync.delAllReqs();
+            if(window.CloudSync.forcePushPlan) window.CloudSync.forcePushPlan();
+            toast('已清空全部数据（含云端同步）');
+          } else {
+            toast('已清空全部数据');
+          }
+          renderAll(); renderRules();
+        });
+      });
+    });
+    // 保存人工快照 / 清空快照 / 下载快照
+    if($('btnManualSnap')) $('btnManualSnap').addEventListener('click', saveManualSnapshot);
+    if($('btnDownloadSnap')) $('btnDownloadSnap').addEventListener('click', downloadSnapshots);
+    // 漂移分析：对比快照选择器
+    if($('driftSelA')) $('driftSelA').addEventListener('change', renderDrift);
+    if($('driftSelB')) $('driftSelB').addEventListener('change', renderDrift);
+    if($('btnClearSnap')) $('btnClearSnap').addEventListener('click', function(){
+      uiConfirm('清空全部排产快照记录？此操作不可恢复，系统将先自动下载备份。', function(ok){
+        if(!ok) return;
+        autoBackup(function(bok){
+          if(!bok) return;
+          state.snapshots = []; addOp('清空快照', ''); save();
+          _snapSel = {}; // 清空勾选记录
+          if(window.CloudSync && window.CloudSync.forcePushPlan) window.CloudSync.forcePushPlan(); // 立即覆盖云端快照，防止刷新后被旧快照回填
+          renderAnalysis(); toast('已清空排产快照');
+        });
+      });
+    });
+    // 快照多选删除：全选 / 删除选中 / 勾选联动按钮
+    if($('btnDelSnaps')) $('btnDelSnaps').addEventListener('click', function(){
+      var ids = Array.prototype.map.call(document.querySelectorAll('.snap-chk:checked'), function(c){ return c.getAttribute('data-id'); });
+      if(!ids.length){ toast('请先勾选要删除的快照'); return; }
+      uiConfirm('删除选中的 '+ids.length+' 份快照？此操作不可恢复，系统将先自动下载备份。', function(ok){
+        if(!ok) return;
+        deleteSnapshots(ids);
+      });
+    });
+    if($('snapSelAll')) $('snapSelAll').addEventListener('change', function(){
+      document.querySelectorAll('.snap-chk').forEach(function(c){ c.checked = $('snapSelAll').checked; _snapSel[c.getAttribute('data-id')] = c.checked; });
+      updateDelSnapsBtn();
+    });
+    var snapTbEl = $('snapTable');
+    if(snapTbEl) snapTbEl.querySelector('tbody').addEventListener('change', function(ev){
+      if(ev.target && ev.target.classList && ev.target.classList.contains('snap-chk')){
+        _snapSel[ev.target.getAttribute('data-id')] = ev.target.checked; // 勾选状态持久，跨重绘保留（v2.10.1）
+        updateDelSnapsBtn();
+      }
+    });
+    // Tab 切换
+    $('nav').addEventListener('click', function(ev){
+      var btn = ev.target.closest('button[data-tab]');
+      if(!btn) return;
+      document.querySelectorAll('nav button').forEach(function(b){b.classList.remove('on');});
+      document.querySelectorAll('section.tab').forEach(function(s){s.classList.remove('on');});
+      btn.classList.add('on');
+      $('tab-'+btn.dataset.tab).classList.add('on');
+    });
+  }
+
+  // ---------- 启动 ----------
+  function init(){
+    if(!load()){
+      resetToHistory();
+    }
+    dedupeBatchIds(); save(); // 修复旧数据重复批次 id 并持久化
+    if(!state.role) state.role='requester';
+    if(state.user==null) state.user='';
+    // 甘特图时间轴控件与 state 同步（旧数据兜底）
+    state.ganttAxis = state.ganttAxis || { px:2.5, unit:'month' };
+    $('ganttAxisPx').value = String(state.ganttAxis.px || 2.5);
+    $('ganttAxisUnit').value = state.ganttAxis.unit || 'month';
+    // 甘特图时间范围控件同步
+    state.ganttRange = state.ganttRange || { preset:'all', start:'', end:'' };
+    $('ganttRange').value = state.ganttRange.preset || 'all';
+    if(state.ganttRange.preset === 'custom') $('ganttRangeDates').style.display = 'flex';
+    $('ganttRangeStart').value = state.ganttRange.start || '';
+    $('ganttRangeEnd').value = state.ganttRange.end || '';
+    // 月度批次趋势时间范围控件同步
+    state.trendRange = state.trendRange || { preset:'all', start:'', end:'' };
+    $('trendRange').value = state.trendRange.preset || 'all';
+    // 联动开关同步（trendLink：勾选后趋势图跟随甘特图窗口）
+    state.trendLink = !!state.trendLink;
+    if($('trendLink')) $('trendLink').checked = state.trendLink;
+    syncTrendRangeDisabled();
+    if(state.trendRange.preset === 'custom') $('trendRangeDates').style.display = 'flex';
+    $('trendRangeStart').value = state.trendRange.start || '';
+    $('trendRangeEnd').value = state.trendRange.end || '';
+    bind();
+    onTypeChange();
+    applyRole();
+    renderAll();
+    renderRules();
+    // 每 2 周定期快照（source=periodic）：记录人工调整后的最新计划状态
+    if(maybeSavePeriodicSnapshot()){ renderAnalysis(); }
+    if(state.batches.some(function(b){return b.status==='预警';})){
+      $('stWarn').style.color='#fca5a5';
+    }
+    // 连接云端（若已配置 envId）：拉取多人共享的需求与计划，合并后刷新
+    if(window.CloudSync){
+      window.CloudSync.connect({
+        setRole: onCloudRole, // v2.15.0：登录身份下发（三档角色：planner/requester/reader，由权限管理页分配）
+        setUser: onCloudUser, // v2.14.0：登录用户名下发（需求人自动绑定登录账号）
+        getReqs: function(){ return state.requirements; },
+        uiConfirm: uiConfirm, // v2.11.0 ⑱：cloud.js 冲突检测/新鲜度弹窗走主应用自定义模态
+        getPlan: function(){ return { batches: state.batches, rules: state.rules, refData: state.refData, ganttAxis: state.ganttAxis, ganttLines: state.ganttLines, ganttRange: state.ganttRange, trendRange: state.trendRange, trendLink: !!state.trendLink, snapshots: state.snapshots }; },
+        applyReqs: function(reqs){ _echoSave = true; state.requirements = reqs; },
+        onRemoteReqs: function(n){ showNewReqBanner(n); },
+        // v2.10.0 本地新鲜度：本地修改是否尚未成功上云（推送失败/节流窗口内刷新）
+        isDirty: function(){ return localStorage.getItem(LS_KEY+'_dirty') === '1'; },
+        clearDirty: function(){ try{ localStorage.removeItem(LS_KEY+'_dirty'); }catch(e){} },
+        onPushFail: function(){ toast('⚠️ 云端同步失败：本地修改未上云。请勿直接关闭页面——可稍后重试或导出备份（刷新页面上次修改可能被云端旧版覆盖）', 6000); },
+        applyPlan: function(p){
+          _echoSave = true;
+          if(!p) return;
+          state.batches = p.batches || state.batches;
+          state.rules = p.rules || null;
+          state.refData = p.refData || null;
+          if(p.ganttAxis) state.ganttAxis = p.ganttAxis;
+          if(p.ganttLines) state.ganttLines = p.ganttLines;
+          if(p.ganttRange) state.ganttRange = p.ganttRange;
+          if(p.trendRange) state.trendRange = p.trendRange;
+          if(p.trendLink != null) state.trendLink = !!p.trendLink;
+          if(p.snapshots) state.snapshots = p.snapshots;
+        },
+        // 远端数据应用后刷新界面：若用户正在表单输入，暂缓重绘到 blur，避免清掉正在编辑的内容（v2.10.0）
+        afterSync: function(){ save(); renderRules(); safeRenderAll(); _echoSave = false; }
+      });
+    }
+  }
+  init();
+})();
+</script>
+</body>
+</html>
