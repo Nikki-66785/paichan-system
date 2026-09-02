@@ -1,5 +1,5 @@
 /* =====================================================
- * cloud.js — CloudBase 云同步层（排产系统 v2.5 → v2.12.0：邮箱登录（安全加固方案A）+ 确认弹窗走主应用模态 + 清空/导入云端需求同步 + 操作日志上云 op_logs）
+ * cloud.js — CloudBase 云同步层（排产系统 v2.5 → v2.12.1：状态栏点击退出/切换账号 + 邮箱登录（安全加固方案A）+ 确认弹窗走主应用模态 + 清空/导入云端需求同步 + 操作日志上云 op_logs）
  *
  * 作用：让「需求填报」与「排产计划」在多人浏览器之间实时共享。
  *   · requests   集合：需求（每条需求一个文档，多人提交互不覆盖）
@@ -107,8 +107,8 @@
     db = appRef.database();
     ready = true;
     if (curEmail) setStatus('☁️ 已连接·' + curEmail, 'cloud-on');
-    else setStatus('☁️ 已连接', 'cloud-on');
-    if (statusEl) statusEl.title = curEmail ? ('当前登录：' + curEmail + '（换人使用请在控制台执行 CloudSync.logout()）') : '当前为匿名登录（过渡期），建议联系管理员开通邮箱账号';
+    else setStatus('☁️ 已连接·匿名', 'cloud-on'); // v2.12.1：匿名状态显式标出，提示用户可切换
+    if (statusEl) statusEl.title = (curEmail ? '当前登录：' + curEmail : '当前为匿名登录（过渡期），建议用邮箱账号') + '。点击此处可退出并切换账号';
     toast('☁️ 已连接云端，需求实时共享');
     syncDown();
   }
@@ -183,6 +183,17 @@
   function connect(h) {
     hook = h || hook;
     statusEl = document.getElementById('cloudStatus');
+    // v2.12.1：点击状态栏退出/切换账号——微信/企微内嵌浏览器无 F12，
+    // 被本地匿名会话「锁死」的用户（hasLoginState 命中即跳过登录框）只能靠这个 UI 入口解锁
+    if (statusEl) {
+      statusEl.style.cursor = 'pointer';
+      statusEl.addEventListener('click', function () {
+        if (!ready) return;
+        uiConfirmC('退出当前账号（' + (curEmail || '匿名') + '）并重新登录？', function (ok) {
+          if (ok) logout();
+        });
+      });
+    }
     if (!enabled()) { setStatus('📴 本地模式', 'cloud-off'); return; }
     // file:// 等非 http(s) 方式打开时 Origin 不在安全域名白名单，登录必失败
     if (window.location && window.location.protocol && window.location.protocol.indexOf('http') !== 0) {
