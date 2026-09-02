@@ -189,7 +189,7 @@
 <body class="role-requester">
 
 <header>
-  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.18.0（APS提交增加项目阶段/条件放行/剂型；批次明细列序调整——交期移至包装完成后、下罐/灌装移至开始列前；快照仅记录拍照时未完成批次；需求列表支持按需求人/时间筛选并可清理已完成需求记录）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.18.0</span></h1>
+  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.18.1（APS 需求提交无需填写项目阶段与条件放行，字段自动隐藏，剂型选择保留；此前 v2.18.0：APS 增加剂型选择、批次明细列序调整、快照仅记录拍照时未完成批次、需求列表筛选与已完成记录清理）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.18.1</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -327,7 +327,7 @@
             <div class="f"><label>同项目 MCB 完成日期（可选，不填则自动匹配已排 MCB）</label><input id="f_mcbdate" type="date"></div>
           </div>
           <div class="form-row"><div class="f"><label>备注（选填）</label><input id="f_note" placeholder="如：临床III期样品、需优先等"></div></div>
-          <!-- APS 培养基模拟灌装专属字段（v2.17.0：需求方按月提交，替代原自动生成；v2.18.0：增加剂型选择） -->
+          <!-- APS 培养基模拟灌装专属字段（v2.17.0：需求方按月提交，替代原自动生成；v2.18.0：增加剂型选择；v2.18.1：项目阶段与条件放行无需填写，已隐藏） -->
           <div class="form-row" id="apsRow" style="display:none">
             <div class="f"><label>APS 产线 *</label>
               <select id="f_apsline">
@@ -659,7 +659,7 @@
         <p>· <b>Mab</b>：生产周期 = 种子培养 20 天 + 反应器培养 15 天 + 下游纯化 7 天（合计 42 天，需求提报用默认，各段天数由生产计划在人工干预时按项目调整）；批间开始 ≥8 天，下罐批间 ≥10 天（下罐=开始+种子培养+反应器培养），同产线所有批均为硬约束；同项目 MCB 生产后 1 个月才可开始。</p>
         <p>· <b>ADC DS</b>：GMP Mab 完成后 2 周、Non-GMP Mab（来源 PD）完成后 1 个月才可生产；LP 放行完成后才可生产；建议在 Mab 下罐后 2 天开始。</p>
         <p>· <b>DP</b>：制剂周期 = 准备 + 灌装 + 冻干 + 清场 + 目检包装（目检包装默认 10 天，默认水针 3+1+0+1+10=15 天、冻干 3+1+3~4+1+10=18~19 天，各段天数在人工干预时可调）；<b>放大测试批次（冻干放大测试及批次类型=放大测试的需求）不含包装目检时间（目检按 0 天计）</b>；<b>灌装日期自动计算 = 开始日期 + 准备天数，随开始日期/准备天数自动更新</b>；C7CM DP 同产线清场后 2 天、SJ2 ADC DP / SJ2CM DP 清场后 4 天开始下一批；ADC Non-GMP 与同项目 ADC DS 间隔 1 个月、其余间隔 2 周；需二次稀配时制剂准备 3 天→4 天（周期 +1 天）；冻干项目需在需求中确认是否安排放大测试，正式生产与测试批间隔 2 个月。</p>
-        <p>· <b>APS 模拟灌装</b>：占用 8 天、当月内任排。C7CM DP 每年 3/8/12 月、SJ2 ADC DP 每年 3/9 月、SJ2CM DP 每年 8/10 月各 1 批。<b>v2.17.0 起 APS 不再自动生成</b>：系统按规则月份在需求录入页提醒「需排产」，由需求方在表单选择「APS 培养基模拟灌装」按月提交后自动排入。<b>v2.18.0 起提交 APS 需求需填写项目阶段，并可选择剂型（水针/冻干）、勾选是否需要条件放行</b>。</p>
+        <p>· <b>APS 模拟灌装</b>：占用 8 天、当月内任排。C7CM DP 每年 3/8/12 月、SJ2 ADC DP 每年 3/9 月、SJ2CM DP 每年 8/10 月各 1 批。<b>v2.17.0 起 APS 不再自动生成</b>：系统按规则月份在需求录入页提醒「需排产」，由需求方在表单选择「APS 培养基模拟灌装」按月提交后自动排入。提交时仅需选择产线、计划月份与剂型（水针/冻干）——<b>v2.18.1 起无需填写项目阶段与条件放行</b>。</p>
         <p>· <b>批次终态（生产计划人工标记）</b>：批次可标记为 <b>中止 / 失败 / 取消</b>。终态批次不再占用产能（槽位可复用），也不参与锁定/重排，仅保留记录便于追溯；可在人工调整中改回「人工」状态或删除。</p>
         <p>· <b>批量解锁与刷新自动排产</b>：生产计划可在批次表首列勾选多个锁定批次「批量解锁」；「刷新自动排产」按当前需求重新排产所有未锁定批次（锁定批次与终态批次保持不变）。</p>
         <p>· <b>需求导出</b>：需求列表可一键导出 Excel/CSV（项目、类型、批次类型、交期、状态、规格、阶段、预算、首次生产分子信息等全部填报字段）。</p>
@@ -706,7 +706,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.18.0（云端共享·邮箱登录·权限三档·新账号默认读者）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.18.1（云端共享·邮箱登录·权限三档·新账号默认读者）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -774,7 +774,7 @@
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
 <script src="cloudbase.full.js?v=2152"></script>
 <script src="cloud.js?v=2152"></script>
-<script src="scheduling.js?v=2180"></script>
+<script src="scheduling.js?v=2181"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -1139,6 +1139,11 @@
     $('mabLineRow').style.display = (t==='Mab') ? '' : 'none'; // v2.16.0：Mab DS 原液可选产线 SJ1/SJ2
     $('mcbDateRow').style.display = (t==='Mab') ? '' : 'none'; // v2.16.0：同项目MCB完成日期仅 Mab 显示（DP/ADC DS 已删除）
     $('apsRow').style.display = isAPS ? '' : 'none'; // v2.17.0：APS 需求方按月提交
+    // v2.18.1：APS 提交无需填写项目阶段与条件放行 → 直接隐藏
+    var stageF = $('f_stage').closest('.f');
+    if(stageF) stageF.style.display = isAPS ? 'none' : '';
+    var condRow = $('f_cond').closest('.form-row');
+    if(condRow) condRow.style.display = isAPS ? 'none' : '';
     $('eqpRow').style.display = isEQP ? '' : 'none';
     $('eqpDateRow').style.display = isEQP ? '' : 'none';
     // 设备维护时隐藏产品专属字段（Henlius项目号、批次数、工艺转移+交期、需求人保留但标签不同）
@@ -1168,7 +1173,7 @@
     var t = $('f_type').value;
     var isDS = (t==='Mab'||t==='ADC DS');
     // v2.17.0：APS 培养基模拟灌装——需求方按月提交（产线+月份），替代原自动生成
-    // v2.18.0：APS 提交增加项目阶段、条件放行、剂型选择
+    // v2.18.0：增加剂型选择；v2.18.1：项目阶段与条件放行无需填写（已隐藏，不再读取）
     if(t==='APS'){
       return {
         id: uid(),
@@ -1181,10 +1186,10 @@
         dueDate: '', // APS 无交期，按计划月份排产
         batchCount: 1,
         gmp: false, batchKind: '', spec: '', concentration: '', titer: '',
-        stage: $('f_stage').value, budget: '', firstProduction: false,
+        stage: '', budget: '', firstProduction: false,
         molType: '', target: '', novelty: '', mabSubtype: '', hostCell: '',
         hypertonic: false, secondaryDilution: false, vialSpec: '', scaleTest: true,
-        lpReleaseDate: '', conditionalRelease: $('f_cond').checked, processTransferDate: '', mcbDate: '',
+        lpReleaseDate: '', conditionalRelease: false, processTransferDate: '', mcbDate: '',
         priority: '中',
         requester: $('f_requester').value.trim() || state.user || '',
         note: $('f_note').value.trim(),
@@ -1257,11 +1262,10 @@
   }
   function validateReq(r){
     var errs=[];
-    // APS 模拟灌装：需产线、计划月份、项目阶段（v2.18.0：阶段随需求提交）
+    // APS 模拟灌装：需产线、计划月份、剂型（v2.18.1：项目阶段与条件放行无需填写）
     if(r.type==='APS'){
       if(!r.apsLine) errs.push('APS产线');
       if(!r.apsMonth) errs.push('计划月份');
-      if(!r.stage) errs.push(FNAMES.stage);
       return errs;
     }
     // 设备维护保养：仅需产线、开始/结束日期、维护类型
@@ -1837,7 +1841,7 @@
       var tip = isEQP
         ? '维护产线:'+(r.maintLine||'-')+' ｜ 维护类型:'+(r.maintKind||'-')+' ｜ '+r.maintStart+'~'+r.maintEnd+(r.note?' ｜ 备注:'+r.note:'')
         : (r.type==='APS'
-          ? 'APS产线:'+(r.apsLine||'-')+' ｜ 计划月份:'+(r.apsMonth||'-')+' ｜ 剂型:'+(r.dosage||'水针')+' ｜ 阶段:'+(r.stage||'-')+(r.conditionalRelease?' ｜ 条件放行':'')+(r.note?' ｜ 备注:'+r.note:'')
+          ? 'APS产线:'+(r.apsLine||'-')+' ｜ 计划月份:'+(r.apsMonth||'-')+' ｜ 剂型:'+(r.dosage||'水针')+(r.stage?' ｜ 阶段:'+r.stage:'')+(r.conditionalRelease?' ｜ 条件放行':'')+(r.note?' ｜ 备注:'+r.note:'')
           : '规格:'+(r.spec||'-')+' ｜ 阶段:'+(r.stage||'-')+' ｜ 批次类型:'+(kindTxt||'-')+
           (r.type==='Mab'?' ｜ 周期:种子20+反应器15+纯化7天(默认,人工干预可调)':'')+
           (r.titer!==''&&r.titer!=null?' ｜ Titer:'+r.titer:'')+(r.concentration?' ｜ 浓度:'+r.concentration:'')+
