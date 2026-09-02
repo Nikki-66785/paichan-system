@@ -19,10 +19,6 @@
   .role-switch button{background:none;border:none;color:#fff;opacity:.7;padding:4px 12px;border-radius:14px;font-size:12.5px;font-weight:600;cursor:pointer}
   .role-switch button:hover{opacity:1}
   .role-switch button.on{background:#fff;color:var(--pri);opacity:1}
-  .user-box{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px}
-  .user-box .rs-label{font-size:11px;opacity:.85}
-  .user-box input{width:110px;padding:3px 8px;border:none;border-radius:12px;font-size:12.5px;background:rgba(255,255,255,.9);color:var(--text);outline:none}
-  .user-box input::placeholder{color:#94a3b8}
   header .stats{display:flex;gap:8px;margin-left:auto;font-size:12px;flex-wrap:wrap}
   header .stat{background:rgba(255,255,255,.16);border-radius:20px;padding:4px 12px}
   header .stat b{font-size:14px;margin-left:4px}
@@ -160,18 +156,14 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.13.0（权限分层：角色绑定登录账号——管理员邮箱自动进入「生产计划」，其他账号为「需求方」；另含邮箱登录+操作日志记录操作者+点击连接状态可退出切换账号）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.13.0</span></h1>
+  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.14.0（需求人自动绑定登录账号·表头不再手填姓名·支持自助修改密码；另含角色绑定登录账号——管理员邮箱自动进入「生产计划」，其他账号为「需求方」）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.14.0</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
     <button data-role="planner">🏭 生产计划</button>
   </div>
-  <div class="user-box" title="用于「本人删除」权限校验：设置后仅可删除需求人为本人的需求">
-    <span class="rs-label">👤 当前用户</span>
-    <input id="userName" placeholder="姓名（选填）">
-  </div>
   <div class="stats">
-    <span class="stat" id="cloudStatus" title="云端连接状态：配置 CloudBase 环境后，多人提交的需求实时共享。连接后点击此处可退出/切换账号">☁️ 连接中…</span>
+    <span class="stat" id="cloudStatus" title="云端连接状态：配置 CloudBase 环境后，多人提交的需求实时共享。连接后点击此处可修改密码或退出/切换账号">☁️ 连接中…</span>
     <span class="stat">需求 <b id="stReq">0</b></span>
     <span class="stat">批次 <b id="stBatch">0</b></span>
     <span class="stat">锁定 <b id="stLock">0</b></span>
@@ -252,7 +244,7 @@
                 <option value="低">低</option>
               </select>
             </div>
-            <div class="f"><label>需求人</label><input id="f_requester" placeholder="姓名"></div>
+            <div class="f"><label>需求人</label><input id="f_requester" placeholder="登录后自动填入，本地模式填姓名" title="云端登录后自动绑定为当前账号，无需填写"></div>
           </div>
           <div class="form-row" id="specRow" style="display:none">
             <div class="f"><label>规格 * <span style="color:#94a3b8;font-weight:400">(生产规模)</span></label><input id="f_spec" list="specList" placeholder=""><datalist id="specList"></datalist></div>
@@ -268,7 +260,7 @@
             <div class="f"><label>项目阶段 *</label>
               <select id="f_stage"><option value="">请选择</option><option>临床前</option><option>临床I期</option><option>临床II期</option><option>临床III期</option><option>商业化</option><option>PD研究</option></select>
             </div>
-            <div class="f" id="f_budget_wrap" style="display:none"><label>预算概况 *</label><input id="f_budget" placeholder="如 100万"></div>
+            <div class="f" id="f_budget_wrap" style="display:none"><label>预算概况 *</label><input id="f_budget" placeholder="如 PGC立项"></div>
           </div>
           <div class="form-row" id="vialRow" style="display:none">
             <div class="f"><label>注射瓶规格 *</label><select id="f_vial"><option value="">请选择</option></select></div>
@@ -630,7 +622,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.13.0（云端共享·邮箱登录·角色分权）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.14.0（云端共享·邮箱登录·角色分权·需求人绑定账号）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -696,9 +688,9 @@
 </div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=2130"></script>
-<script src="cloud.js?v=2130"></script>
-<script src="scheduling.js?v=2130"></script>
+<script src="cloudbase.full.js?v=2140"></script>
+<script src="cloud.js?v=2140"></script>
+<script src="scheduling.js?v=2140"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -798,6 +790,22 @@
     toast(isAdmin ? '👤 已按登录身份启用「🏭 生产计划」角色' : '👤 已按登录身份设为「📋 需求方」角色（调整/锁定/删除等排产管理需生产计划权限）');
   }
   window.__setCloudRole = onCloudRole; // 测试钩子：模拟云端登录身份下发
+  // v2.14.0：登录用户名下发（cloud.js hook.setUser）——需求人自动绑定登录账号，无需人工填写；
+  // 匿名登录时下发空串，需求人回退为手填；本地模式（未连云）不触发，保持手填
+  var cloudUserBound = false; // 云端用户名已下发（含匿名空串）
+  function onCloudUser(name){
+    cloudUserBound = true;
+    name = name || '';
+    state.user = name;
+    var el = $('f_requester');
+    if(el){
+      el.readOnly = !!name;                 // 有账号 → 只读防篡改；匿名 → 可手填
+      el.placeholder = name ? '' : '姓名（匿名登录，请填写）';
+      if(document.activeElement !== el) el.value = name; // 用户正在输入时不覆盖
+    }
+    save(); renderReq(); // 删除按钮按「本人」权限刷新
+  }
+  window.__setCloudUser = onCloudUser; // 测试钩子：模拟云端登录用户名下发
 
   // ---------- 确认弹窗（v2.11.0 ⑱）与 Excel 组件按需加载（㉒） ----------
   // uiConfirm(msg, cb)：替代原生 confirm——微信/企微等内嵌浏览器会静默拦截 confirm 造成「点了没反应」。
@@ -830,7 +838,7 @@
     if(_xlsxQ){ _xlsxQ.push(cb); return; }
     _xlsxQ = [cb];
     var s = document.createElement('script');
-    s.src = 'xlsx.full.min.js?v=2130';
+    s.src = 'xlsx.full.min.js?v=2140';
     s.onload = function(){ var q = _xlsxQ; _xlsxQ = null; q.forEach(function(f){ f(true); }); };
     s.onerror = function(){ var q = _xlsxQ; _xlsxQ = null; q.forEach(function(f){ f(false); }); toast('⚠️ Excel 组件加载失败，请检查网络后重试', 5000); };
     document.head.appendChild(s);
@@ -1105,13 +1113,13 @@
     toast('已添加需求，可点击「自动排产」');
     clearFormFields();
   }
-  // 本人校验：设置了当前用户时，仅需求人为本人的需求可删除（未设置则不限制）
+  // 本人校验：登录账号绑定了需求人时，仅需求人为本人的需求可删除（匿名/本地模式不限制）
   function canDelReq(r){
     return !state.user || !r.requester || r.requester===state.user;
   }
   function delReq(id){
     var r = state.requirements.find(function(x){return x.id===id;});
-    if(r && !isPlanner() && !canDelReq(r)){ toast('该需求由「'+r.requester+'」提交，仅本人可删。解决：右上角「👤 当前用户」改为'+r.requester+'，或切换「🏭 生产计划」角色'); return; }
+    if(r && !isPlanner() && !canDelReq(r)){ toast('该需求由「'+r.requester+'」提交，仅本人可删。解决：用该需求人的账号登录，或切换「🏭 生产计划」角色'); return; }
     uiConfirm('删除该需求及其排产批次？', function(ok){
       if(!ok) return;
       state.requirements = state.requirements.filter(function(r){return r.id!==id;});
@@ -1470,7 +1478,7 @@
           ? '<button class="btn sm danger" data-act="del" data-id="'+r.id+'" title="生产计划角色可删除任意需求">删除</button>'
           : '<button class="btn sm" data-act="edit" data-id="'+r.id+'">编辑</button> '+
             (canDelReq(r)?'<button class="btn sm danger" data-act="del" data-id="'+r.id+'" title="仅需求人本人可删除">删除</button>'
-              :'<span class="hint" style="font-size:11px;cursor:help;border-bottom:1px dotted" data-act="delhint" data-id="'+r.id+'" title="删除方法：① 右上角「👤 当前用户」改为 '+esc(r.requester)+'；② 或切换到「🏭 生产计划」角色后可删除任意需求">🔒 仅'+esc(r.requester)+'可删</span>'))+'</td>';
+              :'<span class="hint" style="font-size:11px;cursor:help;border-bottom:1px dotted" data-act="delhint" data-id="'+r.id+'" title="删除方法：① 用该需求人的账号登录（需求人自动绑定登录账号）；② 或切换到「🏭 生产计划」角色后可删除任意需求">🔒 仅'+esc(r.requester)+'可删</span>'))+'</td>';
       tb.appendChild(tr);
     });
   }
@@ -2489,7 +2497,6 @@
         if(state.trendLink==null) state.trendLink=false;
         $('trendLink').checked = !!state.trendLink;
         syncTrendRangeDisabled();
-        $('userName').value = state.user;
         save(); applyRole(); renderAll();
         addOp('导入数据', '需求 '+d.requirements.length+' 条 / 批次 '+d.batches.length+' 批（'+(file.name||'')+'）'); save();
         // v2.11.0 ⑲：云模式下同步导入结果——清空云端需求集合后逐条补传，防止旧需求在下次打开时「复活」
@@ -2616,7 +2623,8 @@
     $('btnAddReq').addEventListener('click', submitForm);
     $('btnClearForm').addEventListener('click', function(){
       clearFormFields();
-      ['f_henlius','f_requester'].forEach(function(i){$(i).value='';});
+      ['f_henlius'].forEach(function(i){$(i).value='';});
+      $('f_requester').value = state.user || ''; // v2.14.0：需求人绑定登录账号——取消编辑后恢复为当前账号（本地模式为空）
       $('f_priority').value='中';
       $('btnAddReq').dataset.editId=''; $('btnAddReq').textContent='➕ 添加需求';
     });
@@ -2626,7 +2634,7 @@
       if(btn.dataset.act==='edit') editReq(btn.dataset.id);
       else if(btn.dataset.act==='delhint'){
         var rr = state.requirements.find(function(x){return x.id===btn.dataset.id;});
-        if(rr) toast('该需求由「'+(rr.requester||'-')+'」提交。删除方法：右上角「👤 当前用户」改为'+(rr.requester||'该需求人')+'，或切换到「🏭 生产计划」角色后可删除任意需求');
+        if(rr) toast('该需求由「'+(rr.requester||'-')+'」提交。删除方法：用该需求人的账号登录（需求人自动绑定登录账号），或切换到「🏭 生产计划」角色后可删除任意需求');
       }
       else delReq(btn.dataset.id);
     });
@@ -2757,10 +2765,6 @@
       save(); applyRole();
       toast(btn.dataset.role==='planner' ? '已切换到「生产计划」角色：可确认可行性、人工调整与排产锁定' : '已切换到「需求方」角色：可填写需求并自动排产');
     });
-    $('userName').addEventListener('input', function(){
-      state.user = this.value.trim();
-      save(); renderReq(); // 删除按钮按「本人」权限刷新
-    });
     $('btnSaveRules').addEventListener('click', saveRules);
     $('btnResetRules').addEventListener('click', resetRules);
     $('btnExport').addEventListener('click', exportData);
@@ -2880,7 +2884,6 @@
     dedupeBatchIds(); save(); // 修复旧数据重复批次 id 并持久化
     if(!state.role) state.role='requester';
     if(state.user==null) state.user='';
-    $('userName').value = state.user;
     // 甘特图时间轴控件与 state 同步（旧数据兜底）
     state.ganttAxis = state.ganttAxis || { px:2.5, unit:'month' };
     $('ganttAxisPx').value = String(state.ganttAxis.px || 2.5);
@@ -2915,6 +2918,7 @@
     if(window.CloudSync){
       window.CloudSync.connect({
         setRole: onCloudRole, // v2.13.0：登录身份下发（管理员=生产计划，其他/匿名=需求方）
+        setUser: onCloudUser, // v2.14.0：登录用户名下发（需求人自动绑定登录账号）
         getReqs: function(){ return state.requirements; },
         uiConfirm: uiConfirm, // v2.11.0 ⑱：cloud.js 冲突检测/新鲜度弹窗走主应用自定义模态
         getPlan: function(){ return { batches: state.batches, rules: state.rules, refData: state.refData, ganttAxis: state.ganttAxis, ganttLines: state.ganttLines, ganttRange: state.ganttRange, trendRange: state.trendRange, trendLink: !!state.trendLink, snapshots: state.snapshots }; },
