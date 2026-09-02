@@ -160,7 +160,7 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.12.1（方案A安全加固：邮箱登录+操作日志记录操作者，未登录时弹登录框，匿名可过渡使用；点击右上角连接状态可退出/切换账号）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.12.1</span></h1>
+  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.13.0（权限分层：角色绑定登录账号——管理员邮箱自动进入「生产计划」，其他账号为「需求方」；另含邮箱登录+操作日志记录操作者+点击连接状态可退出切换账号）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.13.0</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -630,7 +630,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.12.1（云端共享·邮箱登录）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.13.0（云端共享·邮箱登录·角色分权）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -696,9 +696,9 @@
 </div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=2121"></script>
-<script src="cloud.js?v=2121"></script>
-<script src="scheduling.js?v=2121"></script>
+<script src="cloudbase.full.js?v=2130"></script>
+<script src="cloud.js?v=2130"></script>
+<script src="scheduling.js?v=2130"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -782,7 +782,22 @@
   function uid(){ return 'R'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
   function today(){ return U.f(new Date()); }
   function esc(s){ return String(s||'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
-  function isPlanner(){ return state.role==='planner'; }
+  // v2.13.0：角色判定双保险——云端已连接时以登录身份为准（白名单邮箱=生产计划），
+  // 即使有人用 F12 手改 state.role 也无法越权；本地模式（未连云）仍按本地 role 自由切换。
+  var cloudRoleBound = false, cloudIsAdmin = false; // 登录身份下发后置 true
+  function isPlanner(){
+    if(cloudRoleBound && !cloudIsAdmin) return false; // 云端身份已绑定且非管理员 → 强制需求方
+    return state.role==='planner';
+  }
+  // 云端登录身份下发回调（cloud.js hook.setRole）：管理员→生产计划，其他/匿名→需求方
+  function onCloudRole(isAdmin){
+    cloudRoleBound = true; cloudIsAdmin = !!isAdmin;
+    var want = isAdmin ? 'planner' : 'requester';
+    if((state.role||'requester') !== want){ state.role = want; save(); }
+    applyRole();
+    toast(isAdmin ? '👤 已按登录身份启用「🏭 生产计划」角色' : '👤 已按登录身份设为「📋 需求方」角色（调整/锁定/删除等排产管理需生产计划权限）');
+  }
+  window.__setCloudRole = onCloudRole; // 测试钩子：模拟云端登录身份下发
 
   // ---------- 确认弹窗（v2.11.0 ⑱）与 Excel 组件按需加载（㉒） ----------
   // uiConfirm(msg, cb)：替代原生 confirm——微信/企微等内嵌浏览器会静默拦截 confirm 造成「点了没反应」。
@@ -815,7 +830,7 @@
     if(_xlsxQ){ _xlsxQ.push(cb); return; }
     _xlsxQ = [cb];
     var s = document.createElement('script');
-    s.src = 'xlsx.full.min.js?v=2121';
+    s.src = 'xlsx.full.min.js?v=2130';
     s.onload = function(){ var q = _xlsxQ; _xlsxQ = null; q.forEach(function(f){ f(true); }); };
     s.onerror = function(){ var q = _xlsxQ; _xlsxQ = null; q.forEach(function(f){ f(false); }); toast('⚠️ Excel 组件加载失败，请检查网络后重试', 5000); };
     document.head.appendChild(s);
@@ -2541,6 +2556,9 @@
     document.querySelectorAll('#roleSwitch button').forEach(function(b){
       b.classList.toggle('on', b.dataset.role===role);
     });
+    // v2.13.0：云端身份已绑定且非管理员 → 隐藏「生产计划」切换按钮（角色跟随登录账号）
+    var pb = document.querySelector('#roleSwitch button[data-role="planner"]');
+    if(pb) pb.style.display = (cloudRoleBound && !cloudIsAdmin) ? 'none' : '';
     // 设备维护保养选项仅生产计划角色可选（部分浏览器 option CSS 隐藏不可靠，用 JS 兜底）
     var eqpOpt = $('f_type').querySelector('option[value="EQP"]');
     if(eqpOpt) eqpOpt.style.display = (role==='planner') ? '' : 'none';
@@ -2730,6 +2748,11 @@
     $('roleSwitch').addEventListener('click', function(ev){
       var btn = ev.target.closest('button[data-role]');
       if(!btn) return;
+      // v2.13.0：云端身份已绑定时，非管理员不可切换到「生产计划」
+      if(cloudRoleBound && !cloudIsAdmin && btn.dataset.role==='planner'){
+        toast('⛔ 角色已绑定登录账号：当前账号为「需求方」权限，排产管理请联系生产计划人员（'+'shunchao_zhang@henlius.com'+'）');
+        return;
+      }
       state.role = btn.dataset.role;
       save(); applyRole();
       toast(btn.dataset.role==='planner' ? '已切换到「生产计划」角色：可确认可行性、人工调整与排产锁定' : '已切换到「需求方」角色：可填写需求并自动排产');
@@ -2891,6 +2914,7 @@
     // 连接云端（若已配置 envId）：拉取多人共享的需求与计划，合并后刷新
     if(window.CloudSync){
       window.CloudSync.connect({
+        setRole: onCloudRole, // v2.13.0：登录身份下发（管理员=生产计划，其他/匿名=需求方）
         getReqs: function(){ return state.requirements; },
         uiConfirm: uiConfirm, // v2.11.0 ⑱：cloud.js 冲突检测/新鲜度弹窗走主应用自定义模态
         getPlan: function(){ return { batches: state.batches, rules: state.rules, refData: state.refData, ganttAxis: state.ganttAxis, ganttLines: state.ganttLines, ganttRange: state.ganttRange, trendRange: state.trendRange, trendLink: !!state.trendLink, snapshots: state.snapshots }; },
