@@ -95,6 +95,14 @@
   /* 角色可见性 */
   body.role-requester .plan-only{display:none!important}
   body.role-planner .req-only{display:none!important}
+  /* v2.15.0 读者角色：仅预览——隐藏所有编辑入口（生产计划专属页签 + 需求编辑表单 + 需求方操作按钮） */
+  body.role-reader .plan-only{display:none!important}
+  body.role-reader .req-only{display:none!important}
+  body.role-reader #reqFormCard{display:none!important}
+  #readerBanner{display:none}
+  body.role-reader #readerBanner{display:flex}
+  .perm-btn{margin-left:8px;padding:5px 14px;border:none;border-radius:20px;background:#7c3aed;color:#fff;font-size:12.5px;cursor:pointer;white-space:nowrap}
+  .perm-btn:hover{background:#6d28d9}
   /* 甘特图 */
   .gantt-wrap{overflow-x:auto;overflow-y:hidden;border:1px solid var(--line);border-radius:8px;background:#fff;position:relative;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
   .gantt{position:relative;min-width:100%}
@@ -156,12 +164,13 @@
 <body class="role-requester">
 
 <header>
-  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.14.0（需求人自动绑定登录账号·表头不再手填姓名·支持自助修改密码；另含角色绑定登录账号——管理员邮箱自动进入「生产计划」，其他账号为「需求方」）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.14.0</span></h1>
+  <h1>🧬 临床生产智能排产系统 <span class="tag" id="verTag" title="页面版本：v2.15.0（权限三档：读者/需求方/生产计划——生产计划可在「权限管理」页给各账号分配角色，读者仅预览需求/排产计划/排产分析）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.15.0</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
     <button data-role="planner">🏭 生产计划</button>
   </div>
+  <button class="perm-btn" id="btnPermMgmt" title="权限管理：给各账号分配「读者 / 需求方 / 生产计划」角色（仅生产计划角色可见）" style="display:none">🛡️ 权限管理</button>
   <div class="stats">
     <span class="stat" id="cloudStatus" title="云端连接状态：配置 CloudBase 环境后，多人提交的需求实时共享。连接后点击此处可修改密码或退出/切换账号">☁️ 连接中…</span>
     <span class="stat">需求 <b id="stReq">0</b></span>
@@ -194,8 +203,9 @@
     </div>
     <div id="warnBanner" class="warn-banner"></div>
     <div id="newReqBanner" class="newreq-banner"></div>
+    <div id="readerBanner" class="warn-banner" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8">👀 当前账号为「读者」权限：仅可预览需求录入、排产计划与排产分析，不能新增/编辑/删除。如需提需求，请联系生产计划管理员在「🛡️ 权限管理」中调整角色</div>
     <div class="grid2">
-      <div class="card">
+      <div class="card" id="reqFormCard">
         <h2>新增需求 <span class="tag">需求方填写 · 生产计划可填设备维护</span></h2>
         <form id="reqForm" autocomplete="off">
           <div class="form-row">
@@ -622,7 +632,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.14.0（云端共享·邮箱登录·角色分权·需求人绑定账号）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.15.0（云端共享·邮箱登录·权限三档·需求人绑定账号）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -688,9 +698,9 @@
 </div>
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
-<script src="cloudbase.full.js?v=2140"></script>
-<script src="cloud.js?v=2140"></script>
-<script src="scheduling.js?v=2140"></script>
+<script src="cloudbase.full.js?v=2150"></script>
+<script src="cloud.js?v=2150"></script>
+<script src="scheduling.js?v=2150"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -774,22 +784,32 @@
   function uid(){ return 'R'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
   function today(){ return U.f(new Date()); }
   function esc(s){ return String(s||'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
-  // v2.13.0：角色判定双保险——云端已连接时以登录身份为准（白名单邮箱=生产计划），
+  // v2.13.0/v2.15.0：角色判定双保险——云端已连接时以登录身份为准（权限管理页分配：planner/requester/reader），
   // 即使有人用 F12 手改 state.role 也无法越权；本地模式（未连云）仍按本地 role 自由切换。
-  var cloudRoleBound = false, cloudIsAdmin = false; // 登录身份下发后置 true
+  var cloudRoleBound = false, cloudIsAdmin = false, cloudRoleCur = ''; // 登录身份下发后置位（cloudRoleCur：云端分配的三档角色）
+  var ROLE_NAMES = { reader:'读者', requester:'需求方', planner:'生产计划' };
   function isPlanner(){
-    if(cloudRoleBound && !cloudIsAdmin) return false; // 云端身份已绑定且非管理员 → 强制需求方
+    if(cloudRoleBound && !cloudIsAdmin) return false; // 云端身份已绑定且非生产计划 → 无排产管理权（读者/需求方）
     return state.role==='planner';
   }
-  // 云端登录身份下发回调（cloud.js hook.setRole）：管理员→生产计划，其他/匿名→需求方
-  function onCloudRole(isAdmin){
-    cloudRoleBound = true; cloudIsAdmin = !!isAdmin;
-    var want = isAdmin ? 'planner' : 'requester';
-    if((state.role||'requester') !== want){ state.role = want; save(); }
-    applyRole();
-    toast(isAdmin ? '👤 已按登录身份启用「🏭 生产计划」角色' : '👤 已按登录身份设为「📋 需求方」角色（调整/锁定/删除等排产管理需生产计划权限）');
+  // v2.15.0 读者：仅预览，无任何编辑权（云端绑定后不可被 F12 改 state.role 绕过）
+  function isReader(){
+    if(cloudRoleBound && !cloudIsAdmin) return cloudRoleCur==='reader';
+    return state.role==='reader';
   }
-  window.__setCloudRole = onCloudRole; // 测试钩子：模拟云端登录身份下发
+  // 云端登录身份下发回调（cloud.js hook.setRole）：三档角色 'planner'|'requester'|'reader'（兼容旧版 true/false）
+  function onCloudRole(role){
+    if(role===true) role='planner';
+    else if(role===false || role==null) role='requester';
+    if(ROLE_NAMES[role]==null) role='requester';
+    cloudRoleBound = true; cloudRoleCur = role; cloudIsAdmin = (role==='planner');
+    if((state.role||'requester') !== role){ state.role = role; save(); }
+    applyRole();
+    toast(role==='planner' ? '👤 已按登录身份启用「🏭 生产计划」角色'
+      : role==='reader' ? '👤 已按登录身份设为「📖 读者」角色（仅预览需求/排产计划/排产分析）'
+      : '👤 已按登录身份设为「📋 需求方」角色（调整/锁定/删除等排产管理需生产计划权限）');
+  }
+  window.__setCloudRole = onCloudRole; // 测试钩子：模拟云端登录身份下发（三档角色字符串或旧版布尔）
   // v2.14.0：登录用户名下发（cloud.js hook.setUser）——需求人自动绑定登录账号，无需人工填写；
   // 匿名登录时下发空串，需求人回退为手填；本地模式（未连云）不触发，保持手填
   var cloudUserBound = false; // 云端用户名已下发（含匿名空串）
@@ -806,6 +826,86 @@
     save(); renderReq(); // 删除按钮按「本人」权限刷新
   }
   window.__setCloudUser = onCloudUser; // 测试钩子：模拟云端登录用户名下发
+
+  // ---------- v2.15.0 权限管理（仅生产计划角色）----------
+  // 各账号角色存云端 permissions 集合（cloud.js fetchPerms/setPerm 读写）；
+  // 未登记邮箱默认「需求方」；白名单管理员恒为「生产计划」；匿名登录恒为「需求方」。
+  var PERM_DESC = { reader:'📖 读者（仅预览）', requester:'📋 需求方（填报需求）', planner:'🏭 生产计划（排产管理）' };
+  function openPermMgmt(){
+    if(!isPlanner()){ toast('仅「生产计划」角色可管理权限'); return; }
+    if(!window.CloudSync || !window.CloudSync.isReady()){ toast('权限管理需要连接云端（本地模式无账号体系）'); return; }
+    if(document.getElementById('permOverlay')) return; // 已打开
+    var ov = document.createElement('div');
+    ov.id = 'permOverlay';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:300;display:flex;align-items:center;justify-content:center;font-family:inherit';
+    ov.innerHTML =
+      '<div style="background:#fff;border-radius:12px;padding:20px;width:min(560px,94vw);max-height:86vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.18);color:#0f172a">' +
+        '<div style="font-size:16px;font-weight:600;margin-bottom:4px">🛡️ 权限管理</div>' +
+        '<div style="font-size:12px;color:#64748b;margin-bottom:12px">给各账号分配角色：<b>读者</b>仅预览 / <b>需求方</b>可填报需求 / <b>生产计划</b>可排产管理。未登记的新账号默认为「需求方」；修改后对方页面会自动生效（或刷新后生效）。</div>' +
+        '<div style="font-size:12px;color:#334155;margin-bottom:10px"><b>新增账号</b>：' +
+          '<input id="permNewEmail" type="email" placeholder="邮箱（须先在控制台创建该用户）" style="width:220px;padding:6px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;outline:none;margin-right:6px">' +
+          '<select id="permNewRole" style="padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px">' +
+            '<option value="reader">📖 读者（仅预览）</option><option value="requester" selected>📋 需求方</option><option value="planner">🏭 生产计划</option></select>' +
+          '<button id="permAddBtn" style="padding:6px 14px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:13px;cursor:pointer;margin-left:6px">分配</button></div>' +
+        '<div id="permList" style="font-size:13px;color:#64748b">加载中…</div>' +
+        '<div id="permErr" style="font-size:12px;color:#dc2626;min-height:16px;margin-top:6px"></div>' +
+        '<button id="permClose" style="width:100%;margin-top:8px;padding:9px;border:none;border-radius:8px;background:#f1f5f9;color:#475569;font-size:13px;cursor:pointer">关闭</button>' +
+      '</div>';
+    document.body.appendChild(ov);
+    function close(){ ov.remove(); }
+    ov.addEventListener('click', function(ev){ if(ev.target===ov) close(); });
+    $('permClose').addEventListener('click', close);
+    function perr(msg){ var e=$('permErr'); if(e) e.textContent=msg||''; }
+    function savePerm(email, role, selEl){
+      window.CloudSync.setPerm(email, role).then(function(ok){
+        if(ok){ perr(''); toast('✅ 已将 '+email+' 设为「'+ROLE_NAMES[role]+'」'); }
+        else { perr('写入云端失败（请检查 permissions 集合与安全规则）'); if(selEl) selEl.dataset.rollback && (selEl.value = selEl.dataset.rollback); }
+      }).catch(function(e){ perr('分配失败：'+(e&&e.message||e)); });
+    }
+    $('permAddBtn').addEventListener('click', function(){
+      var email = ($('permNewEmail').value||'').trim().toLowerCase();
+      var role = $('permNewRole').value;
+      if(!email || email.indexOf('@')<0){ perr('请输入有效邮箱'); return; }
+      savePerm(email, role);
+      $('permNewEmail').value='';
+      setTimeout(function(){ // 写入云端后稍等重拉列表（云端读有延迟）
+        window.CloudSync.fetchPerms().then(renderList).catch(function(){ renderList([]); });
+      }, 600);
+    });
+    function rowHtml(email, role, fixed){
+      var opts = ['reader','requester','planner'].map(function(r){
+        return '<option value="'+r+'"'+(r===role?' selected':'')+'>'+PERM_DESC[r]+'</option>';
+      }).join('');
+      return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f1f5f9">' +
+        '<span style="flex:1;word-break:break-all">'+esc(email)+(fixed?' <span style="font-size:11px;color:#7c3aed">（白名单管理员，固定生产计划）</span>':'')+'</span>' +
+        (fixed ? '<span style="font-size:12.5px;color:#334155">🏭 生产计划</span>'
+               : '<select data-perm-email="'+esc(email)+'" style="padding:5px 8px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px">'+opts+'</select>') +
+        '</div>';
+    }
+    function bindSelects(){
+      ov.querySelectorAll('select[data-perm-email]').forEach(function(sel){
+        sel.dataset.rollback = sel.value;
+        sel.addEventListener('change', function(){ savePerm(sel.dataset.permEmail, sel.value, sel); sel.dataset.rollback = sel.value; });
+      });
+    }
+    function renderList(permRows){
+      var box = $('permList'); if(!box) return;
+      var html = '';
+      // 白名单管理员置顶（固定生产计划，不可改）
+      ['shunchao_zhang@henlius.com'].forEach(function(a){ html += rowHtml(a, 'planner', true); });
+      var seen = { 'shunchao_zhang@henlius.com': true };
+      (permRows||[]).forEach(function(p){
+        var em = String(p.email||'').toLowerCase();
+        if(!em || seen[em]) return;
+        seen[em] = true;
+        html += rowHtml(em, ROLE_NAMES[p.role]!=null ? p.role : 'requester', false);
+      });
+      box.innerHTML = html + '<div style="font-size:11.5px;color:#94a3b8;margin-top:8px">提示：账号需先在腾讯云控制台「身份验证→用户管理」中创建，再在此分配角色。</div>';
+      bindSelects();
+    }
+    window.CloudSync.fetchPerms().then(renderList).catch(function(){ renderList([]); });
+  }
+  window.__openPermMgmt = openPermMgmt; // 测试钩子
 
   // ---------- 确认弹窗（v2.11.0 ⑱）与 Excel 组件按需加载（㉒） ----------
   // uiConfirm(msg, cb)：替代原生 confirm——微信/企微等内嵌浏览器会静默拦截 confirm 造成「点了没反应」。
@@ -838,7 +938,7 @@
     if(_xlsxQ){ _xlsxQ.push(cb); return; }
     _xlsxQ = [cb];
     var s = document.createElement('script');
-    s.src = 'xlsx.full.min.js?v=2140';
+    s.src = 'xlsx.full.min.js?v=2150';
     s.onload = function(){ var q = _xlsxQ; _xlsxQ = null; q.forEach(function(f){ f(true); }); };
     s.onerror = function(){ var q = _xlsxQ; _xlsxQ = null; q.forEach(function(f){ f(false); }); toast('⚠️ Excel 组件加载失败，请检查网络后重试', 5000); };
     document.head.appendChild(s);
@@ -1103,6 +1203,7 @@
     updateMolRow();
   }
   function addReq(){
+    if(isReader()){ toast('📖 读者权限仅可预览，无法新增需求'); return; }
     var r = readForm();
     var bad = validateReq(r);
     if(bad.length){ toast('请填写：'+bad.join('、')); return; }
@@ -1118,6 +1219,7 @@
     return !state.user || !r.requester || r.requester===state.user;
   }
   function delReq(id){
+    if(isReader()){ toast('📖 读者权限仅可预览，无法删除需求'); return; }
     var r = state.requirements.find(function(x){return x.id===id;});
     if(r && !isPlanner() && !canDelReq(r)){ toast('该需求由「'+r.requester+'」提交，仅本人可删。解决：用该需求人的账号登录，或切换「🏭 生产计划」角色'); return; }
     uiConfirm('删除该需求及其排产批次？', function(ok){
@@ -1129,6 +1231,7 @@
     });
   }
   function editReq(id){
+    if(isReader()){ toast('📖 读者权限仅可预览，无法编辑需求'); return; }
     var r = state.requirements.find(function(x){return x.id===id;});
     if(!r) return;
     $('f_type').value=r.type; onTypeChange();
@@ -1206,6 +1309,7 @@
     };
   }
   function doSchedule(){
+    if(isReader()){ toast('📖 读者权限仅可预览，无法执行排产'); return; }
     var nb = $('newReqBanner'); if(nb) nb.classList.remove('show'); // 已处理，隐藏提示条
     if(!state.requirements.length){ toast('请先添加需求'); return; }
     if(!state.requirements.some(function(r){return r.dueDate;})){
@@ -1377,6 +1481,7 @@
     toast('人工快照已保存' + (note ? '：'+note : ''));
   }
   function clearPlan(){
+    if(isReader()){ toast('📖 读者权限仅可预览，无法清空排产结果'); return; }
     state.batches = state.batches.filter(function(b){return b.locked || isFinal(b);});
     save(); renderAll(); toast('已清空自动排产草案（保留锁定批次、终态批次与需求）');
   }
@@ -1474,11 +1579,13 @@
         '<td><span class="pri '+(r.priority==='高'?'high':r.priority==='低'?'low':'mid')+'">'+esc(r.priority)+'</span></td>'+
         '<td>'+esc(r.requester||'-')+'</td>'+
         '<td><span class="badge '+stBadge+'">'+st+'</span></td>'+
-        '<td>'+(isPlanner()
+        '<td>'+(isReader()
+          ? '<span class="hint" style="font-size:11px;cursor:help" title="读者权限仅可预览">👀 只读</span>'
+          : (isPlanner()
           ? '<button class="btn sm danger" data-act="del" data-id="'+r.id+'" title="生产计划角色可删除任意需求">删除</button>'
           : '<button class="btn sm" data-act="edit" data-id="'+r.id+'">编辑</button> '+
             (canDelReq(r)?'<button class="btn sm danger" data-act="del" data-id="'+r.id+'" title="仅需求人本人可删除">删除</button>'
-              :'<span class="hint" style="font-size:11px;cursor:help;border-bottom:1px dotted" data-act="delhint" data-id="'+r.id+'" title="删除方法：① 用该需求人的账号登录（需求人自动绑定登录账号）；② 或切换到「🏭 生产计划」角色后可删除任意需求">🔒 仅'+esc(r.requester)+'可删</span>'))+'</td>';
+              :'<span class="hint" style="font-size:11px;cursor:help;border-bottom:1px dotted" data-act="delhint" data-id="'+r.id+'" title="删除方法：① 用该需求人的账号登录（需求人自动绑定登录账号）；② 或切换到「🏭 生产计划」角色后可删除任意需求">🔒 仅'+esc(r.requester)+'可删</span>')))+'</td>';
       tb.appendChild(tr);
     });
   }
@@ -2560,12 +2667,19 @@
     var role = state.role||'requester';
     document.body.classList.toggle('role-requester', role==='requester');
     document.body.classList.toggle('role-planner', role==='planner');
+    document.body.classList.toggle('role-reader', role==='reader'); // v2.15.0：读者（仅预览）
     document.querySelectorAll('#roleSwitch button').forEach(function(b){
       b.classList.toggle('on', b.dataset.role===role);
     });
-    // v2.13.0：云端身份已绑定且非管理员 → 隐藏「生产计划」切换按钮（角色跟随登录账号）
+    // v2.13.0/v2.15.0：云端身份已绑定且非生产计划 → 隐藏「生产计划」切换按钮（角色跟随登录账号）；
+    // 读者身份绑定时「需求方」按钮也隐藏（读者无填报权，不可自行切回）
     var pb = document.querySelector('#roleSwitch button[data-role="planner"]');
     if(pb) pb.style.display = (cloudRoleBound && !cloudIsAdmin) ? 'none' : '';
+    var rb = document.querySelector('#roleSwitch button[data-role="requester"]');
+    if(rb) rb.style.display = (cloudRoleBound && !cloudIsAdmin && cloudRoleCur==='reader') ? 'none' : '';
+    // v2.15.0：权限管理入口仅生产计划角色可见
+    var permBtn = $('btnPermMgmt');
+    if(permBtn) permBtn.style.display = (role==='planner') ? '' : 'none';
     // 设备维护保养选项仅生产计划角色可选（部分浏览器 option CSS 隐藏不可靠，用 JS 兜底）
     var eqpOpt = $('f_type').querySelector('option[value="EQP"]');
     if(eqpOpt) eqpOpt.style.display = (role==='planner') ? '' : 'none';
@@ -2756,15 +2870,20 @@
     $('roleSwitch').addEventListener('click', function(ev){
       var btn = ev.target.closest('button[data-role]');
       if(!btn) return;
-      // v2.13.0：云端身份已绑定时，非管理员不可切换到「生产计划」
+      // v2.13.0/v2.15.0：云端身份已绑定时，非生产计划不可切换到「生产计划」；读者也不可自行切回「需求方」
       if(cloudRoleBound && !cloudIsAdmin && btn.dataset.role==='planner'){
-        toast('⛔ 角色已绑定登录账号：当前账号为「需求方」权限，排产管理请联系生产计划人员（'+'shunchao_zhang@henlius.com'+'）');
+        toast('⛔ 角色已绑定登录账号：当前账号为「'+ (ROLE_NAMES[cloudRoleCur]||'需求方') +'」权限，排产管理请联系生产计划人员（'+'shunchao_zhang@henlius.com'+'）');
+        return;
+      }
+      if(cloudRoleBound && !cloudIsAdmin && cloudRoleCur==='reader'){
+        toast('⛔ 读者权限由管理员在「权限管理」中分配，无法自行切换角色');
         return;
       }
       state.role = btn.dataset.role;
       save(); applyRole();
       toast(btn.dataset.role==='planner' ? '已切换到「生产计划」角色：可确认可行性、人工调整与排产锁定' : '已切换到「需求方」角色：可填写需求并自动排产');
     });
+    $('btnPermMgmt').addEventListener('click', openPermMgmt); // v2.15.0：权限管理入口
     $('btnSaveRules').addEventListener('click', saveRules);
     $('btnResetRules').addEventListener('click', resetRules);
     $('btnExport').addEventListener('click', exportData);
@@ -2917,7 +3036,7 @@
     // 连接云端（若已配置 envId）：拉取多人共享的需求与计划，合并后刷新
     if(window.CloudSync){
       window.CloudSync.connect({
-        setRole: onCloudRole, // v2.13.0：登录身份下发（管理员=生产计划，其他/匿名=需求方）
+        setRole: onCloudRole, // v2.15.0：登录身份下发（三档角色：planner/requester/reader，由权限管理页分配）
         setUser: onCloudUser, // v2.14.0：登录用户名下发（需求人自动绑定登录账号）
         getReqs: function(){ return state.requirements; },
         uiConfirm: uiConfirm, // v2.11.0 ⑱：cloud.js 冲突检测/新鲜度弹窗走主应用自定义模态
