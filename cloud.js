@@ -1,5 +1,5 @@
 /* =====================================================
- * cloud.js — CloudBase 云同步层（排产系统 v2.13.0 → v2.15.0：三档角色（读者/需求方/生产计划）+ 权限管理（permissions 集合读写、角色实时下发）+ 登录用户名下发（需求人自动绑定账号）+ 账号面板（自助修改密码/退出切换）+ 角色绑定登录身份（方案A权限分层）+ 状态栏点击弹出账号面板 + 邮箱登录（安全加固方案A）+ 确认弹窗走主应用模态 + 清空/导入云端需求同步 + 操作日志上云 op_logs）
+ * cloud.js — CloudBase 云同步层（排产系统 v2.13.0 → v2.15.1：未登记新账号/匿名默认「读者」+ setPerm 失败自动补建 permissions 集合并给出可操作报错 + 三档角色（读者/需求方/生产计划）+ 权限管理（permissions 集合读写、角色实时下发）+ 登录用户名下发（需求人自动绑定账号）+ 账号面板（自助修改密码/退出切换）+ 角色绑定登录身份（方案A权限分层）+ 状态栏点击弹出账号面板 + 邮箱登录（安全加固方案A）+ 确认弹窗走主应用模态 + 清空/导入云端需求同步 + 操作日志上云 op_logs）
  *
  * 作用：让「需求填报」与「排产计划」在多人浏览器之间实时共享。
  *   · requests    集合：需求（每条需求一个文档，多人提交互不覆盖）
@@ -24,9 +24,10 @@
   var PERM_COLL = 'permissions'; // v2.15.0 账号角色集合（_id=邮箱小写，role=reader/requester/planner）
   var PLAN_ID = 'main';
   // v2.13.0/v2.15.0 生产计划白名单：列表内邮箱恒为「生产计划」角色（可调整/锁定/删除/清空/导入/权限管理）；
-  // 其他邮箱按 permissions 集合分配（未登记默认「需求方」），匿名 = 「需求方」。可用 CLOUD_CONFIG.planAdmins 追加。
+  // 其他邮箱按 permissions 集合分配（v2.15.1 起未登记/匿名默认「读者」，新账号须管理员在权限管理页分配角色），可用 CLOUD_CONFIG.planAdmins 追加。
   var PLAN_ADMINS = ['shunchao_zhang@henlius.com'].concat(CFG.planAdmins || []).map(function (s) { return String(s || '').trim().toLowerCase(); });
   var ROLE_LABEL = { reader: '读者', requester: '需求方', planner: '生产计划' };
+  var DEFAULT_ROLE = 'reader'; // v2.15.1：未登记新账号/匿名/角色值异常时的默认角色（仅预览，最简权限）
 
   var db = null, ready = false;
   var retriedLogin = false; // 凭证缺失自动重登标志（每次会话最多一次）
@@ -112,28 +113,28 @@
   }
   // 角色下发：更新状态栏文案 + 通知主文件（hook.setRole 传三档角色字符串，兼容旧版布尔）
   function applyMyRole(role) {
-    if (ROLE_LABEL[role] == null) role = 'requester';
+    if (ROLE_LABEL[role] == null) role = DEFAULT_ROLE;
     myRole = role;
     adminFlag = (role === 'planner');
     if (curEmail) setStatus('☁️ 已连接·' + curEmail + '（' + ROLE_LABEL[role] + '）', 'cloud-on');
-    else setStatus('☁️ 已连接·匿名（需求方）', 'cloud-on'); // v2.12.1：匿名状态显式标出，提示用户可切换
-    if (statusEl) statusEl.title = (curEmail ? '当前登录：' + curEmail + '（' + ROLE_LABEL[role] + '）' : '当前为匿名登录（需求方权限），建议用邮箱账号') + '。点击此处可修改密码或退出并切换账号';
+    else setStatus('☁️ 已连接·匿名（' + ROLE_LABEL[DEFAULT_ROLE] + '）', 'cloud-on'); // v2.12.1：匿名状态显式标出，提示用户可切换
+    if (statusEl) statusEl.title = (curEmail ? '当前登录：' + curEmail + '（' + ROLE_LABEL[role] + '）' : '当前为匿名登录（' + ROLE_LABEL[DEFAULT_ROLE] + '权限），建议用邮箱账号') + '。点击此处可修改密码或退出并切换账号';
     if (hook && typeof hook.setRole === 'function') {
       try { hook.setRole(role); } catch (e) { console.warn('[cloud] setRole 回调异常：', e); }
     }
   }
-  // v2.15.0：解析当前账号角色——白名单=planner（免查库）；匿名=requester；
-  // 其他邮箱查 permissions 集合（未登记/集合未建/读失败 → 默认 requester）
+  // v2.15.0/v2.15.1：解析当前账号角色——白名单=planner（免查库）；匿名=读者；
+  // 其他邮箱查 permissions 集合（未登记/集合未建/读失败 → 默认读者，须管理员分配后才可填报需求）
   function refreshMyRole() {
     var em = (curEmail || '').toLowerCase();
-    if (!curEmail) { applyMyRole('requester'); return; }
+    if (!curEmail) { applyMyRole(DEFAULT_ROLE); return; }
     if (PLAN_ADMINS.indexOf(em) >= 0) { applyMyRole('planner'); return; }
     db.collection(PERM_COLL).doc(em).get()
       .then(function (r) {
         var d = (r && r.data) || {};
-        applyMyRole(ROLE_LABEL[d.role] != null ? d.role : 'requester');
+        applyMyRole(ROLE_LABEL[d.role] != null ? d.role : DEFAULT_ROLE);
       })
-      .catch(function () { applyMyRole('requester'); }); // 集合未建/无权限/网络问题 → 默认需求方
+      .catch(function () { applyMyRole(DEFAULT_ROLE); }); // 集合未建/无权限/网络问题 → 默认读者
   }
   // 登录成功/会话恢复后的统一入口
   function onAuthed() {
@@ -610,25 +611,49 @@
     if (!ready) return Promise.resolve([]);
     return getAll(PERM_COLL).then(function (rows) {
       return (rows || []).map(function (d) {
-        return { email: String(d && d._id || '').toLowerCase(), role: (d && d.role) || 'requester', updatedAt: (d && d.updatedAt) || 0 };
+        return { email: String(d && d._id || '').toLowerCase(), role: (d && ROLE_LABEL[d.role] != null ? d.role : DEFAULT_ROLE), updatedAt: (d && d.updatedAt) || 0 };
       }).filter(function (p) { return p.email && p.email.indexOf('@') >= 0; });
     }).catch(function (e) {
       console.warn('[cloud] 权限列表拉取失败（集合可能未创建）：', e);
       return [];
     });
   }
-  // 分配角色：email 归一小写后作为文档 _id upsert。返回 Promise<boolean>（true=云端写入成功）
+  // 分配角色：email 归一小写后作为文档 _id 用 doc(id).set() 直写（存在即整体替换——文档仅含 role/updatedBy/updatedAt）。
+  // v2.15.1：写入失败时按错误码自动补建 permissions 集合并重试一次；仍失败则 reject 带可操作的中文原因（不再静默返回 false）。
   function setPerm(email, role) {
     if (!ready) return Promise.reject(new Error('未连接云端'));
     email = String(email || '').trim().toLowerCase();
     if (!email || email.indexOf('@') < 0) return Promise.reject(new Error('邮箱格式无效'));
     if (ROLE_LABEL[role] == null) return Promise.reject(new Error('角色无效（应为 reader/requester/planner）'));
-    return upsert(PERM_COLL, email, { role: role, updatedBy: curEmail || '', updatedAt: Date.now() }, '权限')
-      .then(function (ok) { return !!ok; });
+    var payload = { role: role, updatedBy: curEmail || '', updatedAt: Date.now() };
+    function errText(e) {
+      var c = String((e && (e.code || e.message)) || e || '');
+      if (/COLLECTION_NOT_EXIST|not\s*exist|不存在/i.test(c))
+        return 'permissions 集合不存在且自动创建失败（' + c + '）。请到 CloudBase 控制台「数据库」手动创建集合 permissions，并把权限规则设为自定义安全规则 {"read":"auth != null","write":"auth != null"}';
+      if (/PERMISSION|DENIED|权限|FORBIDDEN/i.test(c))
+        return '写入被安全规则拒绝：请到 CloudBase 控制台 → 数据库 → permissions 集合 → 权限设置 → 自定义安全规则，填入 {"read":"auth != null","write":"auth != null"}（默认「仅创建者可读写」会拦截本操作）';
+      return '写入云端失败：' + c;
+    }
+    function trySet() { return db.collection(PERM_COLL).doc(email).set(payload); }
+    function isCollMissing(e) {
+      return /COLLECTION_NOT_EXIST|not\s*exist|不存在/i.test(String((e && (e.code || e.message)) || e || ''));
+    }
+    return trySet()
+      .then(function () { return true; })
+      .catch(function (e1) {
+        if (!isCollMissing(e1)) throw new Error(errText(e1));
+        // 集合未建：自动创建后重试一次（createCollection 接口被拒也仍试一次写，部分环境创建即生效）
+        return Promise.resolve()
+          .then(function () { return db.createCollection(PERM_COLL); })
+          .catch(function () { /* 创建被拒不影响后续重试 */ })
+          .then(function () { return trySet(); })
+          .then(function () { return true; })
+          .catch(function (e2) { throw new Error(errText(e2)); });
+      });
   }
-  // 当前账号三档角色查询（'reader'|'requester'|'planner'；未连接/匿名/未登记 → requester）
+  // 当前账号三档角色查询（'reader'|'requester'|'planner'；未连接/匿名/未登记 → reader）
   function getMyRole() {
-    return myRole || 'requester';
+    return myRole || DEFAULT_ROLE;
   }
   // 角色实时监听：管理员在权限管理页改了某账号角色 → 该账号在线页面自动生效（无需刷新）。
   // 监听失败（集合未建等）静默降级为「下次登录/刷新时生效」。
@@ -645,7 +670,7 @@
           var mine = null;
           docs.forEach(function (d) { if (d && String(d._id || '').toLowerCase() === em) mine = d; });
           if (mine && mine.role && mine.role !== myRole) {
-            var newRole = ROLE_LABEL[mine.role] != null ? mine.role : 'requester';
+            var newRole = ROLE_LABEL[mine.role] != null ? mine.role : DEFAULT_ROLE;
             console.log('[cloud] 权限变更（实时生效）：' + myRole + ' → ' + newRole);
             applyMyRole(newRole);
           }
