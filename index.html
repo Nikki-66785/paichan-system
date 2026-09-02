@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>临床生产智能排产系统</title>
 <style>
   :root{
@@ -14,7 +17,7 @@
   body{font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:13.5px}
   header{background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;padding:12px 22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
   header h1{font-size:18px;font-weight:700;letter-spacing:.5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .logo{height:36px;width:auto;display:block;flex:none}
+  .logo{height:38px;width:auto;display:block;flex:none}
   .role-switch{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.18);border-radius:20px;padding:3px 8px}
   .role-switch .rs-label{font-size:11px;opacity:.85;margin-right:4px}
   .role-switch button{background:none;border:none;color:#fff;opacity:.7;padding:4px 12px;border-radius:14px;font-size:12.5px;font-weight:600;cursor:pointer}
@@ -165,7 +168,7 @@
 <body class="role-requester">
 
 <header>
-  <h1><img src="henlius-logo.png?v=2152" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.15.2（表头新增 Logo；权限管理弹窗放大）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.15.2</span></h1>
+  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.15.5（反白 Logo 独立文件名+防缓存；Logo 字标与标题同高；权限邮箱强制单行）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.15.5</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -633,7 +636,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.15.2（云端共享·邮箱登录·权限三档·新账号默认读者）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.15.5（云端共享·邮箱登录·权限三档·新账号默认读者）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -841,17 +844,17 @@
     ov.id = 'permOverlay';
     ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:300;display:flex;align-items:center;justify-content:center;font-family:inherit';
     ov.innerHTML =
-      '<div style="background:#fff;border-radius:14px;padding:28px;width:min(760px,94vw);max-height:88vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.18);color:#0f172a">' +
-        '<div style="font-size:20px;font-weight:700;margin-bottom:6px">🛡️ 权限管理</div>' +
-        '<div style="font-size:13.5px;color:#64748b;margin-bottom:16px;line-height:1.7">给各账号分配角色：<b>读者</b>仅预览 / <b>需求方</b>可填报需求 / <b>生产计划</b>可排产管理。未登记的新账号默认为「读者」，须在此分配角色后方可填报需求；修改后对方页面会自动生效（或刷新后生效）。</div>' +
-        '<div style="font-size:14.5px;color:#334155;margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b>新增账号：</b>' +
-          '<input id="permNewEmail" type="email" placeholder="邮箱（须先在控制台创建该用户）" style="flex:1;min-width:200px;padding:9px 12px;border:1px solid #cbd5e1;border-radius:9px;font-size:14px;outline:none">' +
-          '<select id="permNewRole" style="padding:9px 10px;border:1px solid #cbd5e1;border-radius:9px;font-size:14px">' +
+      '<div style="background:#fff;border-radius:16px;padding:32px;width:min(980px,96vw);max-height:92vh;overflow:auto;box-shadow:0 16px 50px rgba(0,0,0,.22);color:#0f172a">' +
+        '<div style="font-size:22px;font-weight:700;margin-bottom:10px">🛡️ 权限管理</div>' +
+        '<div style="font-size:15.5px;color:#64748b;margin-bottom:20px;line-height:1.7">给各账号分配角色：<b>读者</b>仅预览 / <b>需求方</b>可填报需求 / <b>生产计划</b>可排产管理。未登记的新账号默认为「读者」，须在此分配角色后方可填报需求；修改后对方页面会自动生效（或刷新后生效）。</div>' +
+        '<div style="font-size:16px;color:#334155;margin-bottom:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b>新增账号：</b>' +
+          '<input id="permNewEmail" type="email" placeholder="邮箱（须先在控制台创建该用户）" style="flex:1;min-width:240px;padding:11px 14px;border:1px solid #cbd5e1;border-radius:10px;font-size:15px;outline:none">' +
+          '<select id="permNewRole" style="padding:11px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:15px">' +
             '<option value="reader" selected>📖 读者（仅预览）</option><option value="requester">📋 需求方</option><option value="planner">🏭 生产计划</option></select>' +
-          '<button id="permAddBtn" style="padding:9px 20px;border:none;border-radius:9px;background:#2563eb;color:#fff;font-size:14px;cursor:pointer">分配</button></div>' +
-        '<div id="permList" style="font-size:15px;color:#64748b">加载中…</div>' +
-        '<div id="permErr" style="font-size:14px;color:#dc2626;min-height:18px;margin-top:8px"></div>' +
-        '<button id="permClose" style="width:100%;margin-top:10px;padding:11px;border:none;border-radius:9px;background:#f1f5f9;color:#475569;font-size:14.5px;cursor:pointer">关闭</button>' +
+          '<button id="permAddBtn" style="padding:11px 24px;border:none;border-radius:10px;background:#2563eb;color:#fff;font-size:15px;cursor:pointer">分配</button></div>' +
+        '<div id="permList" style="font-size:16px;color:#64748b">加载中…</div>' +
+        '<div id="permErr" style="font-size:15px;color:#dc2626;min-height:20px;margin-top:10px"></div>' +
+        '<button id="permClose" style="width:100%;margin-top:14px;padding:13px;border:none;border-radius:10px;background:#f1f5f9;color:#475569;font-size:16px;cursor:pointer">关闭</button>' +
       '</div>';
     document.body.appendChild(ov);
     function close(){ ov.remove(); }
@@ -878,10 +881,10 @@
       var opts = ['reader','requester','planner'].map(function(r){
         return '<option value="'+r+'"'+(r===role?' selected':'')+'>'+PERM_DESC[r]+'</option>';
       }).join('');
-      return '<div style="display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid #e2e8f0">' +
-        '<span style="flex:1;word-break:break-all;font-size:15px;color:#0f172a">'+esc(email)+(fixed?' <span style="font-size:12px;color:#7c3aed;white-space:nowrap">（白名单管理员，固定生产计划）</span>':'')+'</span>' +
-        (fixed ? '<span style="font-size:14.5px;color:#334155;white-space:nowrap">🏭 生产计划</span>'
-               : '<select data-perm-email="'+esc(email)+'" style="padding:8px 10px;border:1px solid #cbd5e1;border-radius:9px;font-size:14px;background:#fff">'+opts+'</select>') +
+      return '<div style="display:flex;align-items:center;gap:16px;padding:14px 6px;border-bottom:1px solid #e2e8f0;flex-wrap:wrap">' +
+        '<span style="flex:1 1 auto;min-width:280px;white-space:nowrap;font-size:16px;color:#0f172a">'+esc(email)+(fixed?' <span style="font-size:13px;color:#7c3aed;white-space:nowrap">（白名单管理员，固定生产计划）</span>':'')+'</span>' +
+        (fixed ? '<span style="flex:0 0 auto;font-size:15.5px;color:#334155;white-space:nowrap">🏭 生产计划</span>'
+               : '<select data-perm-email="'+esc(email)+'" style="flex:0 0 auto;min-width:170px;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:15px;background:#fff">'+opts+'</select>') +
         '</div>';
     }
     function bindSelects(){
