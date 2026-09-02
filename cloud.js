@@ -1,17 +1,18 @@
 /* =====================================================
- * cloud.js — CloudBase 云同步层（排产系统 v2.13.0 → v2.14.0：登录用户名下发（需求人自动绑定账号）+ 账号面板（自助修改密码/退出切换）+ 角色绑定登录身份（方案A权限分层）+ 状态栏点击弹出账号面板 + 邮箱登录（安全加固方案A）+ 确认弹窗走主应用模态 + 清空/导入云端需求同步 + 操作日志上云 op_logs）
+ * cloud.js — CloudBase 云同步层（排产系统 v2.13.0 → v2.15.0：三档角色（读者/需求方/生产计划）+ 权限管理（permissions 集合读写、角色实时下发）+ 登录用户名下发（需求人自动绑定账号）+ 账号面板（自助修改密码/退出切换）+ 角色绑定登录身份（方案A权限分层）+ 状态栏点击弹出账号面板 + 邮箱登录（安全加固方案A）+ 确认弹窗走主应用模态 + 清空/导入云端需求同步 + 操作日志上云 op_logs）
  *
  * 作用：让「需求填报」与「排产计划」在多人浏览器之间实时共享。
- *   · requests   集合：需求（每条需求一个文档，多人提交互不覆盖）
- *   · plan_state 集合：排产计划（单文档，管理员维护，大家加载）
- *   · op_logs    集合：操作审计日志（v2.11.0 起上云，v2.12.0 起附带操作者邮箱）
- * 两个集合均有实时监听（watch）：他人提交需求、调整/锁定排产，几秒内自动同步，无需刷新。
+ *   · requests    集合：需求（每条需求一个文档，多人提交互不覆盖）
+ *   · plan_state  集合：排产计划（单文档，管理员维护，大家加载）
+ *   · op_logs     集合：操作审计日志（v2.11.0 起上云，v2.12.0 起附带操作者邮箱）
+ *   · permissions 集合：账号角色分配（v2.15.0，_id=邮箱小写，role=reader/requester/planner）
+ * 各集合均有实时监听（watch）：他人提交需求、调整/锁定排产、管理员改角色，几秒内自动同步，无需刷新。
  * 未配置 envId / SDK 未加载 / 网络不可用 → 自动降级为纯本地模式（localStorage）。
  *
  * 接入步骤（详见「数据安全加固指南.md」方案A）：
  *   1. 腾讯云控制台开通 CloudBase 环境（免费额度即可）
  *   2. 环境 → 身份验证 → 开启「邮箱登录」+ 创建团队成员用户（保留匿名登录作过渡）
- *   3. 数据库 → 创建集合 requests、plan_state、op_logs → 权限规则「auth != null 可读写」
+ *   3. 数据库 → 创建集合 requests、plan_state、op_logs、permissions → 权限规则「auth != null 可读写」
  *   4. 把环境 ID 填到 排产系统.html 顶部 window.CLOUD_CONFIG.envId
  * ===================================================== */
 (function () {
@@ -20,10 +21,12 @@
   var CFG = window.CLOUD_CONFIG || {};
   var REQ_COLL = 'requests';   // 需求集合
   var PLAN_COLL = 'plan_state'; // 排产计划集合
+  var PERM_COLL = 'permissions'; // v2.15.0 账号角色集合（_id=邮箱小写，role=reader/requester/planner）
   var PLAN_ID = 'main';
-  // v2.13.0 角色白名单：列表内邮箱登录 = 「生产计划」角色（可调整/锁定/删除/清空/导入）；
-  // 其他邮箱/匿名 = 「需求方」角色（可填报需求、查看全部页面）。可用 CLOUD_CONFIG.planAdmins 追加。
+  // v2.13.0/v2.15.0 生产计划白名单：列表内邮箱恒为「生产计划」角色（可调整/锁定/删除/清空/导入/权限管理）；
+  // 其他邮箱按 permissions 集合分配（未登记默认「需求方」），匿名 = 「需求方」。可用 CLOUD_CONFIG.planAdmins 追加。
   var PLAN_ADMINS = ['shunchao_zhang@henlius.com'].concat(CFG.planAdmins || []).map(function (s) { return String(s || '').trim().toLowerCase(); });
+  var ROLE_LABEL = { reader: '读者', requester: '需求方', planner: '生产计划' };
 
   var db = null, ready = false;
   var retriedLogin = false; // 凭证缺失自动重登标志（每次会话最多一次）
@@ -96,7 +99,8 @@
   var appRef = null; // 保留 app 引用供重登使用
   var authRef = null;      // auth 实例（登录/登出）
   var curEmail = '';       // 当前登录邮箱（空 = 匿名/未知），用于操作日志追溯与状态栏展示
-  var adminFlag = false;   // v2.13.0：当前身份是否「生产计划」角色（邮箱白名单判定）
+  var adminFlag = false;   // 当前身份是否「生产计划」角色（planner）
+  var myRole = '';         // v2.15.0：当前三档角色（reader/requester/planner）
   var EMAIL_KEY = 'paichan_login_email'; // 本地记住登录邮箱（会话恢复时显示用）
 
   function rememberEmail(email) {
@@ -106,18 +110,37 @@
       else localStorage.removeItem(EMAIL_KEY);
     } catch (e) { /* 隐私模式等场景忽略 */ }
   }
+  // 角色下发：更新状态栏文案 + 通知主文件（hook.setRole 传三档角色字符串，兼容旧版布尔）
+  function applyMyRole(role) {
+    if (ROLE_LABEL[role] == null) role = 'requester';
+    myRole = role;
+    adminFlag = (role === 'planner');
+    if (curEmail) setStatus('☁️ 已连接·' + curEmail + '（' + ROLE_LABEL[role] + '）', 'cloud-on');
+    else setStatus('☁️ 已连接·匿名（需求方）', 'cloud-on'); // v2.12.1：匿名状态显式标出，提示用户可切换
+    if (statusEl) statusEl.title = (curEmail ? '当前登录：' + curEmail + '（' + ROLE_LABEL[role] + '）' : '当前为匿名登录（需求方权限），建议用邮箱账号') + '。点击此处可修改密码或退出并切换账号';
+    if (hook && typeof hook.setRole === 'function') {
+      try { hook.setRole(role); } catch (e) { console.warn('[cloud] setRole 回调异常：', e); }
+    }
+  }
+  // v2.15.0：解析当前账号角色——白名单=planner（免查库）；匿名=requester；
+  // 其他邮箱查 permissions 集合（未登记/集合未建/读失败 → 默认 requester）
+  function refreshMyRole() {
+    var em = (curEmail || '').toLowerCase();
+    if (!curEmail) { applyMyRole('requester'); return; }
+    if (PLAN_ADMINS.indexOf(em) >= 0) { applyMyRole('planner'); return; }
+    db.collection(PERM_COLL).doc(em).get()
+      .then(function (r) {
+        var d = (r && r.data) || {};
+        applyMyRole(ROLE_LABEL[d.role] != null ? d.role : 'requester');
+      })
+      .catch(function () { applyMyRole('requester'); }); // 集合未建/无权限/网络问题 → 默认需求方
+  }
   // 登录成功/会话恢复后的统一入口
   function onAuthed() {
     db = appRef.database();
     ready = true;
-    // v2.13.0：角色绑定登录身份——管理员白名单邮箱=生产计划，其他/匿名=需求方
-    adminFlag = PLAN_ADMINS.indexOf((curEmail || '').toLowerCase()) >= 0;
-    if (curEmail) setStatus(adminFlag ? '☁️ 已连接·' + curEmail + '（生产计划）' : '☁️ 已连接·' + curEmail + '（需求方）', 'cloud-on');
-    else setStatus('☁️ 已连接·匿名（需求方）', 'cloud-on'); // v2.12.1：匿名状态显式标出，提示用户可切换
-    if (statusEl) statusEl.title = (curEmail ? '当前登录：' + curEmail + (adminFlag ? '（生产计划）' : '（需求方）') : '当前为匿名登录（需求方权限），建议用邮箱账号') + '。点击此处可修改密码或退出并切换账号';
-    if (hook && typeof hook.setRole === 'function') {
-      try { hook.setRole(adminFlag); } catch (e) { console.warn('[cloud] setRole 回调异常：', e); }
-    }
+    // v2.15.0：角色按登录账号解析（白名单→生产计划；permissions 集合→读者/需求方/生产计划）
+    refreshMyRole();
     // v2.14.0：登录用户名下发（邮箱前缀，小写归一与角色判定一致）——主文件据此把「需求人」自动绑定为当前账号，无需人工填写
     if (hook && typeof hook.setUser === 'function') {
       try { hook.setUser(curEmail ? curEmail.toLowerCase().split('@')[0] : ''); } catch (e) { console.warn('[cloud] setUser 回调异常：', e); }
@@ -125,9 +148,9 @@
     toast('☁️ 已连接云端，需求实时共享');
     syncDown();
   }
-  // v2.13.0：当前登录身份是否为「生产计划」角色。
+  // v2.13.0/v2.15.0：当前登录身份是否为「生产计划」角色。
   // 本地模式（未配置云）与连接建立前的启动瞬间不拦截，保持离线单机全功能；
-  // 连接后以登录邮箱白名单为准（防 F12 手改 state.role 绕过 UI）。
+  // 连接后以登录身份为准（白名单/权限管理页分配，防 F12 手改 state.role 绕过 UI）。
   function isPlanAdmin() {
     if (!enabled()) return true;
     if (!ready) return true;
@@ -419,6 +442,7 @@
       if (res[1] && res[1].updatedAt) rememberPlanVersion(res[1].updatedAt);
       startWatch();       // 需求实时监听
       startPlanWatch();   // 计划实时监听
+      startPermWatch();   // v2.15.0：角色权限实时监听（管理员改角色 → 在线页面自动生效）
     }).catch(function (e) {
       var full = shortErr(e, 300);
       console.warn('[cloud] 拉取失败：', e);
@@ -580,6 +604,62 @@
       })
       .catch(function (e) { console.warn('[cloud] 操作日志拉取失败：', e); return []; });
   }
+  // ---------- v2.15.0 权限管理：permissions 集合读写 ----------
+  // 读取全部角色分配（权限管理页列表）。集合未建/读失败 → 空数组（页面仍可用，白名单管理员置顶显示）
+  function fetchPerms() {
+    if (!ready) return Promise.resolve([]);
+    return getAll(PERM_COLL).then(function (rows) {
+      return (rows || []).map(function (d) {
+        return { email: String(d && d._id || '').toLowerCase(), role: (d && d.role) || 'requester', updatedAt: (d && d.updatedAt) || 0 };
+      }).filter(function (p) { return p.email && p.email.indexOf('@') >= 0; });
+    }).catch(function (e) {
+      console.warn('[cloud] 权限列表拉取失败（集合可能未创建）：', e);
+      return [];
+    });
+  }
+  // 分配角色：email 归一小写后作为文档 _id upsert。返回 Promise<boolean>（true=云端写入成功）
+  function setPerm(email, role) {
+    if (!ready) return Promise.reject(new Error('未连接云端'));
+    email = String(email || '').trim().toLowerCase();
+    if (!email || email.indexOf('@') < 0) return Promise.reject(new Error('邮箱格式无效'));
+    if (ROLE_LABEL[role] == null) return Promise.reject(new Error('角色无效（应为 reader/requester/planner）'));
+    return upsert(PERM_COLL, email, { role: role, updatedBy: curEmail || '', updatedAt: Date.now() }, '权限')
+      .then(function (ok) { return !!ok; });
+  }
+  // 当前账号三档角色查询（'reader'|'requester'|'planner'；未连接/匿名/未登记 → requester）
+  function getMyRole() {
+    return myRole || 'requester';
+  }
+  // 角色实时监听：管理员在权限管理页改了某账号角色 → 该账号在线页面自动生效（无需刷新）。
+  // 监听失败（集合未建等）静默降级为「下次登录/刷新时生效」。
+  var permWatchHandle = null;
+  function startPermWatch() {
+    if (!ready || permWatchHandle) return;
+    if (typeof WebSocket === 'undefined') return;
+    try {
+      permWatchHandle = db.collection(PERM_COLL).where({}).watch({
+        onChange: function (snap) {
+          var docs = (snap && snap.docs) || [];
+          var em = (curEmail || '').toLowerCase();
+          if (!em || PLAN_ADMINS.indexOf(em) >= 0) return; // 匿名/白名单管理员角色固定，不随集合变化
+          var mine = null;
+          docs.forEach(function (d) { if (d && String(d._id || '').toLowerCase() === em) mine = d; });
+          if (mine && mine.role && mine.role !== myRole) {
+            var newRole = ROLE_LABEL[mine.role] != null ? mine.role : 'requester';
+            console.log('[cloud] 权限变更（实时生效）：' + myRole + ' → ' + newRole);
+            applyMyRole(newRole);
+          }
+        },
+        onError: function (err) {
+          console.warn('[cloud] 权限实时监听断开（下次登录/刷新时生效）：', err);
+          permWatchHandle = null;
+        }
+      });
+    } catch (e) {
+      console.warn('[cloud] 权限实时监听不可用，回退为登录时生效：', e);
+      permWatchHandle = null;
+    }
+  }
   function pushPlan() {
     if (!ready || !hook || !hook.getPlan) return;
     var p = hook.getPlan();
@@ -651,6 +731,8 @@
   window.CloudSync = {
     connect: connect, isReady: isReady, onSaved: onSaved, logout: logout,
     isPlanAdmin: isPlanAdmin, // v2.13.0 角色查询：主文件 isPlanner() 据此强制身份
+    getMyRole: getMyRole,     // v2.15.0 三档角色查询（reader/requester/planner）
+    fetchPerms: fetchPerms, setPerm: setPerm, // v2.15.0 权限管理：角色列表/分配（permissions 集合）
     changePwd: changePwd, // v2.14.0 自助修改密码（参数：旧密码, 新密码）
     pushReq: pushReq, delReqCloud: delReqCloud, delAllReqs: delAllReqs,
     pushPlan: pushPlan, forcePushPlan: forcePushPlan,
