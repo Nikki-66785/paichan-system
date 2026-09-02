@@ -189,7 +189,7 @@
 <body class="role-requester">
 
 <header>
-  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.17.0（界面美化；APS改为需求方按月提交并按规则月份提醒；批次明细增加交期列；甘特图刻度支持天级）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.17.0</span></h1>
+  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.18.0（APS提交增加项目阶段/条件放行/剂型；批次明细列序调整——交期移至包装完成后、下罐/灌装移至开始列前；快照仅记录拍照时未完成批次；需求列表支持按需求人/时间筛选并可清理已完成需求记录）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.18.0</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -327,7 +327,7 @@
             <div class="f"><label>同项目 MCB 完成日期（可选，不填则自动匹配已排 MCB）</label><input id="f_mcbdate" type="date"></div>
           </div>
           <div class="form-row"><div class="f"><label>备注（选填）</label><input id="f_note" placeholder="如：临床III期样品、需优先等"></div></div>
-          <!-- APS 培养基模拟灌装专属字段（v2.17.0：需求方按月提交，替代原自动生成） -->
+          <!-- APS 培养基模拟灌装专属字段（v2.17.0：需求方按月提交，替代原自动生成；v2.18.0：增加剂型选择） -->
           <div class="form-row" id="apsRow" style="display:none">
             <div class="f"><label>APS 产线 *</label>
               <select id="f_apsline">
@@ -337,6 +337,9 @@
               </select>
             </div>
             <div class="f"><label>计划月份 *</label><input id="f_apsmonth" type="month" title="APS 在该月内自动择 8 天排入（避让已有批次）"></div>
+            <div class="f"><label>剂型 *</label>
+              <select id="f_apsdosage"><option value="水针">水针</option><option value="冻干">冻干</option></select>
+            </div>
           </div>
           <!-- 设备维护保养专属字段（仅生产计划角色、type=EQP 时可见） -->
           <div class="form-row plan-only" id="eqpRow" style="display:none">
@@ -382,6 +385,26 @@
           <span class="spacer"></span>
           <span class="hint req-only">排产方向：优先自动正排（最早可开工）；正排排不下时按交期倒排；交期无法满足时<b style="color:#b45309">标黄预警</b></span>
           <span class="hint plan-only">生产计划角色可在本页删除任意需求（每行「删除」按钮）；批次确认与调整在「📅 排产计划」页</span>
+        </div>
+        <!-- v2.18.0：需求列表筛选（需求人 + 提交时间）与已完成需求记录清理 -->
+        <div class="toolbar" style="margin-bottom:8px">
+          <span class="hint">筛选：</span>
+          <label class="hint">需求人 <select id="reqFiltPerson" title="按需求人筛选"><option value="">全部</option></select></label>
+          <label class="hint">提交时间 <select id="reqFiltTime" title="按需求提交时间筛选">
+            <option value="all">全部</option>
+            <option value="1w">近1周</option>
+            <option value="1m">近1月</option>
+            <option value="3m">近3月</option>
+            <option value="custom">自定义</option>
+          </select></label>
+          <span id="reqFiltDates" style="display:none;align-items:center;gap:4px">
+            <input type="date" id="reqFiltStart" title="提交时间起（含）" style="width:130px">
+            <span class="hint">~</span>
+            <input type="date" id="reqFiltEnd" title="提交时间止（含）" style="width:130px">
+          </span>
+          <span class="hint" id="reqFiltInfo"></span>
+          <span class="spacer"></span>
+          <button class="btn sm" id="btnCleanDoneReq" title="删除所有批次均已完成的需求数据（仅清理需求记录，「📅 排产计划」中的批次保留不动）">🧹 清理已完成需求记录</button>
         </div>
         <div class="req-tbl scroll-tbl">
           <table id="reqTable">
@@ -471,7 +494,7 @@
       <div class="scroll-tbl" style="max-height:520px">
         <table id="batchTable">
           <thead><tr>
-            <th class="plan-only" style="width:28px"><input type="checkbox" id="batchSelAll" title="全选/全不选（仅锁定批次）"></th><th>状态</th><th>类型</th><th>项目</th><th>需求人</th><th>批次号</th><th>产线</th><th>开始</th><th>完成</th><th>交期</th><th>下罐/灌装</th><th>包装完成</th><th>GMP</th><th>备注</th><th class="plan-only">操作</th>
+            <th class="plan-only" style="width:28px"><input type="checkbox" id="batchSelAll" title="全选/全不选（仅锁定批次）"></th><th>状态</th><th>类型</th><th>项目</th><th>需求人</th><th>批次号</th><th>产线</th><th>下罐/灌装</th><th>开始</th><th>完成</th><th>包装完成</th><th>交期</th><th>GMP</th><th>备注</th><th class="plan-only">操作</th>
           </tr></thead>
           <tbody></tbody>
         </table>
@@ -508,7 +531,7 @@
         <button class="btn sm" id="btnDownloadSnap" title="将全部快照导出为 Excel（快照列表 + 批次明细）">⬇ 下载快照</button>
       </div>
       <div class="hint" id="driftUnplanned" style="display:none;background:#fef3c7;color:#92400e;padding:6px 10px;border-radius:8px;margin-bottom:8px"></div>
-      <div class="hint" id="driftHint">快照来源：自动排产（每次排产后）、定期快照（每 2 周自动保存，含人工调整结果）、人工快照（手动保存的关键节点版本）。默认对比最近两次快照，可在上方下拉任选基准与对比版本（含人工快照）。除日期漂移外，对比快照中「新增」的批次（基准无此批次）与「取消」的批次（基准有、对比已移除）也会在表中列出并计入汇总。工具栏「下载快照」可将全部快照导出为 Excel。</div>
+      <div class="hint" id="driftHint">快照来源：自动排产（每次排产后）、定期快照（每 2 周自动保存，含人工调整结果）、人工快照（手动保存的关键节点版本）。快照仅记录<b>拍照时间未完成的批次及其后续</b>（已完成的批次不再进入快照，也不计为「取消」）。默认对比最近两次快照，可在上方下拉任选基准与对比版本（含人工快照）。除日期漂移外，对比快照中「新增」的批次（基准无此批次）与「取消」的批次（基准有、对比已移除）也会在表中列出并计入汇总。工具栏「下载快照」可将全部快照导出为 Excel。</div>
       <div class="scroll-tbl" style="max-height:320px">
         <table class="tbl" id="driftTable">
           <thead><tr><th>类型</th><th>项目</th><th>产线</th><th>上次排产</th><th>本次排产</th><th>漂移(天)</th><th>来源</th><th>状态</th></tr></thead>
@@ -636,12 +659,12 @@
         <p>· <b>Mab</b>：生产周期 = 种子培养 20 天 + 反应器培养 15 天 + 下游纯化 7 天（合计 42 天，需求提报用默认，各段天数由生产计划在人工干预时按项目调整）；批间开始 ≥8 天，下罐批间 ≥10 天（下罐=开始+种子培养+反应器培养），同产线所有批均为硬约束；同项目 MCB 生产后 1 个月才可开始。</p>
         <p>· <b>ADC DS</b>：GMP Mab 完成后 2 周、Non-GMP Mab（来源 PD）完成后 1 个月才可生产；LP 放行完成后才可生产；建议在 Mab 下罐后 2 天开始。</p>
         <p>· <b>DP</b>：制剂周期 = 准备 + 灌装 + 冻干 + 清场 + 目检包装（目检包装默认 10 天，默认水针 3+1+0+1+10=15 天、冻干 3+1+3~4+1+10=18~19 天，各段天数在人工干预时可调）；<b>放大测试批次（冻干放大测试及批次类型=放大测试的需求）不含包装目检时间（目检按 0 天计）</b>；<b>灌装日期自动计算 = 开始日期 + 准备天数，随开始日期/准备天数自动更新</b>；C7CM DP 同产线清场后 2 天、SJ2 ADC DP / SJ2CM DP 清场后 4 天开始下一批；ADC Non-GMP 与同项目 ADC DS 间隔 1 个月、其余间隔 2 周；需二次稀配时制剂准备 3 天→4 天（周期 +1 天）；冻干项目需在需求中确认是否安排放大测试，正式生产与测试批间隔 2 个月。</p>
-        <p>· <b>APS 模拟灌装</b>：占用 8 天、当月内任排。C7CM DP 每年 3/8/12 月、SJ2 ADC DP 每年 3/9 月、SJ2CM DP 每年 8/10 月各 1 批。<b>v2.17.0 起 APS 不再自动生成</b>：系统按规则月份在需求录入页提醒「需排产」，由需求方在表单选择「APS 培养基模拟灌装」按月提交后自动排入。</p>
+        <p>· <b>APS 模拟灌装</b>：占用 8 天、当月内任排。C7CM DP 每年 3/8/12 月、SJ2 ADC DP 每年 3/9 月、SJ2CM DP 每年 8/10 月各 1 批。<b>v2.17.0 起 APS 不再自动生成</b>：系统按规则月份在需求录入页提醒「需排产」，由需求方在表单选择「APS 培养基模拟灌装」按月提交后自动排入。<b>v2.18.0 起提交 APS 需求需填写项目阶段，并可选择剂型（水针/冻干）、勾选是否需要条件放行</b>。</p>
         <p>· <b>批次终态（生产计划人工标记）</b>：批次可标记为 <b>中止 / 失败 / 取消</b>。终态批次不再占用产能（槽位可复用），也不参与锁定/重排，仅保留记录便于追溯；可在人工调整中改回「人工」状态或删除。</p>
         <p>· <b>批量解锁与刷新自动排产</b>：生产计划可在批次表首列勾选多个锁定批次「批量解锁」；「刷新自动排产」按当前需求重新排产所有未锁定批次（锁定批次与终态批次保持不变）。</p>
         <p>· <b>需求导出</b>：需求列表可一键导出 Excel/CSV（项目、类型、批次类型、交期、状态、规格、阶段、预算、首次生产分子信息等全部填报字段）。</p>
         <p>· <b>甘特图视图</b>：产线支持多选过滤；时间范围（全部/近1月/近3月/近6月/自定义）与时间轴密度（px/天）、刻度单位（月/周/天）可调，设置保存在本地。</p>
-        <p>· <b>排产分析</b>：每次「自动排产」记录快照（自动排产），每 2 周自动记录一次定期快照（含人工调整结果），可分析批次日期漂移、月度批次趋势与准时率；快照按来源分别限额保留：自动排产 15 条 / 定期 10 条 / 人工 5 条。</p>
+        <p>· <b>排产分析</b>：每次「自动排产」记录快照（自动排产），每 2 周自动记录一次定期快照（含人工调整结果），可分析批次日期漂移、月度批次趋势与准时率；快照按来源分别限额保留：自动排产 15 条 / 定期 10 条 / 人工 5 条。<b>v2.18.0 起快照仅记录拍照时间未完成的批次及其后续</b>（已完成批次不再进入快照，也不计为「取消」）。</p>
         <p>· <b>权限说明</b>：「📊 参考数据」与「⚙️ 规则参数」仅「🏭 生产计划」角色可见与操作；需求方角色不显示入口。</p>
         <p>· <b>参考数据</b>：「产线情况 / 制剂产能 / 人员配置 / 需求字段矩阵」四张表可修订（生产计划角色），保存后本地持久化。</p>
       </div>
@@ -683,7 +706,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.17.0（云端共享·邮箱登录·权限三档·新账号默认读者）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.18.0（云端共享·邮箱登录·权限三档·新账号默认读者）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -751,7 +774,7 @@
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
 <script src="cloudbase.full.js?v=2152"></script>
 <script src="cloud.js?v=2152"></script>
-<script src="scheduling.js?v=2170"></script>
+<script src="scheduling.js?v=2180"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -1145,21 +1168,23 @@
     var t = $('f_type').value;
     var isDS = (t==='Mab'||t==='ADC DS');
     // v2.17.0：APS 培养基模拟灌装——需求方按月提交（产线+月份），替代原自动生成
+    // v2.18.0：APS 提交增加项目阶段、条件放行、剂型选择
     if(t==='APS'){
       return {
         id: uid(),
         type: 'APS',
         apsLine: $('f_apsline').value || 'C7CM DP',
         apsMonth: $('f_apsmonth').value || '',
+        dosage: $('f_apsdosage').value || '水针',
         atProject: '培养基模拟灌装',
         henliusProject: '',
         dueDate: '', // APS 无交期，按计划月份排产
         batchCount: 1,
         gmp: false, batchKind: '', spec: '', concentration: '', titer: '',
-        stage: '', budget: '', firstProduction: false,
+        stage: $('f_stage').value, budget: '', firstProduction: false,
         molType: '', target: '', novelty: '', mabSubtype: '', hostCell: '',
         hypertonic: false, secondaryDilution: false, vialSpec: '', scaleTest: true,
-        lpReleaseDate: '', conditionalRelease: false, processTransferDate: '', mcbDate: '',
+        lpReleaseDate: '', conditionalRelease: $('f_cond').checked, processTransferDate: '', mcbDate: '',
         priority: '中',
         requester: $('f_requester').value.trim() || state.user || '',
         note: $('f_note').value.trim(),
@@ -1232,10 +1257,11 @@
   }
   function validateReq(r){
     var errs=[];
-    // APS 模拟灌装：仅需产线与计划月份
+    // APS 模拟灌装：需产线、计划月份、项目阶段（v2.18.0：阶段随需求提交）
     if(r.type==='APS'){
       if(!r.apsLine) errs.push('APS产线');
       if(!r.apsMonth) errs.push('计划月份');
+      if(!r.stage) errs.push(FNAMES.stage);
       return errs;
     }
     // 设备维护保养：仅需产线、开始/结束日期、维护类型
@@ -1280,7 +1306,7 @@
     $('f_cond').checked=false; $('f_first').checked=false; $('f_hypertonic').checked=false;
     $('f_dilute').checked=false; $('f_scale').checked=true;
     $('f_eqpline').value='SJ2 CB'; $('f_eqpkind').value='计划保养';
-    $('f_apsline').value='C7CM DP'; $('f_apsmonth').value='';
+    $('f_apsline').value='C7CM DP'; $('f_apsmonth').value=''; $('f_apsdosage').value='水针';
     updateMolRow();
   }
   function addReq(){
@@ -1311,12 +1337,49 @@
       if(window.CloudSync) window.CloudSync.delReqCloud(id); // 同步删除云端需求
     });
   }
+  // v2.18.0：删除已完成需求的记录——仅移除需求条目，批次保留在排产计划中不受影响
+  function delDoneReq(id){
+    if(isReader()){ toast('📖 读者权限仅可预览，无法删除需求'); return; }
+    var r = state.requirements.find(function(x){return x.id===id;});
+    if(!r) return;
+    if(!reqAllDone(r)){ toast('该需求尚有未完成批次，请使用「删除」（将同时删除批次）'); return; }
+    if(!isPlanner() && !canDelReq(r)){ toast('该需求由「'+r.requester+'」提交，仅本人可删。解决：用该需求人的账号登录，或切换「🏭 生产计划」角色'); return; }
+    uiConfirm('删除该需求记录？\n其批次均已完成，将保留在「📅 排产计划」中不受影响。', function(ok){
+      if(!ok) return;
+      state.requirements = state.requirements.filter(function(x){return x.id!==id;});
+      save(); renderAll();
+      addOp('删除已完成需求记录', (r.henliusProject||r.atProject||r.id)+'（批次保留）');
+      if(window.CloudSync) window.CloudSync.delReqCloud(id);
+      toast('已删除需求记录（排产计划中的批次不受影响）');
+    });
+  }
+  // v2.18.0：批量清理已完成需求记录（仅本人可删的按登录账号过滤；批次保留）
+  function cleanDoneReqs(){
+    if(isReader()){ toast('📖 读者权限仅可预览，无法删除需求'); return; }
+    var done = state.requirements.filter(reqAllDone);
+    if(!done.length){ toast('暂无可清理的已完成需求记录'); return; }
+    var allowed = isPlanner() ? done : done.filter(canDelReq);
+    if(!allowed.length){ toast('可清理的记录均由他人提交：请用对应账号登录，或切换「🏭 生产计划」角色'); return; }
+    var skipped = done.length - allowed.length;
+    var names = allowed.map(function(r){ return r.henliusProject||r.atProject||r.id; }).join('、');
+    if(names.length > 120) names = names.slice(0,120)+'…';
+    uiConfirm('批量清理 '+allowed.length+' 条已完成需求记录？\n（排产计划中的批次保留不动）\n涉及：'+names+(skipped?'（另有 '+skipped+' 条他人提交的记录未纳入）':''), function(ok){
+      if(!ok) return;
+      var ids = {};
+      allowed.forEach(function(r){ ids[r.id]=1; });
+      state.requirements = state.requirements.filter(function(r){ return !ids[r.id]; });
+      save(); renderAll();
+      addOp('清理已完成需求记录', allowed.length+' 条（批次保留）');
+      allowed.forEach(function(r){ if(window.CloudSync) window.CloudSync.delReqCloud(r.id); });
+      toast('已清理 '+allowed.length+' 条需求记录（排产计划不受影响）');
+    });
+  }
   function editReq(id){
     if(isReader()){ toast('📖 读者权限仅可预览，无法编辑需求'); return; }
     var r = state.requirements.find(function(x){return x.id===id;});
     if(!r) return;
     $('f_type').value=r.type; onTypeChange();
-    if(r.type==='APS'){ $('f_apsline').value=r.apsLine||'C7CM DP'; $('f_apsmonth').value=r.apsMonth||''; }
+    if(r.type==='APS'){ $('f_apsline').value=r.apsLine||'C7CM DP'; $('f_apsmonth').value=r.apsMonth||''; $('f_apsdosage').value=r.dosage||'水针'; }
     if(r.type==='EQP'){
       $('f_eqpline').value=r.maintLine||'SJ2 CB';
       $('f_eqpkind').value=r.maintKind||'计划保养';
@@ -1475,7 +1538,13 @@
   function snapshotBatches(){
     var dueMap = {};
     state.requirements.forEach(function(r){ dueMap[r.id] = r.dueDate || ''; });
-    return state.batches.map(function(b){
+    // v2.18.0：快照范围 = 拍照时间未完成的批次及其后续（end ≥ 今天）；
+    // 拍照时已完成的批次不再进入快照，控制体积并聚焦在制/待制批次。
+    var t0 = U.p(today());
+    return state.batches.filter(function(b){
+      var e = U.p(b.end);
+      return !e || e >= t0;
+    }).map(function(b){
       return { id:b.id, reqId:b.reqId, type:b.type, line:b.line||'其他', start:b.start, end:b.end,
         project:b.project||'', status:b.status, dueDate: dueMap[b.reqId]||'' };
     });
@@ -1620,6 +1689,13 @@
     if(!bs.length) return '待排产';
     return bs.every(function(b){ return b.locked || isFinal(b); }) ? '已锁定' : '待确认';
   }
+  // v2.18.0：需求的所有批次均已完成（锁定/终态且完成日期已过）→ 需求记录可单独清理（批次保留）
+  function reqAllDone(r){
+    var bs = state.batches.filter(function(b){ return b.reqId===r.id; });
+    if(!bs.length) return false;
+    var t0 = U.p(today());
+    return bs.every(function(b){ return (b.locked || isFinal(b)) && b.end && U.p(b.end) <= t0; });
+  }
   // v2.16.1：交期差异提醒（需求录入页横幅）——各需求已排批次的最晚完成日期 vs 期望完成日期，晚于交期即提醒
   function renderDueInfo(){
     var el = $('dueBanner'); if(!el) return;
@@ -1713,21 +1789,55 @@
   function renderReq(){
     renderDueInfo(); // v2.16.1：交期差异提醒随需求列表刷新
     renderApsInfo(); // v2.17.0：APS 月份提醒随需求列表刷新
-    $('reqCount').textContent = state.requirements.length+' 条';
     var tb = $('reqTable').querySelector('tbody');
     tb.innerHTML='';
-    $('reqEmpty').style.display = state.requirements.length ? 'none' : '';
-    state.requirements.slice().reverse().forEach(function(r){
+    // v2.18.0：需求列表筛选（需求人 + 提交时间，仅影响显示不影响数据）
+    var fP = $('reqFiltPerson') ? ($('reqFiltPerson').value||'') : '';
+    var fT = $('reqFiltTime') ? ($('reqFiltTime').value||'all') : 'all';
+    var fS = $('reqFiltStart') ? ($('reqFiltStart').value||'') : '';
+    var fE = $('reqFiltEnd') ? ($('reqFiltEnd').value||'') : '';
+    // 需求人下拉选项重建（保留当前选择）
+    var pSel = $('reqFiltPerson');
+    if(pSel){
+      var pCur = pSel.value;
+      var persons = [];
+      state.requirements.forEach(function(r){ var p = r.requester||'-'; if(persons.indexOf(p)<0) persons.push(p); });
+      persons.sort();
+      pSel.innerHTML = '<option value="">全部</option>' + persons.map(function(p){ return '<option value="'+esc(p)+'">'+esc(p)+'</option>'; }).join('');
+      pSel.value = persons.indexOf(pCur) >= 0 ? pCur : '';
+      fP = pSel.value;
+    }
+    var nowMs = Date.now();
+    var shown = state.requirements.filter(function(r){
+      if(fP && (r.requester||'-') !== fP) return false;
+      if(fT==='1w' || fT==='1m' || fT==='3m'){
+        if(!r.createdAt) return true; // 旧数据无提交时间时不过滤
+        var days = fT==='1w' ? 7 : (fT==='1m' ? 30 : 90);
+        if(nowMs - new Date(r.createdAt).getTime() > days * 86400000) return false;
+      } else if(fT==='custom'){
+        var cd = (r.createdAt||'').slice(0,10);
+        if(cd){
+          if(fS && cd < fS) return false;
+          if(fE && cd > fE) return false;
+        }
+      }
+      return true;
+    });
+    var filtered = fP || fT!=='all';
+    $('reqCount').textContent = filtered ? (shown.length+' / '+state.requirements.length+' 条') : (state.requirements.length+' 条');
+    if($('reqFiltInfo')) $('reqFiltInfo').textContent = filtered ? '（筛选结果 '+shown.length+' 条）' : '';
+    $('reqEmpty').style.display = shown.length ? 'none' : '';
+    shown.slice().reverse().forEach(function(r){
       var tr=document.createElement('tr');
       var isEQP = r.type==='EQP';
-      var typeTxt = isEQP ? '设备维护' : (r.type==='APS' ? 'APS' : (r.type==='CB' ? r.cbKind : (r.type==='DP' ? r.dpKind+' '+r.dosage : r.type)));
+      var typeTxt = isEQP ? '设备维护' : (r.type==='APS' ? ('APS'+(r.dosage&&r.dosage!=='水针' ? ' '+r.dosage : '')) : (r.type==='CB' ? r.cbKind : (r.type==='DP' ? r.dpKind+' '+r.dosage : r.type)));
       var kindTxt = isEQP ? (r.maintKind||'-') : (r.batchKind || (r.gmp?'GMP生产':'Non-GMP'));
-      var st = reqStatus(r);
-      var stBadge = st==='已锁定' ? 'b-green' : (st==='待确认' ? 'b-orange' : 'b-gray');
+      var st = reqAllDone(r) ? '已完成' : reqStatus(r); // v2.18.0：全部批次已完成的需求标记「已完成」，可清理记录
+      var stBadge = st==='已锁定' ? 'b-green' : (st==='待确认' ? 'b-orange' : (st==='已完成' ? 'b-cyan' : 'b-gray'));
       var tip = isEQP
         ? '维护产线:'+(r.maintLine||'-')+' ｜ 维护类型:'+(r.maintKind||'-')+' ｜ '+r.maintStart+'~'+r.maintEnd+(r.note?' ｜ 备注:'+r.note:'')
         : (r.type==='APS'
-          ? 'APS产线:'+(r.apsLine||'-')+' ｜ 计划月份:'+(r.apsMonth||'-')+(r.note?' ｜ 备注:'+r.note:'')
+          ? 'APS产线:'+(r.apsLine||'-')+' ｜ 计划月份:'+(r.apsMonth||'-')+' ｜ 剂型:'+(r.dosage||'水针')+' ｜ 阶段:'+(r.stage||'-')+(r.conditionalRelease?' ｜ 条件放行':'')+(r.note?' ｜ 备注:'+r.note:'')
           : '规格:'+(r.spec||'-')+' ｜ 阶段:'+(r.stage||'-')+' ｜ 批次类型:'+(kindTxt||'-')+
           (r.type==='Mab'?' ｜ 周期:种子20+反应器15+纯化7天(默认,人工干预可调)':'')+
           (r.titer!==''&&r.titer!=null?' ｜ Titer:'+r.titer:'')+(r.concentration?' ｜ 浓度:'+r.concentration:'')+
@@ -1738,6 +1848,10 @@
             (r.novelty?' ｜ Novelty:'+r.novelty:'')+
             (r.mabSubtype?' ｜ mAb subtype:'+r.mabSubtype:'')+
             (r.hostCell?' ｜ Host Cell Line:'+r.hostCell:''):'')+(r.note?' ｜ 备注:'+r.note:''));
+      // v2.18.0：全部批次已完成的需求可单独删除记录（批次保留在排产计划中不受影响）
+      var doneBtn = (st==='已完成' && !isReader() && (isPlanner() || canDelReq(r)))
+        ? ' <button class="btn sm" data-act="deldone" data-id="'+r.id+'" title="仅删除本条需求记录（批次均已完成，「📅 排产计划」中的批次保留不动）">🧹 删除记录</button>'
+        : '';
       tr.innerHTML = '<td title="'+esc(tip)+'"><b>'+esc(isEQP ? (r.maintKind||'设备维护') : (r.henliusProject||r.atProject||'-'))+'</b></td>'+
         '<td>'+esc(typeTxt)+'</td>'+
         '<td>'+r.batchCount+' 批</td>'+
@@ -1749,10 +1863,10 @@
         '<td>'+(isReader()
           ? '<span class="hint" style="font-size:11px;cursor:help" title="读者权限仅可预览">👀 只读</span>'
           : (isPlanner()
-          ? '<button class="btn sm danger" data-act="del" data-id="'+r.id+'" title="生产计划角色可删除任意需求">删除</button>'
+          ? '<button class="btn sm danger" data-act="del" data-id="'+r.id+'" title="生产计划角色可删除任意需求">删除</button>'+doneBtn
           : '<button class="btn sm" data-act="edit" data-id="'+r.id+'">编辑</button> '+
             (canDelReq(r)?'<button class="btn sm danger" data-act="del" data-id="'+r.id+'" title="仅需求人本人可删除">删除</button>'
-              :'<span class="hint" style="font-size:11px;cursor:help;border-bottom:1px dotted" data-act="delhint" data-id="'+r.id+'" title="删除方法：① 用该需求人的账号登录（需求人自动绑定登录账号）；② 或切换到「🏭 生产计划」角色后可删除任意需求">🔒 仅'+esc(r.requester)+'可删</span>')))+'</td>';
+              :'<span class="hint" style="font-size:11px;cursor:help;border-bottom:1px dotted" data-act="delhint" data-id="'+r.id+'" title="删除方法：① 用该需求人的账号登录（需求人自动绑定登录账号）；② 或切换到「🏭 生产计划」角色后可删除任意需求">🔒 仅'+esc(r.requester)+'可删</span>')+doneBtn))+'</td>';
       tb.appendChild(tr);
     });
   }
@@ -1965,6 +2079,10 @@
     });
     (prev.batches||[]).forEach(function(pb){
       if(!pb.reqId) return;
+      // v2.18.0：快照仅记录拍照时未完成批次——批次在两次快照之间已完成（end 早于对比快照日期）
+      // 而不在对比快照中，属于范围排除而非取消，不计入「取消批次」
+      var lastDay = U.p((last.time||'').slice(0,10));
+      if(pb.end && lastDay && U.p(pb.end) < lastDay) return;
       if(!(last.batches||[]).some(function(nb){ return nb.reqId===pb.reqId && nb.type===pb.type && nb.line===pb.line; })){
         removedRows.push(pb);
       }
@@ -2289,9 +2407,9 @@
         '<td>'+esc(b.requester||'-')+'</td>'+
         '<td style="color:var(--sub)">'+esc(b.batchNo||'-')+'</td>'+
         '<td>'+esc(b.line||'-')+'</td>'+
-        '<td>'+esc(b.start)+'</td><td>'+esc(b.end)+'</td>'+dueCell(b)+
-        '<td style="color:var(--sub)">'+(b.harvestDate?'下罐 '+esc(b.harvestDate):(b.fillDate?'灌装 '+esc(b.fillDate):'-'))+'</td>'+
-        '<td style="color:var(--sub)">'+esc(packDateOf(b)||'-')+'</td>'+
+        '<td style="color:var(--sub)">'+(b.harvestDate?'下罐 '+esc(b.harvestDate):(b.fillDate?'灌装 '+esc(b.fillDate):'-'))+'</td>'+ // v2.18.0：下罐/灌装移至开始列前
+        '<td>'+esc(b.start)+'</td><td>'+esc(b.end)+'</td>'+
+        '<td style="color:var(--sub)">'+esc(packDateOf(b)||'-')+'</td>'+dueCell(b)+ // v2.18.0：交期移至包装完成后
         '<td>'+(b.gmp?'<span class="b-green">GMP</span>':'<span class="b-gray">非GMP</span>')+'</td>'+
         '<td style="max-width:220px;white-space:normal;color:var(--sub)">'+esc(b.warning||b.note||'')+'</td>'+
         '<td class="plan-only">'+ops+'</td>';
@@ -2849,11 +2967,11 @@
     ensureXlsx(function(ok){
       if(!ok) return;
       try{
-        var rows = [['状态','类型','项目','需求人','批次号','产线','开始','完成','交期','下罐/灌装','包装完成','GMP','备注']];
+        var rows = [['状态','类型','项目','需求人','批次号','产线','下罐/灌装','开始','完成','包装完成','交期','GMP','备注']];
         var dueMap = {};
         state.requirements.forEach(function(r){ dueMap[r.id] = r.dueDate || ''; });
         state.batches.forEach(function(b){
-          rows.push([b.status, b.type, b.project, b.requester||'', b.batchNo||'', b.line, b.start, b.end, dueMap[b.reqId]||'', b.harvestDate||b.fillDate||'', packDateOf(b)||'', b.gmp?'Y':'N', (b.warning||b.note||'').replace(/\n/g,' ')]);
+          rows.push([b.status, b.type, b.project, b.requester||'', b.batchNo||'', b.line, b.harvestDate||b.fillDate||'', b.start, b.end, packDateOf(b)||'', dueMap[b.reqId]||'', b.gmp?'Y':'N', (b.warning||b.note||'').replace(/\n/g,' ')]);
         });
         var wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '排产批次');
@@ -2869,7 +2987,7 @@
       var rows = [['项目号','类型','批次类型','批次数','交期','优先级','需求人','状态','规格','项目阶段','预算','首次生产','Molecule Type','Target','Novelty','mAb subtype','Host Cell Line','二次稀配','注射瓶规格','Titer','制剂批量','备注','提交时间']];
       state.requirements.forEach(function(r){
         var isEQP = r.type==='EQP';
-        var typeTxt = isEQP ? '设备维护' : (r.type==='CB' ? r.cbKind : (r.type==='DP' ? r.dpKind+' '+r.dosage : r.type));
+        var typeTxt = isEQP ? '设备维护' : (r.type==='APS' ? ('APS'+(r.dosage&&r.dosage!=='水针'?' '+r.dosage:'')) : (r.type==='CB' ? r.cbKind : (r.type==='DP' ? r.dpKind+' '+r.dosage : r.type)));
         rows.push([
           isEQP ? (r.maintKind||'设备维护') : (r.henliusProject||r.atProject||''),
           typeTxt, isEQP ? (r.maintKind||'-') : (r.batchKind||(r.gmp?'GMP生产':'Non-GMP')), r.batchCount,
@@ -2974,6 +3092,7 @@
       var btn = ev.target.closest('[data-act]');
       if(!btn) return;
       if(btn.dataset.act==='edit') editReq(btn.dataset.id);
+      else if(btn.dataset.act==='deldone') delDoneReq(btn.dataset.id); // v2.18.0：仅删需求记录，批次保留
       else if(btn.dataset.act==='delhint'){
         var rr = state.requirements.find(function(x){return x.id===btn.dataset.id;});
         if(rr) toast('该需求由「'+(rr.requester||'-')+'」提交。删除方法：用该需求人的账号登录（需求人自动绑定登录账号），或切换到「🏭 生产计划」角色后可删除任意需求');
@@ -2997,6 +3116,15 @@
     });
     ['filtType','filtLine','filtStatus'].forEach(function(i){ $(i).addEventListener('change', renderBatches); });
     $('filtProject').addEventListener('input', renderBatches);
+    // v2.18.0：需求列表筛选（需求人/时间）与已完成需求记录清理
+    ['reqFiltPerson','reqFiltTime'].forEach(function(i){
+      $(i).addEventListener('change', function(){
+        $('reqFiltDates').style.display = $('reqFiltTime').value==='custom' ? 'inline-flex' : 'none';
+        renderReq();
+      });
+    });
+    ['reqFiltStart','reqFiltEnd'].forEach(function(i){ $(i).addEventListener('change', renderReq); });
+    $('btnCleanDoneReq').addEventListener('click', cleanDoneReqs);
     $('batchTable').addEventListener('click', function(ev){
       var btn = ev.target.closest('button[data-act]');
       if(!btn) return;
