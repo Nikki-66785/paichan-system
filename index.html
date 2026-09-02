@@ -168,7 +168,7 @@
 <body class="role-requester">
 
 <header>
-  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.15.7（月度趋势：Mab 更名 MabDS；CM DP 按产线拆分为 C7/SJ2 两条）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.15.7</span></h1>
+  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.16.0（需求录入优化：删优先级、备注选填、期望日期移至工艺转移后、Mab可选SJ1/SJ2产线；新增排产冲突提示与首次生产汇总；月度趋势按产线筛选）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.16.0</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -207,6 +207,7 @@
     </div>
     <div id="warnBanner" class="warn-banner"></div>
     <div id="newReqBanner" class="newreq-banner"></div>
+    <div id="conflictBanner" class="warn-banner"></div>
     <div id="readerBanner" class="warn-banner" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8">👀 当前账号为「读者」权限：仅可预览需求录入、排产计划与排产分析，不能新增/编辑/删除。如需提需求，请联系生产计划管理员在「🛡️ 权限管理」中调整角色</div>
     <div class="grid2">
       <div class="card" id="reqFormCard">
@@ -248,14 +249,10 @@
           </div>
           <div class="form-row">
             <div class="f"><label>批次数 *</label><input id="f_batchcount" type="number" min="1" max="99" value="1"></div>
-            <div class="f"><label>期望完成日期（交期）*</label><input id="f_due" type="date"></div>
-          </div>
-          <div class="form-row">
-            <div class="f"><label>优先级 *</label>
-              <select id="f_priority">
-                <option value="中">中</option>
-                <option value="高">高</option>
-                <option value="低">低</option>
+            <div class="f" id="mabLineRow" style="display:none"><label>产线 *</label>
+              <select id="f_mabline">
+                <option value="SJ1DS">SJ1（松江一厂）</option>
+                <option value="SJ2DS">SJ2（松江二厂）</option>
               </select>
             </div>
             <div class="f"><label>需求人</label><input id="f_requester" placeholder="登录后自动填入，本地模式填姓名" title="云端登录后自动绑定为当前账号，无需填写"></div>
@@ -301,17 +298,19 @@
           </div>
           <div class="form-row">
             <div class="f"><label>正式工艺转移完成日期 <span style="color:#dc2626;font-weight:400">（MCB建库必填；Mab/ADC DS/DP首次生产必填）</span>，之后1个月才可投产</label><input id="f_transfer" type="date"></div>
+            <div class="f" id="dueWrap"><label>期望完成日期（交期）*</label><input id="f_due" type="date"></div>
           </div>
           <div class="form-row" id="mcbDateRow">
             <div class="f"><label>同项目 MCB 完成日期（可选，不填则自动匹配已排 MCB）</label><input id="f_mcbdate" type="date"></div>
           </div>
-          <div class="form-row"><div class="f"><label>备注</label><input id="f_note" placeholder="如：临床III期样品、需优先等"></div></div>
+          <div class="form-row"><div class="f"><label>备注（选填）</label><input id="f_note" placeholder="如：临床III期样品、需优先等"></div></div>
           <!-- 设备维护保养专属字段（仅生产计划角色、type=EQP 时可见） -->
           <div class="form-row plan-only" id="eqpRow" style="display:none">
             <div class="f"><label>维护产线 *</label>
               <select id="f_eqpline">
                 <option value="SJ2 CB">SJ2 CB（细胞库）</option>
-                <option value="SJ1DS">SJ1DS（Mab原液）</option>
+                <option value="SJ1DS">SJ1DS（Mab原液·松江一厂）</option>
+                <option value="SJ2DS">SJ2DS（Mab原液·松江二厂）</option>
                 <option value="SJ2 ADC DS">SJ2 ADC DS</option>
                 <option value="SJ2 ADC DP">SJ2 ADC DP</option>
                 <option value="C7CM DP">C7CM DP</option>
@@ -371,6 +370,7 @@
           <label><input type="checkbox" data-line="" checked>全部</label>
           <label><input type="checkbox" data-line="SJ2 CB">SJ2 CB</label>
           <label><input type="checkbox" data-line="SJ1DS">SJ1DS</label>
+          <label><input type="checkbox" data-line="SJ2DS">SJ2DS</label>
           <label><input type="checkbox" data-line="SJ2 ADC DS">SJ2 ADC DS</label>
           <label><input type="checkbox" data-line="SJ2 ADC DP">SJ2 ADC DP</label>
           <label><input type="checkbox" data-line="C7CM DP">C7CM DP</label>
@@ -421,7 +421,7 @@
         </select>
         <select id="filtLine">
           <option value="">全部产线</option>
-          <option>SJ2 CB</option><option>SJ1DS</option><option>SJ2 ADC DS</option>
+          <option>SJ2 CB</option><option>SJ1DS</option><option>SJ2DS</option><option>SJ2 ADC DS</option>
           <option>SJ2 ADC DP</option><option>C7CM DP</option><option>SJ2CM DP</option><option>其他</option>
         </select>
         <select id="filtStatus">
@@ -486,12 +486,16 @@
     <div class="card">
       <h2>月度批次趋势 <span class="tag">按批次开始日期月份统计</span></h2>
       <div class="toolbar" style="margin-bottom:8px">
-        <span class="hint">工序筛选：</span>
+        <span class="hint">产线筛选：</span>
         <span class="chk-group" id="trendFilter">
           <label><input type="radio" name="trendCat" value="all" checked>全部</label>
-          <label><input type="radio" name="trendCat" value="CB">CB 细胞库</label>
-          <label><input type="radio" name="trendCat" value="DS">DS 原液</label>
-          <label><input type="radio" name="trendCat" value="DP">DP 制剂</label>
+          <label><input type="radio" name="trendCat" value="SJ2 CB">SJ2 CB 细胞库</label>
+          <label><input type="radio" name="trendCat" value="SJ1DS">SJ1DS Mab</label>
+          <label><input type="radio" name="trendCat" value="SJ2DS">SJ2DS Mab</label>
+          <label><input type="radio" name="trendCat" value="SJ2 ADC DS">SJ2 ADC DS</label>
+          <label><input type="radio" name="trendCat" value="SJ2 ADC DP">SJ2 ADC DP</label>
+          <label><input type="radio" name="trendCat" value="C7CM DP">C7CM DP</label>
+          <label><input type="radio" name="trendCat" value="SJ2CM DP">SJ2CM DP</label>
         </span>
         <span class="spacer" style="flex:1"></span>
         <label class="hint" style="display:flex;align-items:center;gap:4px;cursor:pointer" title="勾选后月度批次趋势跟随甘特图时间窗口，甘特图调整范围时同步刷新；取消勾选恢复独立设置"><input type="checkbox" id="trendLink">与甘特图联动</label>
@@ -507,7 +511,7 @@
           <span class="hint">~</span>
           <input type="date" id="trendRangeEnd" title="窗口结束日期" style="width:130px">
         </span>
-        <span class="hint">Mab / ADC / 其他 按产品系列分色</span>
+        <span class="hint">全部生产类型独立堆叠显示 · 可按产线筛选</span>
       </div>
       <div id="trendChart"></div>
     </div>
@@ -566,6 +570,14 @@
         <tbody></tbody>
       </table>
       <div class="hint" style="margin-top:8px">注：Mab/ADC DS/DP 提交时需判断是否为首次生产，首次生产需额外填写 8-12 项分子信息（Mab 另需 Titer）；冻干 DP 需在需求中确认是否进行放大测试；选择二次稀配时制剂生产周期 +1 天（准备 3 天→4 天）。</div>
+    </div>
+    <div class="card">
+      <h2>首次生产项目汇总 <span class="tag">自动汇总自需求录入（勾选「首次生产」的需求）</span></h2>
+      <table class="ref-tbl" id="refFirst">
+        <thead><tr><th>项目号</th><th>类型</th><th>Molecule Type</th><th>Target</th><th>Novelty</th><th>mAb subtype</th><th>Host Cell Line</th><th>Titer</th><th>规格</th><th>备注</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="hint" style="margin-top:8px" id="refFirstEmpty">暂无首次生产需求（需求录入勾选「首次生产」并提交后，其分子信息、项目号与备注自动汇总至此）</div>
     </div>
   </section>
 
@@ -636,7 +648,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.15.7（云端共享·邮箱登录·权限三档·新账号默认读者）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.16.0（云端共享·邮箱登录·权限三档·新账号默认读者）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -652,7 +664,7 @@
     </div>
     <div class="form-row">
       <div class="f"><label>产线 *</label><select id="e_line">
-        <option value="SJ2 CB">SJ2 CB</option><option value="SJ1DS">SJ1DS</option><option value="SJ2 ADC DS">SJ2 ADC DS</option>
+        <option value="SJ2 CB">SJ2 CB</option><option value="SJ1DS">SJ1DS</option><option value="SJ2DS">SJ2DS</option><option value="SJ2 ADC DS">SJ2 ADC DS</option>
         <option value="SJ2 ADC DP">SJ2 ADC DP</option><option value="C7CM DP">C7CM DP</option><option value="SJ2CM DP">SJ2CM DP</option>
         <option value="其他">其他</option>
       </select></div>
@@ -704,7 +716,7 @@
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
 <script src="cloudbase.full.js?v=2152"></script>
 <script src="cloud.js?v=2152"></script>
-<script src="scheduling.js?v=2152"></script>
+<script src="scheduling.js?v=2160"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -735,7 +747,7 @@
     'MCB':'b-blue','WCB':'b-blue','Mab':'b-purple','ADC DS':'b-cyan','ADC DP':'b-orange',
     'CM DP':'b-green','冻干放大测试':'b-gray','APS':'b-pink','设备维护':'b-brown'
   };
-  var LINES_ORDER = ['SJ2 CB','SJ1DS','SJ2 ADC DS','SJ2 ADC DP','C7CM DP','SJ2CM DP','其他'];
+  var LINES_ORDER = ['SJ2 CB','SJ1DS','SJ2DS','SJ2 ADC DS','SJ2 ADC DP','C7CM DP','SJ2CM DP','其他'];
   var VIALS = { 'SJ2 ADC DP': ['6R','10R','20R'], 'C7CM DP': ['2R','6R','10R','20R'], 'SJ2CM DP': ['10R','20R'] };
   var FNAMES = { spec:'规格', concentration:'制剂批量', titer:'Titer', batchKind:'批次类型', stage:'项目阶段',
     budget:'预算概况', molType:'Molecule Type', target:'Target', novelty:'Novelty', mabSubtype:'mAb subtype',
@@ -747,10 +759,11 @@
     lines: [
       ['1','松江二厂细胞库制备车间','SJ2 CB','10天','—','—','—'],
       ['2','松江一厂临床生产原液车间','SJ1DS','42天','上游种子培养20天、反应器培养15天、下游纯化7天','200L或500L','—'],
-      ['3','松江二厂临床生产ADC原液车间','SJ2 ADC DS','7天','—','20L、50L、200L反应釜','Non-GMP、GMP生产'],
-      ['4','松江二厂临床生产ADC制剂车间','SJ2 ADC DP','水针15天 / 冻干19天','水针：准备3+灌装1+冻干0+清场1+目检包装10=15天；冻干：准备3+灌装1+冻干4+清场1+目检包装10=19天','6R、10R、20R','Non-GMP、放大测试、GMP生产、安慰剂'],
-      ['5','临床生产制剂车间（C7）','C7CM DP','水针15天 / 冻干18天','水针：准备3+灌装1+冻干0+清场1+目检包装10=15天；冻干：准备3+灌装1+冻干3+清场1+目检包装10=18天','2R、6R、10R、20R','Non-GMP、放大测试、GMP生产、安慰剂'],
-      ['6','松江二厂临床生产制剂车间','SJ2CM DP','水针15天 / 冻干19天','水针：准备3+灌装1+冻干0+清场1+目检包装10=15天；冻干：准备3+灌装1+冻干4+清场1+目检包装10=19天','10R、20R','Non-GMP、放大测试、GMP生产、安慰剂']
+      ['3','松江二厂临床生产原液车间','SJ2DS','42天','上游种子培养20天、反应器培养15天、下游纯化7天','200L或500L','—'],
+      ['4','松江二厂临床生产ADC原液车间','SJ2 ADC DS','7天','—','20L、50L、200L反应釜','Non-GMP、GMP生产'],
+      ['5','松江二厂临床生产ADC制剂车间','SJ2 ADC DP','水针15天 / 冻干19天','水针：准备3+灌装1+冻干0+清场1+目检包装10=15天；冻干：准备3+灌装1+冻干4+清场1+目检包装10=19天','6R、10R、20R','Non-GMP、放大测试、GMP生产、安慰剂'],
+      ['6','临床生产制剂车间（C7）','C7CM DP','水针15天 / 冻干18天','水针：准备3+灌装1+冻干0+清场1+目检包装10=15天；冻干：准备3+灌装1+冻干3+清场1+目检包装10=18天','2R、6R、10R、20R','Non-GMP、放大测试、GMP生产、安慰剂'],
+      ['7','松江二厂临床生产制剂车间','SJ2CM DP','水针15天 / 冻干19天','水针：准备3+灌装1+冻干0+清场1+目检包装10=15天；冻干：准备3+灌装1+冻干4+清场1+目检包装10=19天','10R、20R','Non-GMP、放大测试、GMP生产、安慰剂']
     ],
     caps: [
       ['C7','水针','2500','2300','2300','1440','/','0.9'],
@@ -759,7 +772,7 @@
       ['ADC','冻干','/','6700','6700','3600','/','0.95']
     ],
     staff: [
-      ['SJ2 CB','3'],['SJ1DS','28'],['SJ2 ADC DS','4'],['SJ2 ADC DP','5'],['C7CM DP','7'],['SJ2CM DP','12']
+      ['SJ2 CB','3'],['SJ1DS','28'],['SJ2DS','28'],['SJ2 ADC DS','4'],['SJ2 ADC DP','5'],['C7CM DP','7'],['SJ2CM DP','12']
     ],
     fields: [
       ['1','规格','—','✓','✓'],
@@ -772,7 +785,7 @@
       ['8-12','Molecule Type / Target / Novelty / mAb subtype / Host Cell Line','—','首次生产时 ✓','首次生产时 ✓'],
       ['13','高浓度或高粘度制剂','—','—','✓'],
       ['14','制剂是否需要二次稀配','—','—','✓'],
-      ['15','备注','✓','✓','✓'],
+      ['15','备注（选填）','✓(选填)','✓(选填)','✓(选填)'],
       ['16','注射瓶规格','—','—','✓']
     ]
   };
@@ -1065,20 +1078,17 @@
     $('f_budget_wrap').style.display = (isCB || isEQP) ? 'none' : '';
     $('vialRow').style.display = isDP ? '' : 'none';
     $('firstRow').style.display = (isCB || isEQP) ? 'none' : '';
-    $('mcbDateRow').style.display = (isDS||isDP) ? '' : 'none';
+    $('mabLineRow').style.display = (t==='Mab') ? '' : 'none'; // v2.16.0：Mab DS 原液可选产线 SJ1/SJ2
+    $('mcbDateRow').style.display = (t==='Mab') ? '' : 'none'; // v2.16.0：同项目MCB完成日期仅 Mab 显示（DP/ADC DS 已删除）
     $('eqpRow').style.display = isEQP ? '' : 'none';
     $('eqpDateRow').style.display = isEQP ? '' : 'none';
-    // 设备维护时隐藏产品专属字段（Henlius项目号、批次数、交期、优先级、需求人保留但标签不同）
+    // 设备维护时隐藏产品专属字段（Henlius项目号、批次数、工艺转移+交期、需求人保留但标签不同）
     var henliusF = $('f_henlius').closest('.f');
     if(henliusF) henliusF.style.display = isProduct ? '' : 'none';
     var batchF = $('f_batchcount').closest('.f');
     if(batchF) batchF.style.display = isProduct ? '' : 'none';
-    var dueF = $('f_due').closest('.f');
-    if(dueF){ dueF.querySelector('label').textContent = isEQP ? '期望完成日期' : '期望完成日期（交期）*'; }
     var transferRow = $('f_transfer').closest('.form-row');
     if(transferRow) transferRow.style.display = isProduct ? '' : 'none';
-    var mcbDateRowEl = $('f_mcbdate').closest('.form-row');
-    if(mcbDateRowEl && !isProduct) mcbDateRowEl.style.display = 'none';
     if(isDP){
       $('f_dpkind').value='CM';
       onDpKindChange();
@@ -1129,6 +1139,7 @@
       dpKind: t==='DP' ? $('f_dpkind').value : 'CM',
       dosage: t==='DP' ? $('f_dosage').value : '水针',
       dpLine: t==='DP' ? $('f_dpline').value : '',
+      mabLine: t==='Mab' ? ($('f_mabline').value || 'SJ1DS') : '', // v2.16.0：Mab 产线选择 SJ1/SJ2
       atProject: $('f_henlius').value.trim(), // AT项目号字段已移除，以 Henlius 项目号作为项目标识
       henliusProject: $('f_henlius').value.trim(),
       batchCount: parseInt($('f_batchcount').value,10)||1,
@@ -1150,7 +1161,7 @@
       conditionalRelease: $('f_cond').checked,
       processTransferDate: $('f_transfer').value || '',
       mcbDate: $('f_mcbdate').value || '',
-      priority: $('f_priority').value,
+      priority: '中', // v2.16.0：需求录入已删除优先级填写，统一默认「中」
       requester: $('f_requester').value.trim(),
       note: $('f_note').value.trim(),
       createdAt: new Date().toISOString()
@@ -1179,8 +1190,7 @@
     if(r.type==='CB' && r.cbKind==='MCB' && !r.processTransferDate) errs.push('正式工艺转移完成日期');
     if((r.type==='Mab'||r.type==='ADC DS'||r.type==='DP') && r.firstProduction && !r.processTransferDate) errs.push('正式工艺转移完成日期');
     if(r.type==='CB'){
-      // CB：项目阶段 + 备注（排产逻辑.xlsx 需求录入说明1）
-      if(!r.note) errs.push('备注');
+      // v2.16.0：备注改为选填（CB 仅需项目阶段）
     } else {
       if(!r.spec) errs.push(FNAMES.spec);
       if(!r.batchKind) errs.push(FNAMES.batchKind);
@@ -1202,6 +1212,7 @@
     ['f_due','f_transfer','f_mcbdate','f_note','f_spec','f_conc','f_titer','f_lp','f_budget',
      'f_moltype','f_target','f_novelty','f_subtype','f_hostcell','f_eqpstart','f_eqpend'].forEach(function(i){ $(i).value=''; });
     $('f_batchcount').value='1'; $('f_batchtype').value=''; $('f_stage').value=''; $('f_vial').value='';
+    $('f_mabline').value='SJ1DS';
     $('f_cond').checked=false; $('f_first').checked=false; $('f_hypertonic').checked=false;
     $('f_dilute').checked=false; $('f_scale').checked=true;
     $('f_eqpline').value='SJ2 CB'; $('f_eqpkind').value='计划保养';
@@ -1214,7 +1225,7 @@
     if(bad.length){ toast('请填写：'+bad.join('、')); return; }
     if(!r.requester && state.user) r.requester = state.user; // 需求人默认取当前用户
     state.requirements.push(r);
-    save(); renderStats(); renderReq();
+    save(); renderAll(); // v2.16.0：改用 renderAll，同步刷新冲突横幅与首次生产汇总表
     if(window.CloudSync) window.CloudSync.pushReq(r); // 需求同步云端
     toast('已添加需求，可点击「自动排产」');
     clearFormFields();
@@ -1257,6 +1268,7 @@
       $('f_conc').value=r.concentration||'';
     }
     if(r.type==='Mab'||r.type==='ADC DS'){ $('f_titer').value=(r.titer!=null?r.titer:''); }
+    if(r.type==='Mab'){ $('f_mabline').value = r.mabLine || 'SJ1DS'; }
     if(r.type==='ADC DS'){ $('f_lp').value=r.lpReleaseDate||''; }
     if(r.type!=='CB'){
       $('f_spec').value=r.spec||''; $('f_batchtype').value=r.batchKind||''; $('f_budget').value=r.budget||'';
@@ -1269,7 +1281,7 @@
     $('f_batchcount').value=r.batchCount; $('f_due').value=r.dueDate;
     $('f_cond').checked=!!r.conditionalRelease;
     $('f_transfer').value=r.processTransferDate||''; $('f_mcbdate').value=r.mcbDate||'';
-    $('f_priority').value=r.priority; $('f_requester').value=r.requester||''; $('f_note').value=r.note||'';
+    $('f_requester').value=r.requester||''; $('f_note').value=r.note||'';
     // 进入编辑模式：换按钮
     var btn=$('btnAddReq');
     btn.dataset.editId=id;
@@ -1283,6 +1295,7 @@
       var idx = state.requirements.findIndex(function(x){return x.id===editId;});
       if(idx<0) return;
       var nr = readForm(); nr.id=editId; nr.createdAt=state.requirements[idx].createdAt;
+      nr.priority = state.requirements[idx].priority || '中'; // 编辑保留原优先级（表单已删除优先级填写）
       var bad = validateReq(nr);
       if(bad.length){ toast('请填写：'+bad.join('、')); return; }
       state.requirements[idx]=nr;
@@ -1541,6 +1554,42 @@
     if(!bs.length) return '待排产';
     return bs.every(function(b){ return b.locked || isFinal(b); }) ? '已锁定' : '待确认';
   }
+  // v2.16.0：排产冲突信息（需求录入页横幅）——同产线批次时间段两两重叠即为冲突
+  function renderConflictInfo(){
+    var el = $('conflictBanner'); if(!el) return;
+    var pairs = [];
+    var byLine = {};
+    state.batches.forEach(function(b){
+      if(!b.start || !b.end || isFinal(b)) return; // 终态批次不占产能，不算冲突
+      var ln = b.line || '其他';
+      (byLine[ln] = byLine[ln] || []).push(b);
+    });
+    Object.keys(byLine).forEach(function(ln){
+      var arr = byLine[ln].sort(function(a,b){ return a.start < b.start ? -1 : 1; });
+      for(var i=0;i<arr.length;i++){
+        for(var j=i+1;j<arr.length;j++){
+          if(arr[j].start <= arr[i].end){ // 时间段重叠（按 ISO 日期字符串比较）
+            pairs.push({ line: ln, a: arr[i], b: arr[j] });
+          } else break; // 已按开始日期排序，后者开始晚于前者结束即可跳出
+        }
+      }
+    });
+    if(!pairs.length){ el.classList.remove('show'); el.innerHTML=''; return; }
+    function projOf(b){
+      if(b.henlius) return b.henlius;
+      if(b.project) return b.project;
+      var rq = b.reqId ? state.requirements.find(function(r){ return r.id===b.reqId; }) : null;
+      return (rq && (rq.henliusProject||rq.atProject)) || b.id;
+    }
+    function desc(b){ return '<b>'+esc(projOf(b))+'</b>（'+esc(b.type)+' · '+esc(b.line||'-')+' · '+(b.start||'?')+'~'+(b.end||'?')+' · '+(b.locked?'锁定':(b.status||'-'))+'）'; }
+    var MAX = 8;
+    var shown = pairs.slice(0, MAX);
+    el.innerHTML = '<b>⚠️ 排产冲突 '+pairs.length+' 处（同产线批次时间段重叠）</b>'+
+      '<ul>'+shown.map(function(p){ return '<li>产线「'+esc(p.line)+'」：'+desc(p.a)+' 与 '+desc(p.b)+'</li>'; }).join('')+'</ul>'+
+      (pairs.length > MAX ? '<div style="margin-top:4px">… 其余 '+(pairs.length-MAX)+' 处见「📅 排产计划」批次明细（筛选状态=预警）</div>' : '')+
+      '<div style="margin-top:4px">处理建议：在「📅 排产计划」中人工调整批次日期，或确认后勾选「锁定」保留（锁定批次间重叠表示已人工确认占用）。</div>';
+    el.classList.add('show');
+  }
 
   // ---------- 渲染：统计 ----------
   function renderStats(){
@@ -1553,6 +1602,7 @@
 
   // ---------- 渲染：需求列表 ----------
   function renderReq(){
+    renderConflictInfo(); // v2.16.0：排产冲突信息随需求列表刷新
     $('reqCount').textContent = state.requirements.length+' 条';
     var tb = $('reqTable').querySelector('tbody');
     tb.innerHTML='';
@@ -1956,7 +2006,7 @@
     var el = $('trendChart'); if(!el) return;
     var catInput = document.querySelector('#trendFilter input[name="trendCat"]:checked');
     var cat = catInput ? catInput.value : 'all';
-    var CATS = { CB:['MCB','WCB'], DS:['Mab','ADC DS'], DP:['CM DP','ADC DP','APS','冻干放大测试'] }; // 工序筛选
+    var CAT_NAMES = { 'SJ2 CB':'SJ2 CB 细胞库', 'SJ1DS':'SJ1DS Mab', 'SJ2DS':'SJ2DS Mab', 'SJ2 ADC DS':'SJ2 ADC DS', 'SJ2 ADC DP':'SJ2 ADC DP', 'C7CM DP':'C7CM DP', 'SJ2CM DP':'SJ2CM DP' }; // 产线筛选
     // 全部生产类型（固定顺序）；CM DP 按产线拆分为 C7/SJ2 两条；未列出的类型统一归「其他」
     var TYPES = ['MCB','WCB','Mab','ADC DS','ADC DP','CM DP·C7','CM DP·SJ2','冻干放大测试','APS','设备维护'];
     var DISP = { 'Mab':'MabDS' }; // 显示名映射：Mab → MabDS
@@ -1979,13 +2029,13 @@
     }
     var bs = state.batches.filter(function(b){
       if(!b.start) return false;
-      if(cat !== 'all' && (CATS[cat]||[]).indexOf(b.type) < 0) return false;
+      if(cat !== 'all' && (b.line||'其他') !== cat) return false; // v2.16.0：按产线筛选
       var k = b.start.slice(0,7);
       if(wStartK && k < wStartK) return false;
       if(wEndK && k > wEndK) return false;
       return true;
     });
-    if(!bs.length){ el.innerHTML = '<div class="empty">暂无批次（'+({CB:'CB 细胞库',DS:'DS 原液',DP:'DP 制剂'}[cat]||'当前筛选')+'）</div>'; return; }
+    if(!bs.length){ el.innerHTML = '<div class="empty">暂无批次（'+(CAT_NAMES[cat]||'当前筛选')+'）</div>'; return; }
     // 按月聚合：每种生产类型独立计数
     var months = {}, keys = [];
     bs.forEach(function(b){
@@ -2411,6 +2461,22 @@
       if(cancel) cancel.style.display = editing ? '' : 'none';
       document.querySelector('#tab-ref #refLines'); // noop
     });
+    renderRefFirst(); // v2.16.0：首次生产项目汇总（自动生成）
+  }
+  // v2.16.0：首次生产项目汇总——需求录入中勾选「首次生产」的需求，项目号+分子信息+备注自动汇总
+  function renderRefFirst(){
+    var tb = $('refFirst'); if(!tb) return;
+    var rows = state.requirements.filter(function(r){ return !!r.firstProduction; });
+    tb.querySelector('tbody').innerHTML = rows.map(function(r){
+      var typeTxt = r.type==='DP' ? ((r.dpKind||'CM')+' '+(r.dosage||'')) : (r.type==='CB' ? (r.cbKind||'MCB') : r.type);
+      return '<tr><td><b>'+esc(r.henliusProject||r.atProject||'-')+'</b></td><td>'+esc(typeTxt)+'</td>'+
+        '<td>'+esc(r.molType||'-')+'</td><td>'+esc(r.target||'-')+'</td><td>'+esc(r.novelty||'-')+'</td>'+
+        '<td>'+esc(r.mabSubtype||'-')+'</td><td>'+esc(r.hostCell||'-')+'</td>'+
+        '<td>'+esc((r.titer!=null&&r.titer!=='')?r.titer:'-')+'</td><td>'+esc(r.spec||'-')+'</td>'+
+        '<td>'+esc(r.note||'-')+'</td></tr>';
+    }).join('');
+    var emp = $('refFirstEmpty');
+    if(emp) emp.style.display = rows.length ? 'none' : '';
   }
   function toggleRefEdit(key){
     if(refEditKey===key){
@@ -2762,7 +2828,6 @@
       clearFormFields();
       ['f_henlius'].forEach(function(i){$(i).value='';});
       $('f_requester').value = state.user || ''; // v2.14.0：需求人绑定登录账号——取消编辑后恢复为当前账号（本地模式为空）
-      $('f_priority').value='中';
       $('btnAddReq').dataset.editId=''; $('btnAddReq').textContent='➕ 添加需求';
     });
     $('reqTable').addEventListener('click', function(ev){
