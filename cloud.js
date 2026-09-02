@@ -1,5 +1,5 @@
 /* =====================================================
- * cloud.js — CloudBase 云同步层（排产系统 v2.5 → v2.13.0：角色绑定登录身份（方案A权限分层）+ 状态栏点击退出/切换账号 + 邮箱登录（安全加固方案A）+ 确认弹窗走主应用模态 + 清空/导入云端需求同步 + 操作日志上云 op_logs）
+ * cloud.js — CloudBase 云同步层（排产系统 v2.13.0 → v2.14.0：登录用户名下发（需求人自动绑定账号）+ 账号面板（自助修改密码/退出切换）+ 角色绑定登录身份（方案A权限分层）+ 状态栏点击弹出账号面板 + 邮箱登录（安全加固方案A）+ 确认弹窗走主应用模态 + 清空/导入云端需求同步 + 操作日志上云 op_logs）
  *
  * 作用：让「需求填报」与「排产计划」在多人浏览器之间实时共享。
  *   · requests   集合：需求（每条需求一个文档，多人提交互不覆盖）
@@ -114,9 +114,13 @@
     adminFlag = PLAN_ADMINS.indexOf((curEmail || '').toLowerCase()) >= 0;
     if (curEmail) setStatus(adminFlag ? '☁️ 已连接·' + curEmail + '（生产计划）' : '☁️ 已连接·' + curEmail + '（需求方）', 'cloud-on');
     else setStatus('☁️ 已连接·匿名（需求方）', 'cloud-on'); // v2.12.1：匿名状态显式标出，提示用户可切换
-    if (statusEl) statusEl.title = (curEmail ? '当前登录：' + curEmail + (adminFlag ? '（生产计划）' : '（需求方）') : '当前为匿名登录（需求方权限），建议用邮箱账号') + '。点击此处可退出并切换账号';
+    if (statusEl) statusEl.title = (curEmail ? '当前登录：' + curEmail + (adminFlag ? '（生产计划）' : '（需求方）') : '当前为匿名登录（需求方权限），建议用邮箱账号') + '。点击此处可修改密码或退出并切换账号';
     if (hook && typeof hook.setRole === 'function') {
       try { hook.setRole(adminFlag); } catch (e) { console.warn('[cloud] setRole 回调异常：', e); }
+    }
+    // v2.14.0：登录用户名下发（邮箱前缀，小写归一与角色判定一致）——主文件据此把「需求人」自动绑定为当前账号，无需人工填写
+    if (hook && typeof hook.setUser === 'function') {
+      try { hook.setUser(curEmail ? curEmail.toLowerCase().split('@')[0] : ''); } catch (e) { console.warn('[cloud] setUser 回调异常：', e); }
     }
     toast('☁️ 已连接云端，需求实时共享');
     syncDown();
@@ -197,18 +201,100 @@
         });
     });
   }
+  // v2.14.0：账号面板——点击状态栏弹出：已登录账号可「修改密码」或「退出切换」；匿名仅退出
+  function showAccountPanel() {
+    if (document.getElementById('acctOverlay')) return; // 已打开
+    var ov = document.createElement('div');
+    ov.id = 'acctOverlay';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:300;display:flex;align-items:center;justify-content:center;font-family:inherit';
+    ov.innerHTML =
+      '<div style="background:#fff;border-radius:12px;padding:22px;width:min(360px,92vw);box-shadow:0 12px 40px rgba(0,0,0,.18);text-align:center">' +
+        '<div style="font-size:16px;font-weight:600;color:#0f172a;margin-bottom:4px">👤 账号管理</div>' +
+        '<div style="font-size:12.5px;color:#64748b;margin-bottom:16px">' + (curEmail ? '当前登录：' + curEmail : '当前为匿名登录（需求方权限）') + '</div>' +
+        (curEmail ? '<button id="acctPwd" style="width:100%;padding:10px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:14px;cursor:pointer;margin-bottom:8px">🔑 修改密码</button>' : '') +
+        '<button id="acctLogout" style="width:100%;padding:10px;border:none;border-radius:8px;background:' + (curEmail ? '#f1f5f9;color:#475569' : '#2563eb;color:#fff') + ';font-size:14px;cursor:pointer;margin-bottom:8px">' + (curEmail ? '🚪 退出并切换账号' : '🚪 退出，改用邮箱登录') + '</button>' +
+        '<button id="acctClose" style="width:100%;padding:8px;border:none;border-radius:8px;background:none;color:#94a3b8;font-size:13px;cursor:pointer">取消</button>' +
+      '</div>';
+    document.body.appendChild(ov);
+    function close() { ov.remove(); }
+    ov.addEventListener('click', function (ev) { if (ev.target === ov) close(); });
+    document.getElementById('acctClose').addEventListener('click', close);
+    document.getElementById('acctLogout').addEventListener('click', function () {
+      close();
+      uiConfirmC('退出当前账号（' + (curEmail || '匿名') + '）并重新登录？', function (ok) {
+        if (ok) logout();
+      });
+    });
+    var pwdBtn = document.getElementById('acctPwd');
+    if (pwdBtn) pwdBtn.addEventListener('click', function () { close(); showPwdBox(); });
+  }
+  // v2.14.0：修改密码框（CloudBase auth.updatePassword(新密码, 旧密码)）
+  function showPwdBox() {
+    if (document.getElementById('pwdOverlay')) return;
+    if (!curEmail) { toast('匿名账号无密码，请先退出改用邮箱登录'); return; }
+    var ov = document.createElement('div');
+    ov.id = 'pwdOverlay';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:300;display:flex;align-items:center;justify-content:center;font-family:inherit';
+    ov.innerHTML =
+      '<div style="background:#fff;border-radius:12px;padding:22px;width:min(360px,92vw);box-shadow:0 12px 40px rgba(0,0,0,.18)">' +
+        '<div style="font-size:16px;font-weight:600;color:#0f172a;margin-bottom:4px">🔑 修改密码</div>' +
+        '<div style="font-size:12px;color:#64748b;margin-bottom:14px">账号：' + curEmail + '</div>' +
+        '<input id="pwdOld" type="password" placeholder="当前密码" autocomplete="current-password" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;margin-bottom:10px;outline:none">' +
+        '<input id="pwdNew" type="password" placeholder="新密码（至少 8 位）" autocomplete="new-password" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;margin-bottom:10px;outline:none">' +
+        '<input id="pwdNew2" type="password" placeholder="再次输入新密码" autocomplete="new-password" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;margin-bottom:6px;outline:none">' +
+        '<div id="pwdErr" style="font-size:12px;color:#dc2626;min-height:16px;margin-bottom:8px"></div>' +
+        '<button id="pwdOk" style="width:100%;padding:10px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:14px;cursor:pointer">确认修改</button>' +
+        '<button id="pwdCancel" style="width:100%;margin-top:8px;padding:8px;border:none;border-radius:8px;background:none;color:#94a3b8;font-size:13px;cursor:pointer">取消</button>' +
+      '</div>';
+    document.body.appendChild(ov);
+    var oldEl = document.getElementById('pwdOld'),
+        newEl = document.getElementById('pwdNew'),
+        new2El = document.getElementById('pwdNew2'),
+        errEl = document.getElementById('pwdErr'),
+        okBtn = document.getElementById('pwdOk');
+    setTimeout(function () { oldEl.focus(); }, 50);
+    function err(msg) { errEl.textContent = msg || ''; okBtn.disabled = false; okBtn.textContent = '确认修改'; }
+    function close() { ov.remove(); }
+    function doChange() {
+      var oldPwd = oldEl.value || '', newPwd = newEl.value || '', new2 = new2El.value || '';
+      if (!oldPwd) { err('请输入当前密码'); return; }
+      if (!newPwd || newPwd.length < 8) { err('新密码至少 8 位'); return; }
+      if (newPwd !== new2) { err('两次输入的新密码不一致'); return; }
+      okBtn.disabled = true; okBtn.textContent = '提交中…'; errEl.textContent = '';
+      changePwd(oldPwd, newPwd).then(function () {
+        close();
+        toast('✅ 密码修改成功，下次登录请使用新密码');
+      }).catch(function (e) {
+        console.warn('[cloud] 修改密码失败：', e);
+        var c = (e && e.code) || '';
+        if (/wrong-password|invalid-password|INVALID_PASS|old.?pass/i.test(c + ' ' + shortErr(e))) err('当前密码不正确');
+        else if (/weak|WEAK|invalid new/i.test(c)) err('新密码强度不足，请更换更复杂的密码');
+        else err('修改失败：' + shortErr(e));
+      });
+    }
+    okBtn.addEventListener('click', doChange);
+    [oldEl, newEl, new2El].forEach(function (el) {
+      el.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') doChange(); });
+    });
+    document.getElementById('pwdCancel').addEventListener('click', close);
+    ov.addEventListener('click', function (ev) { if (ev.target === ov) close(); });
+  }
+  // 修改密码（暴露到 CloudSync.changePwd 供测试）：CloudBase 签名 updatePassword(新密码, 旧密码)
+  function changePwd(oldPwd, newPwd) {
+    if (!authRef) return Promise.reject(new Error('未连接云端'));
+    return authRef.updatePassword(newPwd, oldPwd);
+  }
   function connect(h) {
     hook = h || hook;
     statusEl = document.getElementById('cloudStatus');
     // v2.12.1：点击状态栏退出/切换账号——微信/企微内嵌浏览器无 F12，
     // 被本地匿名会话「锁死」的用户（hasLoginState 命中即跳过登录框）只能靠这个 UI 入口解锁
+    // v2.14.0：入口升级为「账号面板」——已登录账号可自助修改密码；匿名仍可直接退出
     if (statusEl) {
       statusEl.style.cursor = 'pointer';
       statusEl.addEventListener('click', function () {
         if (!ready) return;
-        uiConfirmC('退出当前账号（' + (curEmail || '匿名') + '）并重新登录？', function (ok) {
-          if (ok) logout();
-        });
+        showAccountPanel();
       });
     }
     if (!enabled()) { setStatus('📴 本地模式', 'cloud-off'); return; }
@@ -565,6 +651,7 @@
   window.CloudSync = {
     connect: connect, isReady: isReady, onSaved: onSaved, logout: logout,
     isPlanAdmin: isPlanAdmin, // v2.13.0 角色查询：主文件 isPlanner() 据此强制身份
+    changePwd: changePwd, // v2.14.0 自助修改密码（参数：旧密码, 新密码）
     pushReq: pushReq, delReqCloud: delReqCloud, delAllReqs: delAllReqs,
     pushPlan: pushPlan, forcePushPlan: forcePushPlan,
     pushOpLog: pushOpLog, fetchOpLogs: fetchOpLogs // v2.11.0 ㉑ 操作日志上云
