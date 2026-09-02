@@ -168,7 +168,7 @@
 <body class="role-requester">
 
 <header>
-  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.15.6（甘特图删除利用率百分比；月度趋势按全部生产类型分开堆叠显示）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.15.6</span></h1>
+  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.15.7（月度趋势：Mab 更名 MabDS；CM DP 按产线拆分为 C7/SJ2 两条）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.15.7</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -636,7 +636,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.15.6（云端共享·邮箱登录·权限三档·新账号默认读者）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.15.7（云端共享·邮箱登录·权限三档·新账号默认读者）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -1957,9 +1957,14 @@
     var catInput = document.querySelector('#trendFilter input[name="trendCat"]:checked');
     var cat = catInput ? catInput.value : 'all';
     var CATS = { CB:['MCB','WCB'], DS:['Mab','ADC DS'], DP:['CM DP','ADC DP','APS','冻干放大测试'] }; // 工序筛选
-    // 全部生产类型（固定顺序，与甘特图图例一致）；未列出的类型统一归「其他」
-    var TYPES = ['MCB','WCB','Mab','ADC DS','ADC DP','CM DP','冻干放大测试','APS','设备维护'];
-    var typeKey = function(t){ return TYPES.indexOf(t) >= 0 ? t : '其他'; };
+    // 全部生产类型（固定顺序）；CM DP 按产线拆分为 C7/SJ2 两条；未列出的类型统一归「其他」
+    var TYPES = ['MCB','WCB','Mab','ADC DS','ADC DP','CM DP·C7','CM DP·SJ2','冻干放大测试','APS','设备维护'];
+    var DISP = { 'Mab':'MabDS' }; // 显示名映射：Mab → MabDS
+    // 按批次取堆叠段 key：CM DP 按批次产线（b.line）拆分
+    var segKey = function(b){
+      if(b.type === 'CM DP') return b.line === 'SJ2CM DP' ? 'CM DP·SJ2' : 'CM DP·C7';
+      return TYPES.indexOf(b.type) >= 0 ? b.type : '其他';
+    };
     // 时间范围窗口：默认独立（trendRange）；勾选「与甘特图联动」(trendLink) 后跟随甘特图窗口（ganttRange）
     // all=全部 / 1m/3m/6m=近N月 / custom=自定义起止（按批次开始日期所在月份过滤）
     var rg = state.trendLink ? (state.ganttRange||{ preset:'all', start:'', end:'' }) : (state.trendRange || { preset:'all', start:'', end:'' });
@@ -1987,7 +1992,7 @@
       var k = (b.start||'').slice(0,7);
       if(!/^\d{4}-\d{2}$/.test(k)) return;
       if(!months[k]){ months[k] = {}; keys.push(k); }
-      var tk = typeKey(b.type);
+      var tk = segKey(b);
       months[k][tk] = (months[k][tk]||0) + 1;
     });
     keys.sort();
@@ -1998,7 +2003,13 @@
       var has = keys.some(function(k){ return (months[k][t]||0) > 0; });
       if(has) usedTypes.push(t);
     });
-    var colorOf = function(t){ return t === '其他' ? '#a8a29e' : (TYPE_COLOR[t] || '#a8a29e'); };
+    // C7/SJ2 两条 CM DP 产线配色（同绿色系深浅区分）
+    var colorOf = function(t){
+      if(t === 'CM DP·C7') return '#16a34a';
+      if(t === 'CM DP·SJ2') return '#86efac';
+      if(t === '其他') return '#a8a29e';
+      return TYPE_COLOR[t] || '#a8a29e';
+    };
     var maxV = 0;
     keys.forEach(function(k){
       var t = 0; usedTypes.forEach(function(s){ t += months[k][s]||0; });
@@ -2014,7 +2025,7 @@
         var v = months[k][s]||0;
         if(!v) return;
         var h = maxV > 0 ? Math.max(Math.round(v/maxV*CH), 4) : 0;
-        segs += '<div title="'+esc(s)+'：'+v+' 批" style="width:100%;height:'+h+'px;background:'+colorOf(s)+'"></div>';
+        segs += '<div title="'+esc(DISP[s]||s)+'：'+v+' 批" style="width:100%;height:'+h+'px;background:'+colorOf(s)+'"></div>';
       });
       html += '<div style="flex:1;min-width:44px;display:flex;flex-direction:column;align-items:center;gap:2px">'+
         '<div style="font-size:10px;font-weight:700;color:#334155">'+total+'</div>'+
@@ -2024,7 +2035,7 @@
     });
     html += '</div>';
     html += '<div class="legend" style="margin-top:8px;flex-wrap:wrap">'+usedTypes.map(function(t){
-      return '<span><i style="background:'+colorOf(t)+'"></i>'+esc(t)+'</span>';
+      return '<span><i style="background:'+colorOf(t)+'"></i>'+esc(DISP[t]||t)+'</span>';
     }).join('')+'</div>';
     el.innerHTML = html;
   }
