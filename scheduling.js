@@ -78,6 +78,7 @@
   var LINES = {
     'SJ2 CB':     { type: 'cb',    cycle: 10,              name: 'SJ2 CB 细胞库' },
     'SJ1DS':      { type: 'mab',   cycle: 42,              name: 'SJ1DS Mab原液' },
+    'SJ2DS':      { type: 'mab',   cycle: 42,              name: 'SJ2DS Mab原液' },
     'SJ2 ADC DS': { type: 'adcDs', cycle: 7,               name: 'SJ2 ADC DS' },
     'SJ2 ADC DP': { type: 'dp',    cycle: { 水针: 5, 冻干: 8 }, name: 'SJ2 ADC DP' },   // 周期不含目检包装（包装走 packDays）
     'C7CM DP':    { type: 'dp',    cycle: { 水针: 5, 冻干: 7 }, name: 'C7CM DP' },
@@ -335,7 +336,7 @@
       for (var n = 1; n <= cnt; n++) {
         var type, line;
         if (baseType === 'CB') { type = req.cbKind === 'WCB' ? 'WCB' : 'MCB'; line = 'SJ2 CB'; }
-        else if (baseType === 'Mab') { type = 'Mab'; line = 'SJ1DS'; }
+        else if (baseType === 'Mab') { type = 'Mab'; line = req.mabLine || 'SJ1DS'; } // v2.16.0：Mab 产线可选 SJ1/SJ2
         else if (baseType === 'ADC DS') { type = 'ADC DS'; line = 'SJ2 ADC DS'; }
         else { // DP
           type = dpKind === 'ADC' ? 'ADC DP' : 'CM DP';
