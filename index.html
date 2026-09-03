@@ -110,10 +110,10 @@
   /* 角色可见性 */
   body.role-requester .plan-only{display:none!important}
   body.role-planner .req-only{display:none!important}
-  /* v2.15.0 读者角色：仅预览——隐藏所有编辑入口（生产计划专属页签 + 需求编辑表单 + 需求方操作按钮） */
+  /* v2.15.0 读者角色基础：plan-only（生产计划专属功能）仍对读者隐藏 */
   body.role-reader .plan-only{display:none!important}
-  body.role-reader .req-only{display:none!important}
-  body.role-reader #reqFormCard{display:none!important}
+  /* v2.18.3：读者「需求录入」界面与需求方一致——不再隐藏 .req-only 元素与需求表单卡片；
+     一切写操作（提交/编辑/删除/清空/自动排产/批量删除等）在对应函数入口由 isReader() toast 拦截，不会产生任何数据变更 */
   #readerBanner{display:none}
   body.role-reader #readerBanner{display:flex}
   /* v2.18.2：需求列表「多选已完成」列仅生产计划角色可见 */
@@ -191,7 +191,7 @@
 <body class="role-requester">
 
 <header>
-  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.18.2（修复快照删除时自动备份被 32767 字符限制中止的问题；需求列表增加提交时间列；已完成需求记录支持多选删除，仅生产计划角色可见）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.18.2</span></h1>
+  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.18.3（读者「需求录入」界面与需求方一致，写操作全部 toast 拦截；需求列表时间筛选可切换「提交时间 / 交期」；批次明细新增时间筛选——按开始/完成/交期 + 全部/近1周/近1月/近3月/近6月/自定义）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.18.3</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -232,7 +232,7 @@
     <div id="newReqBanner" class="newreq-banner"></div>
     <div id="dueBanner" class="warn-banner"></div>
     <div id="apsBanner" class="info-banner"></div>
-    <div id="readerBanner" class="warn-banner" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8">👀 当前账号为「读者」权限：仅可预览需求录入、排产计划与排产分析，不能新增/编辑/删除。如需提需求，请联系生产计划管理员在「🛡️ 权限管理」中调整角色</div>
+    <div id="readerBanner" class="warn-banner" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8">👀 当前账号为「读者」权限：v2.18.3 起「需求录入」界面与需求方一致，可查看填报表单与列表；但提交/编辑/删除/排产等写操作均会被拦截提示。如需提交需求，请联系生产计划管理员在「🛡️ 权限管理」中调整角色</div>
     <div class="grid2">
       <div class="card" id="reqFormCard">
         <h2>新增需求 <span class="tag">需求方填写 · 生产计划可填设备维护</span></h2>
@@ -388,11 +388,15 @@
           <span class="hint req-only">排产方向：优先自动正排（最早可开工）；正排排不下时按交期倒排；交期无法满足时<b style="color:#b45309">标黄预警</b></span>
           <span class="hint plan-only">生产计划角色可在本页删除任意需求（每行「删除」按钮）；批次确认与调整在「📅 排产计划」页</span>
         </div>
-        <!-- v2.18.0：需求列表筛选（需求人 + 提交时间）与已完成需求记录清理 -->
+        <!-- v2.18.0：需求列表筛选（需求人 + 时间）与已完成需求记录清理；v2.18.3：时间筛选支持按「提交时间 / 交期」字段切换 -->
         <div class="toolbar" style="margin-bottom:8px">
           <span class="hint">筛选：</span>
           <label class="hint">需求人 <select id="reqFiltPerson" title="按需求人筛选"><option value="">全部</option></select></label>
-          <label class="hint">提交时间 <select id="reqFiltTime" title="按需求提交时间筛选">
+          <label class="hint">时间 <select id="reqFiltField" title="按哪个时间列筛选">
+            <option value="createdAt">提交时间</option>
+            <option value="due">交期</option>
+          </select>
+          <select id="reqFiltTime" title="时间范围">
             <option value="all">全部</option>
             <option value="1w">近1周</option>
             <option value="1m">近1月</option>
@@ -400,9 +404,9 @@
             <option value="custom">自定义</option>
           </select></label>
           <span id="reqFiltDates" style="display:none;align-items:center;gap:4px">
-            <input type="date" id="reqFiltStart" title="提交时间起（含）" style="width:130px">
+            <input type="date" id="reqFiltStart" title="起始日期（含）" style="width:130px">
             <span class="hint">~</span>
-            <input type="date" id="reqFiltEnd" title="提交时间止（含）" style="width:130px">
+            <input type="date" id="reqFiltEnd" title="结束日期（含）" style="width:130px">
           </span>
           <span class="hint" id="reqFiltInfo"></span>
           <span class="spacer"></span>
@@ -492,6 +496,25 @@
         </select>
         <input id="filtProject" placeholder="搜索项目号" style="width:160px">
         <span class="spacer" style="flex:1"></span>
+        <!-- v2.18.3：批次明细时间筛选——时间列（开始/完成/交期）+ 范围（全部/近1周/近1月/近3月/近6月/自定义），与类型/产线/状态/项目搜索叠加 -->
+        <label class="hint">时间 <select id="filtTField" title="按哪个时间列筛选批次">
+          <option value="start">开始</option>
+          <option value="end">完成</option>
+          <option value="due">交期</option>
+        </select>
+        <select id="filtTRange" title="时间范围">
+          <option value="all">全部</option>
+          <option value="1w">近1周</option>
+          <option value="1m">近1月</option>
+          <option value="3m">近3月</option>
+          <option value="6m">近6月</option>
+          <option value="custom">自定义</option>
+        </select></label>
+        <span id="filtTDates" style="display:none;align-items:center;gap:4px">
+          <input type="date" id="filtTStart" title="起始日期（含）" style="width:130px">
+          <span class="hint">~</span>
+          <input type="date" id="filtTEnd" title="结束日期（含）" style="width:130px">
+        </span>
         <button class="btn sm" id="btnExportPlan">导出Excel(.xlsx)</button>
       </div>
       <div class="scroll-tbl" style="max-height:520px">
@@ -668,7 +691,9 @@
         <p>· <b>需求导出</b>：需求列表可一键导出 Excel/CSV（项目、类型、批次类型、交期、状态、规格、阶段、预算、首次生产分子信息等全部填报字段）。</p>
         <p>· <b>甘特图视图</b>：产线支持多选过滤；时间范围（全部/近1月/近3月/近6月/自定义）与时间轴密度（px/天）、刻度单位（月/周/天）可调，设置保存在本地。</p>
         <p>· <b>排产分析</b>：每次「自动排产」记录快照（自动排产），每 2 周自动记录一次定期快照（含人工调整结果），可分析批次日期漂移、月度批次趋势与准时率；快照按来源分别限额保留：自动排产 15 条 / 定期 10 条 / 人工 5 条。<b>v2.18.0 起快照仅记录拍照时间未完成的批次及其后续</b>（已完成批次不再进入快照，也不计为「取消」）；<b>v2.18.2 起自动备份改为「快照列表 + 快照批次」两张工作表</b>，避开 Excel 单格 32767 字符上限，避免删除/清空快照时备份中止。</p>
-        <p>· <b>需求列表</b>：支持按需求人 / 提交时间筛选，显示「x / y 条」；每行展示「提交时间」列；<b>v2.18.2 起</b>已完成需求（全部批次锁定/终态且完成日期已过）可由生产计划角色多选后一次性删除记录（批次保留在「📅 排产计划」中不受影响）。</p>
+        <p>· <b>需求列表</b>：支持按需求人筛选；时间筛选可按「提交时间 / 交期」字段切换，范围支持 全部/近1周/近1月/近3月/自定义，筛选后显示「x / y 条」；每行展示「提交时间」列；<b>v2.18.2 起</b>已完成需求（全部批次锁定/终态且完成日期已过）可由生产计划角色多选后一次性删除记录（批次保留在「📅 排产计划」中不受影响）。</p>
+        <p>· <b>批次明细筛选</b>：<b>v2.18.3 起</b>在类型 / 产线 / 状态 / 项目搜索之外，可按「开始 / 完成 / 交期」任一时间列 + 范围（全部 / 近1周 / 近1月 / 近3月 / 近6月 / 自定义）筛选批次，各条件叠加生效。</p>
+        <p>· <b>读者权限</b>：<b>v2.18.3 起</b>读者在「需求录入」页看到与需求方一致的表单与按钮（含编辑 / 删除 / 自动排产等）；点击任何写操作均提示「读者权限仅可预览」并被拦截，不会产生数据变更；生产计划专属功能（排产锁定、参考数据、规则参数、数据管理等）对读者仍不可见。</p>
         <p>· <b>权限说明</b>：「📊 参考数据」与「⚙️ 规则参数」仅「🏭 生产计划」角色可见与操作；需求方角色不显示入口。</p>
         <p>· <b>参考数据</b>：「产线情况 / 制剂产能 / 人员配置 / 需求字段矩阵」四张表可修订（生产计划角色），保存后本地持久化。</p>
       </div>
@@ -710,7 +735,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.18.2（云端共享·邮箱登录·权限三档·新账号默认读者）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.18.3（读者界面与需求方一致·写操作拦截·需求列表/批次明细时间筛选）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -778,7 +803,7 @@
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
 <script src="cloudbase.full.js?v=2152"></script>
 <script src="cloud.js?v=2152"></script>
-<script src="scheduling.js?v=2182"></script>
+<script src="scheduling.js?v=2183"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -1827,11 +1852,16 @@
     renderApsInfo(); // v2.17.0：APS 月份提醒随需求列表刷新
     var tb = $('reqTable').querySelector('tbody');
     tb.innerHTML='';
-    // v2.18.0：需求列表筛选（需求人 + 提交时间，仅影响显示不影响数据）
+    // v2.18.0：需求列表筛选（需求人 + 时间，仅影响显示不影响数据）；v2.18.3：时间列可在「提交时间 / 交期」间切换
     var fP = $('reqFiltPerson') ? ($('reqFiltPerson').value||'') : '';
+    var fF = $('reqFiltField') ? ($('reqFiltField').value||'createdAt') : 'createdAt';
     var fT = $('reqFiltTime') ? ($('reqFiltTime').value||'all') : 'all';
     var fS = $('reqFiltStart') ? ($('reqFiltStart').value||'') : '';
     var fE = $('reqFiltEnd') ? ($('reqFiltEnd').value||'') : '';
+    // 时间列取值：交期模式取 r.dueDate；APS 计划月需求以「计划月月初」作为交期参照（与交期列显示「yyyy-MM（计划月）」一致）；提交时间模式取 r.createdAt
+    function fTimeOf(r){
+      return fF==='due' ? (r.dueDate || (r.apsMonth ? r.apsMonth+'-01' : '')) : (r.createdAt||'');
+    }
     // 需求人下拉选项重建（保留当前选择）
     var pSel = $('reqFiltPerson');
     if(pSel){
@@ -1847,11 +1877,14 @@
     var shown = state.requirements.filter(function(r){
       if(fP && (r.requester||'-') !== fP) return false;
       if(fT==='1w' || fT==='1m' || fT==='3m'){
-        if(!r.createdAt) return true; // 旧数据无提交时间时不过滤
+        var tv = fTimeOf(r);
+        if(!tv) return true; // 旧数据无对应时间列取值时不过滤
         var days = fT==='1w' ? 7 : (fT==='1m' ? 30 : 90);
-        if(nowMs - new Date(r.createdAt).getTime() > days * 86400000) return false;
+        // v2.18.3：双向窗口 |now-t|≤N 天——「交期」等未来时间列同样按距今 N 天内判定（此前仅排除过去，未来交期永不排除）
+        if(Math.abs(nowMs - new Date(tv).getTime()) > days * 86400000) return false;
       } else if(fT==='custom'){
-        var cd = (r.createdAt||'').slice(0,10);
+        var tv2 = fTimeOf(r);
+        var cd = tv2 ? tv2.slice(0,10) : '';
         if(cd){
           if(fS && cd < fS) return false;
           if(fE && cd > fE) return false;
@@ -1885,7 +1918,8 @@
             (r.mabSubtype?' ｜ mAb subtype:'+r.mabSubtype:'')+
             (r.hostCell?' ｜ Host Cell Line:'+r.hostCell:''):'')+(r.note?' ｜ 备注:'+r.note:''));
       // v2.18.2：全部批次已完成的需求可单独删除记录（批次保留在排产计划中不受影响）
-      var doneBtn = (st==='已完成' && !isReader() && (isPlanner() || canDelReq(r)))
+      // v2.18.3：读者与需求方按钮一致——读者点击删除记录同样由 delDoneReq 的 isReader() toast 拦截
+      var doneBtn = (st==='已完成' && (isPlanner() || canDelReq(r)))
         ? ' <button class="btn sm" data-act="deldone" data-id="'+r.id+'" title="仅删除本条需求记录（批次均已完成，「📅 排产计划」中的批次保留不动）">🧹 删除记录</button>'
         : '';
       // v2.18.2：多选删除列——仅生产计划角色 + 已完成需求显示复选框
@@ -1902,16 +1936,18 @@
         '<td>'+esc(r.requester||'-')+'</td>'+
         '<td>'+esc((r.createdAt||'').slice(0,10))+'</td>'+
         '<td><span class="badge '+stBadge+'">'+st+'</span></td>'+
-        '<td>'+(isReader()
-          ? '<span class="hint" style="font-size:11px;cursor:help" title="读者权限仅可预览">👀 只读</span>'
-          : (isPlanner()
+        // v2.18.3：读者与需求方（非生产计划）渲染一致的编辑/删除按钮——点击写操作由对应函数入口 isReader() toast 拦截，无「👀 只读」占位
+        '<td>'+(isPlanner()
           ? '<button class="btn sm danger" data-act="del" data-id="'+r.id+'" title="生产计划角色可删除任意需求">删除</button>'+doneBtn
           : '<button class="btn sm" data-act="edit" data-id="'+r.id+'">编辑</button> '+
             (canDelReq(r)?'<button class="btn sm danger" data-act="del" data-id="'+r.id+'" title="仅需求人本人可删除">删除</button>'
-              :'<span class="hint" style="font-size:11px;cursor:help;border-bottom:1px dotted" data-act="delhint" data-id="'+r.id+'" title="删除方法：① 用该需求人的账号登录（需求人自动绑定登录账号）；② 或切换到「🏭 生产计划」角色后可删除任意需求">🔒 仅'+esc(r.requester)+'可删</span>')+doneBtn))+'</td>';
+              :'<span class="hint" style="font-size:11px;cursor:help;border-bottom:1px dotted" data-act="delhint" data-id="'+r.id+'" title="删除方法：① 用该需求人的账号登录（需求人自动绑定登录账号）；② 或切换到「🏭 生产计划」角色后可删除任意需求">🔒 仅'+esc(r.requester)+'可删</span>')+doneBtn)+'</td>';
       tb.appendChild(tr);
     });
     updateDelDoneBtn();
+    // v2.18.3：没有已完成需求时隐藏表头全选框，避免"表头有框、下面无框"的误解
+    var doneSelAllTh = $('doneSelAll') ? $('doneSelAll').closest('th') : null;
+    if(doneSelAllTh) doneSelAllTh.style.display = (isPlanner() && shown.some(function(r){ return reqAllDone(r); })) ? '' : 'none';
   }
 
   // ---------- 渲染：甘特图 ----------
@@ -2397,20 +2433,43 @@
     var tb = $('batchTable').querySelector('tbody');
     tb.innerHTML='';
     var ft = $('filtType').value, fl = $('filtLine').value, fs = $('filtStatus').value, fp = ($('filtProject').value||'').toLowerCase();
+    // v2.18.3：批次明细时间筛选（时间列：开始/完成/交期；范围：全部/近1周/近1月/近3月/近6月/自定义）
+    var ftF = $('filtTField') ? $('filtTField').value : 'start';
+    var ftR = $('filtTRange') ? ($('filtTRange').value||'all') : 'all';
+    var ftS = $('filtTStart') ? ($('filtTStart').value||'') : '';
+    var ftE = $('filtTEnd') ? ($('filtTEnd').value||'') : '';
+    var nowMs2 = Date.now();
+    // v2.17.0：交期列（需求→交期映射，预构建避免 O(批次×需求) 查找；v2.18.3 起同时供「交期」时间筛选取值）
+    var dueMap = {};
+    state.requirements.forEach(function(r){ dueMap[r.id] = r.dueDate || ''; });
+    function tValOf(b){
+      return ftF==='due' ? (dueMap[b.reqId]||'') : (ftF==='end' ? (b.end||'') : (b.start||''));
+    }
     var list = state.batches.filter(function(b){
       if(ft && b.type!==ft) return false;
       if(fl && (b.line||'其他')!==fl) return false;
       if(fs && b.status!==fs) return false;
       if(fp && !(b.project||'').toLowerCase().includes(fp)) return false;
+      if(ftR!=='all'){
+        var tv = tValOf(b);
+        if(tv){ // 该批次无对应时间列取值（如无交期的 APS/历史批）时不过滤，避免误隐藏
+          if(ftR==='1w' || ftR==='1m' || ftR==='3m' || ftR==='6m'){
+            var days = ftR==='1w' ? 7 : (ftR==='1m' ? 30 : (ftR==='3m' ? 90 : 180));
+            // v2.18.3：双向窗口 |now-t|≤N 天（与需求列表一致；开始/完成/交期含未来日期时同样按距今判定）
+            if(Math.abs(nowMs2 - U.p(tv)) > days * 86400000) return false;
+          } else if(ftR==='custom'){
+            var cd = tv.slice(0,10);
+            if(ftS && cd < ftS) return false;
+            if(ftE && cd > ftE) return false;
+          }
+        }
+      }
       return true;
     });
     list.sort(function(a,b){ return U.p(a.start)-U.p(b.start); });
     $('batchCount').textContent = list.length+' / '+state.batches.length;
     $('batchEmpty').style.display = list.length ? 'none' : '';
     var stCls = {'锁定':'lock','自动':'auto','预警':'warn','人工':'manual','中止':'dead','失败':'fail','取消':'cancel'};
-    // v2.17.0：交期列（需求→交期映射，预构建避免 O(批次×需求) 查找）
-    var dueMap = {};
-    state.requirements.forEach(function(r){ dueMap[r.id] = r.dueDate || ''; });
     function dueCell(b){
       var due = dueMap[b.reqId] || '';
       if(!due) return '<td style="color:var(--sub)">-</td>';
@@ -2458,6 +2517,9 @@
         '<td class="plan-only">'+ops+'</td>';
       tb.appendChild(tr);
     });
+    // v2.18.3：没有可解锁批次时隐藏表头全选框
+    var batchSelAllTh = $('batchSelAll') ? $('batchSelAll').closest('th') : null;
+    if(batchSelAllTh) batchSelAllTh.style.display = (isPlanner() && list.some(function(b){ return b.locked && b.source!=='历史'; })) ? '' : 'none';
   }
 
   // ---------- 人工调整（编辑弹窗，生产计划角色） ----------
@@ -2875,11 +2937,55 @@
     a.click();
     setTimeout(function(){URL.revokeObjectURL(a.href);}, 1000);
   }
+  // v2.18.3：获取当前 UI 筛选条件，用于导出信息工作表
+  function currentUiFilters(){
+    function v(id, def){ var el = $(id); return el ? (el.value||def) : def; }
+    return {
+      role: state.role || 'requester',
+      reqFiltPerson: v('reqFiltPerson',''),
+      reqFiltField: v('reqFiltField','createdAt'),
+      reqFiltTime: v('reqFiltTime','all'),
+      reqFiltStart: v('reqFiltStart',''),
+      reqFiltEnd: v('reqFiltEnd',''),
+      filtType: v('filtType',''),
+      filtLine: v('filtLine',''),
+      filtStatus: v('filtStatus',''),
+      filtProject: v('filtProject',''),
+      filtTField: v('filtTField','start'),
+      filtTRange: v('filtTRange','all'),
+      filtTStart: v('filtTStart',''),
+      filtTEnd: v('filtTEnd','')
+    };
+  }
+  // v2.18.3：把 UI 筛选条件格式化为可读字符串
+  function formatFiltInfo(ui){
+    var parts = [];
+    parts.push('角色：'+(ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')));
+    parts.push('需求列表：'+(ui.reqFiltField==='createdAt'?'提交时间':'交期')+' / '+ui.reqFiltTime+(ui.reqFiltTime==='custom'?' ('+ui.reqFiltStart+'~'+ui.reqFiltEnd+')':''));
+    parts.push('批次明细：'+ui.filtTField+' / '+ui.filtTRange+(ui.filtTRange==='custom'?' ('+ui.filtTStart+'~'+ui.filtTEnd+')':''));
+    return parts.join(' ｜ ');
+  }
   // 构建完整数据工作簿（需求 + 批次 + 配置），导出与自动备份共用
   // v2.18.2：快照不再整数组 JSON 写入单个单元格（易超 Excel 单格 32767 字符上限导致备份/删除失败），
   // 改为「快照列表」+「快照批次」两个工作表；导入时优先读取工作表重建。
   function buildWorkbook(){
     var wb = XLSX.utils.book_new();
+    // v2.18.3：导出信息工作表（版本/时间/角色/当前筛选条件），便于追溯导出版本与时间范围
+    var ui = currentUiFilters();
+    var info = [['项','值'],
+      ['系统版本','v2.18.3'],
+      ['导出时间', new Date().toISOString()],
+      ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
+      ['需求列表-时间列', ui.reqFiltField==='createdAt'?'提交时间':'交期'],
+      ['需求列表-时间范围', ui.reqFiltTime],
+      ['需求列表-自定义开始', ui.reqFiltStart],
+      ['需求列表-自定义结束', ui.reqFiltEnd],
+      ['批次明细-时间列', ui.filtTField],
+      ['批次明细-时间范围', ui.filtTRange],
+      ['批次明细-自定义开始', ui.filtTStart],
+      ['批次明细-自定义结束', ui.filtTEnd],
+      ['筛选条件摘要', formatFiltInfo(ui)]];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(info), '导出信息');
     XLSX.utils.book_append_sheet(wb, toSheet(state.requirements), '需求');
     XLSX.utils.book_append_sheet(wb, toSheet(state.batches), '排产批次');
     // 快照：拆为列表 + 批次明细两张表
@@ -2950,6 +3056,13 @@
       });
       try{
         var wb = XLSX.utils.book_new();
+        var ui = currentUiFilters();
+        var info = [['项','值'],
+          ['系统版本','v2.18.3'],
+          ['导出时间', new Date().toISOString()],
+          ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
+          ['筛选条件摘要', formatFiltInfo(ui)]];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(info), '导出信息');
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(list), '快照列表');
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '批次明细');
         saveXlsx(wb, '排产快照_'+today()+'.xlsx');
@@ -3047,6 +3160,17 @@
           rows.push([b.status, b.type, b.project, b.requester||'', b.batchNo||'', b.line, b.harvestDate||b.fillDate||'', b.start, b.end, packDateOf(b)||'', dueMap[b.reqId]||'', b.gmp?'Y':'N', (b.warning||b.note||'').replace(/\n/g,' ')]);
         });
         var wb = XLSX.utils.book_new();
+        var ui = currentUiFilters();
+        var info = [['项','值'],
+          ['系统版本','v2.18.3'],
+          ['导出时间', new Date().toISOString()],
+          ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
+          ['批次明细-时间列', ui.filtTField],
+          ['批次明细-时间范围', ui.filtTRange],
+          ['批次明细-自定义开始', ui.filtTStart],
+          ['批次明细-自定义结束', ui.filtTEnd],
+          ['筛选条件摘要', formatFiltInfo(ui)]];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(info), '导出信息');
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '排产批次');
         saveXlsx(wb, '排产批次_'+today()+'.xlsx');
       }catch(e){ toast('导出失败：'+e.message); }
@@ -3075,6 +3199,17 @@
       });
       try{
         var wb = XLSX.utils.book_new();
+        var ui = currentUiFilters();
+        var info = [['项','值'],
+          ['系统版本','v2.18.3'],
+          ['导出时间', new Date().toISOString()],
+          ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
+          ['需求列表-时间列', ui.reqFiltField==='createdAt'?'提交时间':'交期'],
+          ['需求列表-时间范围', ui.reqFiltTime],
+          ['需求列表-自定义开始', ui.reqFiltStart],
+          ['需求列表-自定义结束', ui.reqFiltEnd],
+          ['筛选条件摘要', formatFiltInfo(ui)]];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(info), '导出信息');
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '需求清单');
         saveXlsx(wb, '需求清单_'+today()+'.xlsx');
         toast('已导出需求清单（'+state.requirements.length+' 条）');
@@ -3187,10 +3322,16 @@
       var boxes = document.querySelectorAll('#batchTable tbody input[data-sel]');
       Array.prototype.forEach.call(boxes, function(c){ c.checked = $('batchSelAll').checked; });
     });
-    ['filtType','filtLine','filtStatus'].forEach(function(i){ $(i).addEventListener('change', renderBatches); });
+    ['filtType','filtLine','filtStatus','filtTField'].forEach(function(i){ $(i).addEventListener('change', renderBatches); });
     $('filtProject').addEventListener('input', renderBatches);
-    // v2.18.0：需求列表筛选（需求人/时间）与已完成需求记录清理
-    ['reqFiltPerson','reqFiltTime'].forEach(function(i){
+    // v2.18.3：批次明细时间筛选——范围切到「自定义」时显示日期输入
+    $('filtTRange').addEventListener('change', function(){
+      $('filtTDates').style.display = $('filtTRange').value==='custom' ? 'inline-flex' : 'none';
+      renderBatches();
+    });
+    ['filtTStart','filtTEnd'].forEach(function(i){ $(i).addEventListener('change', renderBatches); });
+    // v2.18.0：需求列表筛选（需求人/时间）与已完成需求记录清理；v2.18.3：字段（提交时间/交期）切换同样触发重渲染
+    ['reqFiltPerson','reqFiltTime','reqFiltField'].forEach(function(i){
       $(i).addEventListener('change', function(){
         $('reqFiltDates').style.display = $('reqFiltTime').value==='custom' ? 'inline-flex' : 'none';
         renderReq();
@@ -3410,6 +3551,7 @@
     if($('driftSelA')) $('driftSelA').addEventListener('change', renderDrift);
     if($('driftSelB')) $('driftSelB').addEventListener('change', renderDrift);
     if($('btnClearSnap')) $('btnClearSnap').addEventListener('click', function(){
+      if(isReader()){ toast('📖 读者权限仅可预览，无法清空快照'); return; } // v2.18.3：读者写操作统一拦截兜底
       uiConfirm('清空全部排产快照记录？此操作不可恢复，系统将先自动下载备份。', function(ok){
         if(!ok) return;
         autoBackup(function(bok){
