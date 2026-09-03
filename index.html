@@ -194,7 +194,7 @@
 <body class="role-requester">
 
 <header>
-  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.18.4（2026-09-03：需求/批次批量删除放开并按行语义处理——已完成需求仅删记录批次保留、未完成需求连带删批次；批次表「下罐/灌装」列移至「开始」之后、历史锁定批次行内禁用勾选；v2.18.3：读者「需求录入」界面与需求方一致、写操作全部 toast 拦截，需求列表时间筛选可按提交时间/交期切换，批次明细可按开始/完成/交期筛选）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.18.4</span></h1>
+  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.18.5（2026-09-03：权限管理可删除账号——移除角色分配后该账号恢复为「读者」仅预览，白名单管理员与当前登录账号不可删除；v2.18.4：需求/批次批量删除放开并按行语义处理——已完成需求仅删记录批次保留、未完成需求连带删批次；批次表「下罐/灌装」列移至「开始」之后、历史锁定批次行内禁用勾选；v2.18.3：读者「需求录入」界面与需求方一致、写操作全部 toast 拦截，需求列表时间筛选可按提交时间/交期切换，批次明细可按开始/完成/交期筛选）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.18.5</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -739,7 +739,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.18.4（批量删除放开·列序修正·读者界面与需求方一致·需求列表/批次明细时间筛选）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.18.5（权限管理可删除账号·批量删除放开·列序修正·读者界面与需求方一致·需求列表/批次明细时间筛选）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -806,7 +806,7 @@
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
 <script src="cloudbase.full.js?v=2152"></script>
-<script src="cloud.js?v=2152"></script>
+<script src="cloud.js?v=2185"></script>
 <script src="scheduling.js?v=2183"></script>
 <script src="history_data.js"></script>
 <script>
@@ -943,6 +943,7 @@
   function openPermMgmt(){
     if(!isPlanner()){ toast('仅「生产计划」角色可管理权限'); return; }
     if(!window.CloudSync || !window.CloudSync.isReady()){ toast('权限管理需要连接云端（本地模式无账号体系）'); return; }
+    var myEmail = (typeof window.CloudSync.getCurEmail === 'function') ? String(window.CloudSync.getCurEmail() || '').toLowerCase() : ''; // v2.18.5：防删当前登录账号
     if(document.getElementById('permOverlay')) return; // 已打开
     var ov = document.createElement('div');
     ov.id = 'permOverlay';
@@ -950,7 +951,7 @@
     ov.innerHTML =
       '<div style="background:#fff;border-radius:16px;padding:32px;width:min(980px,96vw);max-height:92vh;overflow:auto;box-shadow:0 16px 50px rgba(0,0,0,.22);color:#0f172a">' +
         '<div style="font-size:22px;font-weight:700;margin-bottom:10px">🛡️ 权限管理</div>' +
-        '<div style="font-size:15.5px;color:#64748b;margin-bottom:20px;line-height:1.7">给各账号分配角色：<b>读者</b>仅预览 / <b>需求方</b>可填报需求 / <b>生产计划</b>可排产管理。未登记的新账号默认为「读者」，须在此分配角色后方可填报需求；修改后对方页面会自动生效（或刷新后生效）。</div>' +
+        '<div style="font-size:15.5px;color:#64748b;margin-bottom:20px;line-height:1.7">给各账号分配角色：<b>读者</b>仅预览 / <b>需求方</b>可填报需求 / <b>生产计划</b>可排产管理。未登记的新账号默认为「读者」，须在此分配角色后方可填报需求；修改后对方页面会自动生效（或刷新后生效）。<b style="color:#334155">可点「🗑️ 删除」移除账号角色（删除后恢复为「读者」仅预览；白名单管理员与当前登录账号不可删除）。</b></div>' +
         '<div style="font-size:16px;color:#334155;margin-bottom:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b>新增账号：</b>' +
           '<input id="permNewEmail" type="email" placeholder="邮箱（须先在控制台创建该用户）" style="flex:1;min-width:240px;padding:11px 14px;border:1px solid #cbd5e1;border-radius:10px;font-size:15px;outline:none">' +
           '<select id="permNewRole" style="padding:11px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:15px">' +
@@ -985,16 +986,39 @@
       var opts = ['reader','requester','planner'].map(function(r){
         return '<option value="'+r+'"'+(r===role?' selected':'')+'>'+PERM_DESC[r]+'</option>';
       }).join('');
+      var isMe = !fixed && email === myEmail; // v2.18.5：当前登录账号不可删除（防锁死）
+      var delBtn = fixed ? '' : // 白名单管理员固定行无删除按钮
+        '<button data-del-email="'+esc(email)+'"'+(isMe?' disabled':'')+
+        ' style="flex:0 0 auto;padding:9px 14px;border:1px solid '+(isMe?'#e2e8f0':'#fecaca')+';border-radius:10px;background:#fff;color:'+(isMe?'#94a3b8':'#dc2626')+';font-size:14px;cursor:'+(isMe?'not-allowed':'pointer')+'"'+
+        ' title="'+(isMe?'当前登录账号，不可删除':'删除该账号的角色分配，恢复为「读者」仅预览')+'">🗑️ 删除</button>';
       return '<div style="display:flex;align-items:center;gap:16px;padding:14px 6px;border-bottom:1px solid #e2e8f0;flex-wrap:wrap">' +
         '<span style="flex:1 1 auto;min-width:280px;white-space:nowrap;font-size:16px;color:#0f172a">'+esc(email)+(fixed?' <span style="font-size:13px;color:#7c3aed;white-space:nowrap">（白名单管理员，固定生产计划）</span>':'')+'</span>' +
         (fixed ? '<span style="flex:0 0 auto;font-size:15.5px;color:#334155;white-space:nowrap">🏭 生产计划</span>'
                : '<select data-perm-email="'+esc(email)+'" style="flex:0 0 auto;min-width:170px;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:15px;background:#fff">'+opts+'</select>') +
+        delBtn +
         '</div>';
     }
     function bindSelects(){
       ov.querySelectorAll('select[data-perm-email]').forEach(function(sel){
         sel.dataset.rollback = sel.value;
         sel.addEventListener('change', function(){ savePerm(sel.dataset.permEmail, sel.value, sel); sel.dataset.rollback = sel.value; });
+      });
+    }
+    function bindDelBtns(){ // v2.18.5：删除账号角色（确认后 delPerm → 重拉列表）
+      ov.querySelectorAll('button[data-del-email]').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          var em = btn.dataset.delEmail;
+          if(btn.disabled){ perr('当前登录账号不可删除（会失去权限管理入口）'); return; }
+          uiConfirm('确定删除「'+em+'」的角色分配？删除后该账号将恢复为「📖 读者（仅预览）」，需重新分配角色后才能填报需求。', function(ok){
+            if(!ok) return;
+            window.CloudSync.delPerm(em).then(function(delOk){
+              if(delOk){
+                perr(''); toast('✅ 已删除 '+em+' 的角色分配（恢复为读者）');
+                window.CloudSync.fetchPerms().then(renderList).catch(function(){ renderList([]); }); // 删除后稍等重拉（云端读有延迟）
+              } else perr('删除失败（未知原因，请检查网络后重试）');
+            }).catch(function(e){ perr('删除失败：'+(e&&e.message||e)); });
+          });
+        });
       });
     }
     function renderList(permRows){
@@ -1009,8 +1033,9 @@
         seen[em] = true;
         html += rowHtml(em, ROLE_NAMES[p.role]!=null ? p.role : 'reader', false);
       });
-      box.innerHTML = html + '<div style="font-size:13px;color:#94a3b8;margin-top:12px;line-height:1.6">提示：账号需先在腾讯云控制台「身份验证→用户管理」中创建，再在此分配角色。</div>';
+      box.innerHTML = html + '<div style="font-size:13px;color:#94a3b8;margin-top:12px;line-height:1.6">提示：账号需先在腾讯云控制台「身份验证→用户管理」中创建，再在此分配角色；删除角色不会删除该云端账号，仅收回其填报/排产权限（恢复为读者）。</div>';
       bindSelects();
+      bindDelBtns(); // v2.18.5 删除按钮绑定
     }
     window.CloudSync.fetchPerms().then(renderList).catch(function(){ renderList([]); });
   }
@@ -3046,7 +3071,7 @@
     // v2.18.3：导出信息工作表（版本/时间/角色/当前筛选条件），便于追溯导出版本与时间范围
     var ui = currentUiFilters();
     var info = [['项','值'],
-      ['系统版本','v2.18.4'],
+      ['系统版本','v2.18.5'],
       ['导出时间', new Date().toISOString()],
       ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
       ['需求列表-时间列', ui.reqFiltField==='createdAt'?'提交时间':'交期'],
@@ -3131,7 +3156,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.18.4'],
+          ['系统版本','v2.18.5'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['筛选条件摘要', formatFiltInfo(ui)]];
@@ -3235,7 +3260,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.18.4'],
+          ['系统版本','v2.18.5'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['批次明细-时间列', ui.filtTField],
@@ -3274,7 +3299,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.18.4'],
+          ['系统版本','v2.18.5'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['需求列表-时间列', ui.reqFiltField==='createdAt'?'提交时间':'交期'],
