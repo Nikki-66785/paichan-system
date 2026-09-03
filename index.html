@@ -411,11 +411,11 @@
           <span class="hint" id="reqFiltInfo"></span>
           <span class="spacer"></span>
           <button class="btn sm" id="btnCleanDoneReq" title="删除所有批次均已完成的需求数据（仅清理需求记录，「📅 排产计划」中的批次保留不动）">🧹 清理已完成需求记录</button>
-          <button class="btn sm plan-only" id="btnDelDoneSelected" title="删除选中的已完成需求记录（仅生产计划角色，批次保留不动）">🗑️ 删除选中（0）</button>
+          <button class="btn sm danger plan-only" id="btnDelDoneSelected" title="删除选中的需求（仅生产计划角色）：已完成→仅删需求记录、批次保留；未完成→连同其排产批次一并删除">🗑️ 删除选中（0）</button>
         </div>
         <div class="req-tbl scroll-tbl">
           <table id="reqTable">
-            <thead><tr><th class="done-col" style="width:32px"><input type="checkbox" id="doneSelAll" title="全选/取消全选 已完成需求（仅生产计划可见）"></th><th>项目</th><th>类型</th><th>批次</th><th>交期</th><th>批次类型</th><th>优先级</th><th>需求人</th><th>提交时间</th><th>状态</th><th>操作</th></tr></thead>
+            <thead><tr><th class="done-col" style="width:32px"><input type="checkbox" id="doneSelAll" title="全选/取消全选（生产计划角色，删除时按行状态处理）"></th><th>项目</th><th>类型</th><th>批次</th><th>交期</th><th>批次类型</th><th>优先级</th><th>需求人</th><th>提交时间</th><th>状态</th><th>操作</th></tr></thead>
             <tbody></tbody>
           </table>
           <div class="empty" id="reqEmpty">暂无需求，请由需求方填写并添加</div>
@@ -474,6 +474,7 @@
       <div class="toolbar plan-only" style="margin-bottom:10px">
         <button class="btn ok" id="btnLockPlan">🔒 排产锁定（确认全部待确认批次）</button>
         <button class="btn" id="btnBatchUnlock">🔓 批量解锁（勾选批次）</button>
+        <button class="btn danger plan-only" id="btnDelBatches" title="删除勾选的批次（历史锁定批次除外，仅生产计划角色）">🗑️ 删除选中（0）</button>
         <button class="btn" id="btnRefreshSched">🔄 刷新自动排产（重排未锁定批次）</button>
         <span class="hint">确认无误后锁定；锁定批次作为已占用产能，不参与下次自动重排。解锁后可「刷新自动排产」重排全部未锁定批次</span>
       </div>
@@ -520,7 +521,7 @@
       <div class="scroll-tbl" style="max-height:520px">
         <table id="batchTable">
           <thead><tr>
-            <th class="plan-only batch-chk-col" style="width:28px"><input type="checkbox" id="batchSelAll" title="全选/全不选（仅锁定批次）"></th><th>状态</th><th>类型</th><th>项目</th><th>需求人</th><th>批次号</th><th>产线</th><th>下罐/灌装</th><th>开始</th><th>完成</th><th>包装完成</th><th>交期</th><th>GMP</th><th>备注</th><th class="plan-only">操作</th>
+            <th class="plan-only batch-chk-col" style="width:28px"><input type="checkbox" id="batchSelAll" title="全选/全不选（生产计划角色，历史锁定批次除外）"></th><th>状态</th><th>类型</th><th>项目</th><th>需求人</th><th>批次号</th><th>产线</th><th>下罐/灌装</th><th>开始</th><th>完成</th><th>包装完成</th><th>交期</th><th>GMP</th><th>备注</th><th class="plan-only">操作</th>
           </tr></thead>
           <tbody></tbody>
         </table>
@@ -1378,23 +1379,35 @@
     btn.textContent = '🗑️ 删除选中（'+n+'）';
     btn.classList.toggle('dim', n === 0);
   }
-  function delDoneReqs(ids){
-    if(!isPlanner()){ toast('仅生产计划角色可批量删除已完成需求记录'); return; }
-    if(!ids || !ids.length){ toast('请先勾选要删除的已完成需求记录'); return; }
-    var allowed = ids.map(function(id){ return state.requirements.find(function(x){return x.id===id;}); }).filter(function(r){ return r && reqAllDone(r); });
-    if(!allowed.length){ toast('所选记录并非全部已完成，已忽略'); return; }
-    var names = allowed.map(function(r){ return r.henliusProject||r.atProject||r.id; }).join('、');
-    if(names.length > 120) names = names.slice(0,120)+'…';
-    uiConfirm('批量删除选中的 '+allowed.length+' 条已完成需求记录？\n（排产计划中的批次保留不动）\n涉及：'+names, function(ok){
+  // v2.18.3：需求列表多选删除（生产计划角色）——勾选范围放开为全部需求行，按行语义处理：
+  //   已完成需求 → 仅删记录、排产批次保留；未完成需求 → 连同其排产批次一并删除
+  function delSelectedReqs(ids){
+    if(!isPlanner()){ toast('仅生产计划角色可批量删除需求'); return; }
+    if(!ids || !ids.length){ toast('请先勾选要删除的需求'); return; }
+    var reqs = ids.map(function(id){ return state.requirements.find(function(x){return x.id===id;}); }).filter(Boolean);
+    if(!reqs.length){ toast('所选需求不存在'); return; }
+    var done = reqs.filter(function(r){ return reqAllDone(r); });
+    var other = reqs.filter(function(r){ return !reqAllDone(r); });
+    var msg = '批量删除选中的 '+reqs.length+' 条需求？\n';
+    if(other.length) msg += '· '+other.length+' 条未完成需求：连同其排产批次一并删除\n';
+    if(done.length) msg += '· '+done.length+' 条已完成需求：仅删除需求记录，「📅 排产计划」批次保留\n';
+    var names = reqs.map(function(r){ return r.henliusProject||r.atProject||r.id; }).join('、');
+    if(names.length > 160) names = names.slice(0,160)+'…';
+    uiConfirm(msg+'涉及：'+names, function(ok){
       if(!ok) return;
       var idSet = {};
-      allowed.forEach(function(r){ idSet[r.id]=1; });
+      reqs.forEach(function(r){ idSet[r.id]=1; });
       state.requirements = state.requirements.filter(function(r){ return !idSet[r.id]; });
+      if(other.length){
+        var oid = {};
+        other.forEach(function(r){ oid[r.id]=1; });
+        state.batches = state.batches.filter(function(b){ return !oid[b.reqId]; });
+      }
       save(); renderAll();
-      addOp('批量删除已完成需求记录', allowed.length+' 条（批次保留）');
-      allowed.forEach(function(r){ if(window.CloudSync) window.CloudSync.delReqCloud(r.id); });
+      addOp('批量删除需求', reqs.length+' 条（已完成 '+done.length+' 仅记录/未完成 '+other.length+' 连带批次）');
+      reqs.forEach(function(r){ if(window.CloudSync) window.CloudSync.delReqCloud(r.id); });
       _doneSel = {};
-      toast('已删除 '+allowed.length+' 条需求记录（排产计划不受影响）');
+      toast('已删除 '+reqs.length+' 条需求');
     });
   }
   // v2.18.0：删除已完成需求的记录——仅移除需求条目，批次保留在排产计划中不受影响
@@ -1728,20 +1741,26 @@
       toast('已解锁，该批次恢复为待确认');
     });
   }
-  // 批量解锁：按批次表勾选框解锁多个锁定批次
+  // 批量解锁：按批次表勾选框解锁多个锁定批次（勾选列放开后，非锁定/历史批次会被自动忽略）
   function batchUnlockSelected(){
     if(!isPlanner()){ toast('仅生产计划角色可解锁批次'); return; }
     var boxes = document.querySelectorAll('#batchTable tbody input[data-sel]:checked');
     var ids = Array.prototype.map.call(boxes, function(c){ return c.dataset.sel; });
     if(!ids.length){ toast('请先勾选需要解锁的锁定批次（首列选择框）'); return; }
-    uiConfirm('解锁选中的 '+ids.length+' 个批次？\n解锁后恢复为待确认状态；可点击「刷新自动排产」按当前需求重新排产。', function(ok){
+    var unlockable = ids.filter(function(id){
+      var b = state.batches.find(function(x){return x.id===id;});
+      return b && b.locked && b.source!=='历史';
+    });
+    if(!unlockable.length){ toast('勾选批次中无「锁定中」的批次可解锁（历史锁定批次不可解锁）'); return; }
+    var skipped = ids.length - unlockable.length;
+    uiConfirm('解锁选中的 '+unlockable.length+' 个锁定批次'+(skipped?'（另有 '+skipped+' 个非锁定/历史批次已忽略）':'')+'？\n解锁后恢复为待确认状态；可点击「刷新自动排产」按当前需求重新排产。', function(ok){
       if(!ok) return;
-      ids.forEach(function(id){
+      unlockable.forEach(function(id){
         var b = state.batches.find(function(x){return x.id===id;});
-        if(b && b.locked && b.source!=='历史'){ b.locked=false; b.status='人工'; b.warning=''; }
+        if(b){ b.locked=false; b.status='人工'; b.warning=''; }
       });
       save(); renderAll();
-      toast('已批量解锁 '+ids.length+' 个批次，恢复为待确认');
+      toast('已批量解锁 '+unlockable.length+' 个批次，恢复为待确认');
     });
   }
   // 需求状态（派生）：待排产 / 待确认 / 已锁定（终态批次视为已定案，不阻塞需求）
@@ -1922,9 +1941,9 @@
       var doneBtn = (st==='已完成' && (isPlanner() || canDelReq(r)))
         ? ' <button class="btn sm" data-act="deldone" data-id="'+r.id+'" title="仅删除本条需求记录（批次均已完成，「📅 排产计划」中的批次保留不动）">🧹 删除记录</button>'
         : '';
-      // v2.18.2：多选删除列——仅生产计划角色 + 已完成需求显示复选框
-      var doneChk = (st==='已完成' && isPlanner())
-        ? '<input type="checkbox" class="done-chk" data-id="'+r.id+'"'+(!!_doneSel[r.id]?' checked':'')+' title="勾选后批量删除（批次保留不动）">'
+      // v2.18.2：多选删除列——仅生产计划角色；v2.18.3：放开为全部需求行可勾选（删除时按行语义：已完成仅删记录/批次保留，未完成连带批次删除）
+      var doneChk = isPlanner()
+        ? '<input type="checkbox" class="done-chk" data-id="'+r.id+'"'+(!!_doneSel[r.id]?' checked':'')+' title="'+(st==='已完成'?'已完成——勾选删除仅删需求记录（排产批次保留）':'勾选删除将连同其排产批次一并删除')+'">'
         : '';
       tr.innerHTML = '<td class="done-col" style="text-align:center">'+doneChk+'</td>'+
         '<td title="'+esc(tip)+'"><b>'+esc(isEQP ? (r.maintKind||'设备维护') : (r.henliusProject||r.atProject||'-'))+'</b></td>'+
@@ -1945,8 +1964,8 @@
       tb.appendChild(tr);
     });
     updateDelDoneBtn();
-    // v2.18.3：没有已完成需求时隐藏 done-col 整列，避免"表头有框、下面无框"的误解，同时保持 th/tbody 列数一致
-    var showDoneCol = isPlanner() && shown.some(function(r){ return reqAllDone(r); });
+    // v2.18.3：生产计划角色下 done-col 整列恒显示（全部需求行可勾选批量删除）；非生产计划角色由 CSS role-requester/role-reader .done-col 规则隐藏
+    var showDoneCol = isPlanner();
     Array.prototype.forEach.call($('reqTable').querySelectorAll('.done-col'), function(cell){ cell.style.display = showDoneCol ? '' : 'none'; });
   }
 
@@ -2483,9 +2502,9 @@
     list.forEach(function(b){
       var tr=document.createElement('tr');
       var ops = '—';
-      // 批量解锁选择框：仅生产计划角色、锁定中的非历史批次可选
-      var canSel = isPlanner() && b.locked && b.source!=='历史';
-      var selTd = '<td class="plan-only batch-chk-col" style="text-align:center">'+(canSel?'<input type="checkbox" data-sel="'+b.id+'" title="勾选后可批量解锁">':'')+'</td>';
+      // 勾选列：仅生产计划角色、非历史批次可选（勾选后可批量解锁或批量删除；历史锁定批次不可批量操作）
+      var canSel = isPlanner() && b.source!=='历史';
+      var selTd = '<td class="plan-only batch-chk-col" style="text-align:center">'+(canSel?'<input type="checkbox" data-sel="'+b.id+'" title="勾选后可批量解锁（🔓 批量解锁）或批量删除（🗑️ 删除选中）">':'')+'</td>';
       if(isPlanner()){
         if(b.source==='历史'){
           ops = '<span style="color:var(--sub)">历史锁定</span>';
@@ -2517,9 +2536,36 @@
         '<td class="plan-only">'+ops+'</td>';
       tb.appendChild(tr);
     });
-    // v2.18.3：没有可解锁批次时隐藏 batch-chk-col 整列，避免"表头有框、下面无框"的误解与错行
-    var showBatchChk = isPlanner() && list.some(function(b){ return b.locked && b.source!=='历史'; });
+    // v2.18.3：生产计划角色且有非历史批次时显示勾选列整列（可批量解锁/删除）；非生产计划角色由 CSS plan-only 规则隐藏
+    var showBatchChk = isPlanner() && list.some(function(b){ return b.source!=='历史'; });
     Array.prototype.forEach.call($('batchTable').querySelectorAll('.batch-chk-col'), function(cell){ cell.style.display = showBatchChk ? '' : 'none'; });
+    updateBatchSelBtn();
+  }
+  // v2.18.3：批次勾选计数同步到「删除选中」按钮
+  function updateBatchSelBtn(){
+    var btn = $('btnDelBatches'); if(!btn) return;
+    var n = document.querySelectorAll('#batchTable tbody input[data-sel]:checked').length;
+    btn.textContent = '🗑️ 删除选中（'+n+'）';
+    btn.classList.toggle('dim', n === 0);
+  }
+  // v2.18.3：批次明细批量删除（生产计划角色；历史锁定批次除外，删除不可撤销）
+  function delBatchesSelected(){
+    if(!isPlanner()){ toast('仅生产计划角色可删除批次'); return; }
+    var boxes = document.querySelectorAll('#batchTable tbody input[data-sel]:checked');
+    var ids = Array.prototype.map.call(boxes, function(c){ return c.dataset.sel; });
+    var targets = ids.map(function(id){ return state.batches.find(function(b){ return b.id===id; }); }).filter(function(b){ return b && b.source!=='历史'; });
+    if(!targets.length){ toast('请先勾选要删除的批次（历史锁定批次除外）'); return; }
+    var names = targets.map(function(b){ return b.id+'（'+(b.project||b.type||'-')+' '+(b.start||'')+'）'; }).join('、');
+    if(names.length > 160) names = names.slice(0,160)+'…';
+    uiConfirm('批量删除选中的 '+targets.length+' 个批次？此操作不可撤销，批次删除后将不再参与排产。\n涉及：'+names, function(ok){
+      if(!ok) return;
+      var del = {};
+      targets.forEach(function(b){ del[b.id]=1; });
+      state.batches = state.batches.filter(function(b){ return !del[b.id]; });
+      addOp('批量删除批次', targets.length+' 个');
+      save(); renderAll();
+      toast('已删除 '+targets.length+' 个批次');
+    });
   }
 
   // ---------- 人工调整（编辑弹窗，生产计划角色） ----------
@@ -3311,16 +3357,18 @@
     $('btnClearPlan').addEventListener('click', clearPlan);
     $('btnLockPlan').addEventListener('click', lockPlan);
     $('btnBatchUnlock').addEventListener('click', batchUnlockSelected);
+    $('btnDelBatches').addEventListener('click', delBatchesSelected); // v2.18.3：批次批量删除
     $('btnRefreshSched').addEventListener('click', function(){
       if(!state.requirements.length){ toast('请先添加需求'); return; }
       doSchedule(); // 刷新自动排产：按当前需求重新排产所有未锁定批次（锁定/终态批次保持不变）
     });
     $('btnExportReq').addEventListener('click', exportReqCSV);
     $('btnExportPlan').addEventListener('click', exportCSV);
-    // 批次表全选（仅锁定批次）：控制所有可选勾选框
+    // 批次表全选（生产计划，历史锁定批次除外）：控制所有可选勾选框并同步计数
     $('batchSelAll').addEventListener('change', function(){
       var boxes = document.querySelectorAll('#batchTable tbody input[data-sel]');
       Array.prototype.forEach.call(boxes, function(c){ c.checked = $('batchSelAll').checked; });
+      updateBatchSelBtn();
     });
     ['filtType','filtLine','filtStatus','filtTField'].forEach(function(i){ $(i).addEventListener('change', renderBatches); });
     $('filtProject').addEventListener('input', renderBatches);
@@ -3339,11 +3387,11 @@
     });
     ['reqFiltStart','reqFiltEnd'].forEach(function(i){ $(i).addEventListener('change', renderReq); });
     $('btnCleanDoneReq').addEventListener('click', cleanDoneReqs);
-    // v2.18.2：已完成需求多选删除（仅生产计划可见）
+    // v2.18.2：需求多选删除（仅生产计划可见）；v2.18.3：放开为全部需求行可勾选，删除按行语义
     if($('btnDelDoneSelected')) $('btnDelDoneSelected').addEventListener('click', function(){
       if(!isPlanner()){ toast('仅生产计划角色可使用多选删除'); return; }
       var ids = Array.prototype.map.call(document.querySelectorAll('.done-chk:checked'), function(c){ return c.getAttribute('data-id'); });
-      delDoneReqs(ids);
+      delSelectedReqs(ids);
     });
     if($('doneSelAll')) $('doneSelAll').addEventListener('change', function(){
       var checked = $('doneSelAll').checked;
@@ -3364,6 +3412,10 @@
       else if(btn.dataset.act==='confirm') confirmBatch(btn.dataset.id);
       else if(btn.dataset.act==='unlock') unlockBatch(btn.dataset.id);
       else if(btn.dataset.act==='del') delBatchDirect(btn.dataset.id);
+    });
+    // v2.18.3：批次勾选计数同步（勾选/取消后更新「删除选中」按钮）
+    $('batchTable').addEventListener('change', function(ev){
+      if(ev.target && ev.target.matches && ev.target.matches('input[data-sel]')) updateBatchSelBtn();
     });
     $('btnEditCancel').addEventListener('click', closeEdit);
     $('btnEditSave').addEventListener('click', saveEdit);
