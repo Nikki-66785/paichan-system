@@ -520,7 +520,7 @@
       <div class="scroll-tbl" style="max-height:520px">
         <table id="batchTable">
           <thead><tr>
-            <th class="plan-only" style="width:28px"><input type="checkbox" id="batchSelAll" title="全选/全不选（仅锁定批次）"></th><th>状态</th><th>类型</th><th>项目</th><th>需求人</th><th>批次号</th><th>产线</th><th>下罐/灌装</th><th>开始</th><th>完成</th><th>包装完成</th><th>交期</th><th>GMP</th><th>备注</th><th class="plan-only">操作</th>
+            <th class="plan-only batch-chk-col" style="width:28px"><input type="checkbox" id="batchSelAll" title="全选/全不选（仅锁定批次）"></th><th>状态</th><th>类型</th><th>项目</th><th>需求人</th><th>批次号</th><th>产线</th><th>下罐/灌装</th><th>开始</th><th>完成</th><th>包装完成</th><th>交期</th><th>GMP</th><th>备注</th><th class="plan-only">操作</th>
           </tr></thead>
           <tbody></tbody>
         </table>
@@ -1945,9 +1945,9 @@
       tb.appendChild(tr);
     });
     updateDelDoneBtn();
-    // v2.18.3：没有已完成需求时隐藏表头全选框，避免"表头有框、下面无框"的误解
-    var doneSelAllTh = $('doneSelAll') ? $('doneSelAll').closest('th') : null;
-    if(doneSelAllTh) doneSelAllTh.style.display = (isPlanner() && shown.some(function(r){ return reqAllDone(r); })) ? '' : 'none';
+    // v2.18.3：没有已完成需求时隐藏 done-col 整列，避免"表头有框、下面无框"的误解，同时保持 th/tbody 列数一致
+    var showDoneCol = isPlanner() && shown.some(function(r){ return reqAllDone(r); });
+    Array.prototype.forEach.call($('reqTable').querySelectorAll('.done-col'), function(cell){ cell.style.display = showDoneCol ? '' : 'none'; });
   }
 
   // ---------- 渲染：甘特图 ----------
@@ -2485,7 +2485,7 @@
       var ops = '—';
       // 批量解锁选择框：仅生产计划角色、锁定中的非历史批次可选
       var canSel = isPlanner() && b.locked && b.source!=='历史';
-      var selTd = '<td class="plan-only" style="text-align:center">'+(canSel?'<input type="checkbox" data-sel="'+b.id+'" title="勾选后可批量解锁">':'')+'</td>';
+      var selTd = '<td class="plan-only batch-chk-col" style="text-align:center">'+(canSel?'<input type="checkbox" data-sel="'+b.id+'" title="勾选后可批量解锁">':'')+'</td>';
       if(isPlanner()){
         if(b.source==='历史'){
           ops = '<span style="color:var(--sub)">历史锁定</span>';
@@ -2517,9 +2517,9 @@
         '<td class="plan-only">'+ops+'</td>';
       tb.appendChild(tr);
     });
-    // v2.18.3：没有可解锁批次时隐藏表头全选框
-    var batchSelAllTh = $('batchSelAll') ? $('batchSelAll').closest('th') : null;
-    if(batchSelAllTh) batchSelAllTh.style.display = (isPlanner() && list.some(function(b){ return b.locked && b.source!=='历史'; })) ? '' : 'none';
+    // v2.18.3：没有可解锁批次时隐藏 batch-chk-col 整列，避免"表头有框、下面无框"的误解与错行
+    var showBatchChk = isPlanner() && list.some(function(b){ return b.locked && b.source!=='历史'; });
+    Array.prototype.forEach.call($('batchTable').querySelectorAll('.batch-chk-col'), function(cell){ cell.style.display = showBatchChk ? '' : 'none'; });
   }
 
   // ---------- 人工调整（编辑弹窗，生产计划角色） ----------
