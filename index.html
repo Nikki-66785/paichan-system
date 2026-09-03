@@ -521,7 +521,7 @@
       <div class="scroll-tbl" style="max-height:520px">
         <table id="batchTable">
           <thead><tr>
-            <th class="plan-only batch-chk-col" style="width:28px"><input type="checkbox" id="batchSelAll" title="全选/全不选（生产计划角色，历史锁定批次除外）"></th><th>状态</th><th>类型</th><th>项目</th><th>需求人</th><th>批次号</th><th>产线</th><th>下罐/灌装</th><th>开始</th><th>完成</th><th>包装完成</th><th>交期</th><th>GMP</th><th>备注</th><th class="plan-only">操作</th>
+            <th class="plan-only batch-chk-col" style="width:28px"><input type="checkbox" id="batchSelAll" title="全选/全不选（生产计划角色，历史锁定批次除外）"></th><th>状态</th><th>类型</th><th>项目</th><th>需求人</th><th>批次号</th><th>产线</th><th>开始</th><th>下罐/灌装</th><th>完成</th><th>包装完成</th><th>交期</th><th>GMP</th><th>备注</th><th class="plan-only">操作</th>
           </tr></thead>
           <tbody></tbody>
         </table>
@@ -2504,7 +2504,9 @@
       var ops = '—';
       // 勾选列：仅生产计划角色、非历史批次可选（勾选后可批量解锁或批量删除；历史锁定批次不可批量操作）
       var canSel = isPlanner() && b.source!=='历史';
-      var selTd = '<td class="plan-only batch-chk-col" style="text-align:center">'+(canSel?'<input type="checkbox" data-sel="'+b.id+'" title="勾选后可批量解锁（🔓 批量解锁）或批量删除（🗑️ 删除选中）">':'')+'</td>';
+      var selTd = '<td class="plan-only batch-chk-col" style="text-align:center">'+
+        (isPlanner()?'<input type="checkbox" data-sel="'+b.id+'"'+(canSel?' title="勾选后可批量解锁（🔓 批量解锁）或批量删除（🗑️ 删除选中）"':' disabled title="历史锁定批次不可批量操作"')+'>':'')+
+        '</td>';
       if(isPlanner()){
         if(b.source==='历史'){
           ops = '<span style="color:var(--sub)">历史锁定</span>';
@@ -2528,16 +2530,17 @@
         '<td>'+esc(b.requester||'-')+'</td>'+
         '<td style="color:var(--sub)">'+esc(b.batchNo||'-')+'</td>'+
         '<td>'+esc(b.line||'-')+'</td>'+
-        '<td style="color:var(--sub)">'+(b.harvestDate?'下罐 '+esc(b.harvestDate):(b.fillDate?'灌装 '+esc(b.fillDate):'-'))+'</td>'+ // v2.18.0：下罐/灌装移至开始列前
-        '<td>'+esc(b.start)+'</td><td>'+esc(b.end)+'</td>'+
+        '<td>'+esc(b.start)+'</td>'+
+        '<td style="color:var(--sub)">'+(b.harvestDate?'下罐 '+esc(b.harvestDate):(b.fillDate?'灌装 '+esc(b.fillDate):'-'))+'</td>'+
+        '<td>'+esc(b.end)+'</td>'+
         '<td style="color:var(--sub)">'+esc(packDateOf(b)||'-')+'</td>'+dueCell(b)+ // v2.18.0：交期移至包装完成后
         '<td>'+(b.gmp?'<span class="b-green">GMP</span>':'<span class="b-gray">非GMP</span>')+'</td>'+
         '<td style="max-width:220px;white-space:normal;color:var(--sub)">'+esc(b.warning||b.note||'')+'</td>'+
         '<td class="plan-only">'+ops+'</td>';
       tb.appendChild(tr);
     });
-    // v2.18.3：生产计划角色且有非历史批次时显示勾选列整列（可批量解锁/删除）；非生产计划角色由 CSS plan-only 规则隐藏
-    var showBatchChk = isPlanner() && list.some(function(b){ return b.source!=='历史'; });
+    // v2.18.3：生产计划角色且列表非空时显示勾选列整列（历史行显示禁用复选框，提示不可操作）
+    var showBatchChk = isPlanner() && list.length > 0;
     Array.prototype.forEach.call($('batchTable').querySelectorAll('.batch-chk-col'), function(cell){ cell.style.display = showBatchChk ? '' : 'none'; });
     updateBatchSelBtn();
   }
@@ -3366,7 +3369,7 @@
     $('btnExportPlan').addEventListener('click', exportCSV);
     // 批次表全选（生产计划，历史锁定批次除外）：控制所有可选勾选框并同步计数
     $('batchSelAll').addEventListener('change', function(){
-      var boxes = document.querySelectorAll('#batchTable tbody input[data-sel]');
+      var boxes = document.querySelectorAll('#batchTable tbody input[data-sel]:not(:disabled)');
       Array.prototype.forEach.call(boxes, function(c){ c.checked = $('batchSelAll').checked; });
       updateBatchSelBtn();
     });
