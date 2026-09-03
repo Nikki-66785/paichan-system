@@ -651,6 +651,25 @@
           .catch(function (e2) { throw new Error(errText(e2)); });
       });
   }
+  // 删除账号角色分配：移除 permissions 集合中的文档（email 小写作 _id）。删除后该账号回到未登记状态 → 默认「读者（仅预览）」，需重新分配角色后才能填报需求。
+  // v2.18.5：自我保护——不能删除当前登录账号（否则刷新后失去权限管理入口，无法恢复）。
+  function delPerm(email) {
+    if (!ready) return Promise.reject(new Error('未连接云端'));
+    email = String(email || '').trim().toLowerCase();
+    if (!email || email.indexOf('@') < 0) return Promise.reject(new Error('邮箱格式无效'));
+    if (curEmail && email === curEmail.toLowerCase())
+      return Promise.reject(new Error('不能删除当前登录账号的角色分配（会失去权限管理入口）'));
+    return db.collection(PERM_COLL).doc(email).remove()
+      .then(function () { return true; })
+      .catch(function (e) {
+        var c = String((e && (e.code || e.message)) || e || '');
+        if (/COLLECTION_NOT_EXIST|not\s*exist|不存在/i.test(c))
+          return Promise.reject(new Error('该账号无角色记录或 permissions 集合不存在（无需删除）'));
+        if (/PERMISSION|DENIED|权限|FORBIDDEN/i.test(c))
+          return Promise.reject(new Error('删除被安全规则拒绝：请到 CloudBase 控制台 → 数据库 → permissions 集合 → 权限设置 → 自定义安全规则，填入 {"read":"auth != null","write":"auth != null"}（默认「仅创建者可读写」会拦截本操作）'));
+        return Promise.reject(new Error('删除云端失败：' + c));
+      });
+  }
   // 当前账号三档角色查询（'reader'|'requester'|'planner'；未连接/匿名/未登记 → reader）
   function getMyRole() {
     return myRole || DEFAULT_ROLE;
@@ -757,7 +776,8 @@
     connect: connect, isReady: isReady, onSaved: onSaved, logout: logout,
     isPlanAdmin: isPlanAdmin, // v2.13.0 角色查询：主文件 isPlanner() 据此强制身份
     getMyRole: getMyRole,     // v2.15.0 三档角色查询（reader/requester/planner）
-    fetchPerms: fetchPerms, setPerm: setPerm, // v2.15.0 权限管理：角色列表/分配（permissions 集合）
+    fetchPerms: fetchPerms, setPerm: setPerm, delPerm: delPerm, // v2.15.0 权限管理：角色列表/分配/删除（permissions 集合；delPerm v2.18.5）
+    getCurEmail: function () { return curEmail; }, // v2.18.5 当前登录邮箱（权限管理「防删当前登录账号」保护）
     changePwd: changePwd, // v2.14.0 自助修改密码（参数：旧密码, 新密码）
     pushReq: pushReq, delReqCloud: delReqCloud, delAllReqs: delAllReqs,
     pushPlan: pushPlan, forcePushPlan: forcePushPlan,
