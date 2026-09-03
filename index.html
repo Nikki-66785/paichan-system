@@ -88,6 +88,9 @@
   th{color:var(--sub);font-weight:600;background:#f6f8fc;position:sticky;top:0;z-index:2;box-shadow:inset 0 -1px 0 var(--line)}
   tbody tr:nth-child(even){background:#fafbfd}
   tbody tr:hover{background:var(--pri-soft)}
+  /* v2.18.4：大表最小宽度——列不被硬挤压；窗口不足时由 .scroll-tbl 触发横向滚动（需求表 11 列 / 批次表 15 列） */
+  #reqTable{min-width:1080px}
+  #batchTable{min-width:1360px}
   .ref-tbl td{white-space:normal}
   .ref-tbl input{width:100%;min-width:60px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;font-size:12px;box-sizing:border-box}
   .ref-edit-btn{font-size:11px;margin-left:8px}
@@ -123,7 +126,7 @@
   /* 甘特图 */
   .gantt-wrap{overflow-x:auto;overflow-y:hidden;border:1px solid var(--line);border-radius:11px;background:#fff;position:relative;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
   .gantt{position:relative;min-width:100%}
-  .btn.dim{opacity:.55}
+  .btn.dim,.btn:disabled{opacity:.55;cursor:not-allowed}
   .g-line{position:relative;height:36px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center}
   .g-line:nth-child(even){background:#fafbfc}
   .g-label{position:sticky;left:0;z-index:5;width:170px;flex:none;background:#f8fafc;border-right:1px solid var(--line);padding:0 10px;font-size:12px;font-weight:700;color:#334155;height:36px;display:flex;align-items:center;box-shadow:3px 0 6px rgba(0,0,0,.06)}
@@ -191,7 +194,7 @@
 <body class="role-requester">
 
 <header>
-  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.18.3（读者「需求录入」界面与需求方一致，写操作全部 toast 拦截；需求列表时间筛选可切换「提交时间 / 交期」；批次明细新增时间筛选——按开始/完成/交期 + 全部/近1周/近1月/近3月/近6月/自定义）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.18.3</span></h1>
+  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.18.4（2026-09-03：需求/批次批量删除放开并按行语义处理——已完成需求仅删记录批次保留、未完成需求连带删批次；批次表「下罐/灌装」列移至「开始」之后、历史锁定批次行内禁用勾选；v2.18.3：读者「需求录入」界面与需求方一致、写操作全部 toast 拦截，需求列表时间筛选可按提交时间/交期切换，批次明细可按开始/完成/交期筛选）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.18.4</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -472,7 +475,7 @@
     <div class="card">
       <h2>批次明细 <span class="tag" id="batchCount">0</span></h2>
       <div class="toolbar plan-only" style="margin-bottom:10px">
-        <button class="btn ok" id="btnLockPlan">🔒 排产锁定（确认全部待确认批次）</button>
+        <button class="btn ok plan-only" id="btnLockPlan">🔒 排产锁定（确认全部待确认批次）</button>
         <button class="btn" id="btnBatchUnlock">🔓 批量解锁（勾选批次）</button>
         <button class="btn danger plan-only" id="btnDelBatches" title="删除勾选的批次（历史锁定批次除外，仅生产计划角色）">🗑️ 删除选中（0）</button>
         <button class="btn" id="btnRefreshSched">🔄 刷新自动排产（重排未锁定批次）</button>
@@ -736,7 +739,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.18.3（读者界面与需求方一致·写操作拦截·需求列表/批次明细时间筛选）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.18.4（批量删除放开·列序修正·读者界面与需求方一致·需求列表/批次明细时间筛选）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -1373,11 +1376,20 @@
   }
   // v2.18.2：多选删除已完成需求记录——仅生产计划角色，跨渲染持久勾选状态
   var _doneSel = {};
+  // v2.18.4：全选框与行勾选实时联动——0 勾选→空、部分→半选(indeterminate)、全部→勾选
+  function syncDoneSelAll(){
+    var selAll = $('doneSelAll'); if(!selAll) return;
+    var boxes = document.querySelectorAll('.done-chk');
+    var checked = document.querySelectorAll('.done-chk:checked').length;
+    selAll.checked = boxes.length > 0 && checked === boxes.length;
+    selAll.indeterminate = checked > 0 && checked < boxes.length;
+  }
   function updateDelDoneBtn(){
     var btn = $('btnDelDoneSelected'); if(!btn) return;
-    var n = document.querySelectorAll('.done-chk:checked').length;
-    btn.textContent = '🗑️ 删除选中（'+n+'）';
-    btn.classList.toggle('dim', n === 0);
+    var checked = document.querySelectorAll('.done-chk:checked').length;
+    btn.textContent = '🗑️ 删除选中（'+checked+'）';
+    btn.disabled = checked === 0; // v2.18.4：0 勾选时真正禁用，防止误触
+    syncDoneSelAll();
   }
   // v2.18.3：需求列表多选删除（生产计划角色）——勾选范围放开为全部需求行，按行语义处理：
   //   已完成需求 → 仅删记录、排产批次保留；未完成需求 → 连同其排产批次一并删除
@@ -2545,11 +2557,23 @@
     updateBatchSelBtn();
   }
   // v2.18.3：批次勾选计数同步到「删除选中」按钮
+  // v2.18.4：全选框与行勾选实时联动（0→空、部分→半选、全部→勾选；历史禁用行不参与统计）
+  function syncBatchSelAll(){
+    var selAll = $('batchSelAll'); if(!selAll) return;
+    var boxes = document.querySelectorAll('#batchTable tbody input[data-sel]:not(:disabled)');
+    var checked = 0;
+    Array.prototype.forEach.call(boxes, function(c){ if(c.checked) checked++; });
+    selAll.checked = boxes.length > 0 && checked === boxes.length;
+    selAll.indeterminate = checked > 0 && checked < boxes.length;
+  }
   function updateBatchSelBtn(){
     var btn = $('btnDelBatches'); if(!btn) return;
-    var n = document.querySelectorAll('#batchTable tbody input[data-sel]:checked').length;
+    var boxes = document.querySelectorAll('#batchTable tbody input[data-sel]:checked');
+    var n = 0;
+    Array.prototype.forEach.call(boxes, function(c){ if(!c.disabled) n++; }); // 历史禁用行即使被脚本勾选也不计入
     btn.textContent = '🗑️ 删除选中（'+n+'）';
-    btn.classList.toggle('dim', n === 0);
+    btn.disabled = n === 0; // v2.18.4：0 勾选时真正禁用，防止误触
+    syncBatchSelAll();
   }
   // v2.18.3：批次明细批量删除（生产计划角色；历史锁定批次除外，删除不可撤销）
   function delBatchesSelected(){
@@ -3022,7 +3046,7 @@
     // v2.18.3：导出信息工作表（版本/时间/角色/当前筛选条件），便于追溯导出版本与时间范围
     var ui = currentUiFilters();
     var info = [['项','值'],
-      ['系统版本','v2.18.3'],
+      ['系统版本','v2.18.4'],
       ['导出时间', new Date().toISOString()],
       ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
       ['需求列表-时间列', ui.reqFiltField==='createdAt'?'提交时间':'交期'],
@@ -3107,7 +3131,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.18.3'],
+          ['系统版本','v2.18.4'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['筛选条件摘要', formatFiltInfo(ui)]];
@@ -3211,7 +3235,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.18.3'],
+          ['系统版本','v2.18.4'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['批次明细-时间列', ui.filtTField],
@@ -3250,7 +3274,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.18.3'],
+          ['系统版本','v2.18.4'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['需求列表-时间列', ui.reqFiltField==='createdAt'?'提交时间':'交期'],
