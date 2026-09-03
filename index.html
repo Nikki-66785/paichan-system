@@ -116,6 +116,8 @@
   body.role-reader #reqFormCard{display:none!important}
   #readerBanner{display:none}
   body.role-reader #readerBanner{display:flex}
+  /* v2.18.2：需求列表「多选已完成」列仅生产计划角色可见 */
+  body.role-requester .done-col, body.role-reader .done-col{display:none!important}
   .perm-btn{margin-left:8px;padding:5px 14px;border:none;border-radius:20px;background:#7c3aed;color:#fff;font-size:12.5px;cursor:pointer;white-space:nowrap}
   .perm-btn:hover{background:#6d28d9}
   /* 甘特图 */
@@ -189,7 +191,7 @@
 <body class="role-requester">
 
 <header>
-  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.18.1（APS 需求提交无需填写项目阶段与条件放行，字段自动隐藏，剂型选择保留；此前 v2.18.0：APS 增加剂型选择、批次明细列序调整、快照仅记录拍照时未完成批次、需求列表筛选与已完成记录清理）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.18.1</span></h1>
+  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.18.2（修复快照删除时自动备份被 32767 字符限制中止的问题；需求列表增加提交时间列；已完成需求记录支持多选删除，仅生产计划角色可见）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.18.2</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -405,10 +407,11 @@
           <span class="hint" id="reqFiltInfo"></span>
           <span class="spacer"></span>
           <button class="btn sm" id="btnCleanDoneReq" title="删除所有批次均已完成的需求数据（仅清理需求记录，「📅 排产计划」中的批次保留不动）">🧹 清理已完成需求记录</button>
+          <button class="btn sm plan-only" id="btnDelDoneSelected" title="删除选中的已完成需求记录（仅生产计划角色，批次保留不动）">🗑️ 删除选中（0）</button>
         </div>
         <div class="req-tbl scroll-tbl">
           <table id="reqTable">
-            <thead><tr><th>项目</th><th>类型</th><th>批次</th><th>交期</th><th>批次类型</th><th>优先级</th><th>需求人</th><th>状态</th><th>操作</th></tr></thead>
+            <thead><tr><th class="done-col" style="width:32px"><input type="checkbox" id="doneSelAll" title="全选/取消全选 已完成需求（仅生产计划可见）"></th><th>项目</th><th>类型</th><th>批次</th><th>交期</th><th>批次类型</th><th>优先级</th><th>需求人</th><th>提交时间</th><th>状态</th><th>操作</th></tr></thead>
             <tbody></tbody>
           </table>
           <div class="empty" id="reqEmpty">暂无需求，请由需求方填写并添加</div>
@@ -664,7 +667,8 @@
         <p>· <b>批量解锁与刷新自动排产</b>：生产计划可在批次表首列勾选多个锁定批次「批量解锁」；「刷新自动排产」按当前需求重新排产所有未锁定批次（锁定批次与终态批次保持不变）。</p>
         <p>· <b>需求导出</b>：需求列表可一键导出 Excel/CSV（项目、类型、批次类型、交期、状态、规格、阶段、预算、首次生产分子信息等全部填报字段）。</p>
         <p>· <b>甘特图视图</b>：产线支持多选过滤；时间范围（全部/近1月/近3月/近6月/自定义）与时间轴密度（px/天）、刻度单位（月/周/天）可调，设置保存在本地。</p>
-        <p>· <b>排产分析</b>：每次「自动排产」记录快照（自动排产），每 2 周自动记录一次定期快照（含人工调整结果），可分析批次日期漂移、月度批次趋势与准时率；快照按来源分别限额保留：自动排产 15 条 / 定期 10 条 / 人工 5 条。<b>v2.18.0 起快照仅记录拍照时间未完成的批次及其后续</b>（已完成批次不再进入快照，也不计为「取消」）。</p>
+        <p>· <b>排产分析</b>：每次「自动排产」记录快照（自动排产），每 2 周自动记录一次定期快照（含人工调整结果），可分析批次日期漂移、月度批次趋势与准时率；快照按来源分别限额保留：自动排产 15 条 / 定期 10 条 / 人工 5 条。<b>v2.18.0 起快照仅记录拍照时间未完成的批次及其后续</b>（已完成批次不再进入快照，也不计为「取消」）；<b>v2.18.2 起自动备份改为「快照列表 + 快照批次」两张工作表</b>，避开 Excel 单格 32767 字符上限，避免删除/清空快照时备份中止。</p>
+        <p>· <b>需求列表</b>：支持按需求人 / 提交时间筛选，显示「x / y 条」；每行展示「提交时间」列；<b>v2.18.2 起</b>已完成需求（全部批次锁定/终态且完成日期已过）可由生产计划角色多选后一次性删除记录（批次保留在「📅 排产计划」中不受影响）。</p>
         <p>· <b>权限说明</b>：「📊 参考数据」与「⚙️ 规则参数」仅「🏭 生产计划」角色可见与操作；需求方角色不显示入口。</p>
         <p>· <b>参考数据</b>：「产线情况 / 制剂产能 / 人员配置 / 需求字段矩阵」四张表可修订（生产计划角色），保存后本地持久化。</p>
       </div>
@@ -706,7 +710,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.18.1（云端共享·邮箱登录·权限三档·新账号默认读者）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.18.2（云端共享·邮箱登录·权限三档·新账号默认读者）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -774,7 +778,7 @@
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
 <script src="cloudbase.full.js?v=2152"></script>
 <script src="cloud.js?v=2152"></script>
-<script src="scheduling.js?v=2181"></script>
+<script src="scheduling.js?v=2182"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -1341,6 +1345,33 @@
       if(window.CloudSync) window.CloudSync.delReqCloud(id); // 同步删除云端需求
     });
   }
+  // v2.18.2：多选删除已完成需求记录——仅生产计划角色，跨渲染持久勾选状态
+  var _doneSel = {};
+  function updateDelDoneBtn(){
+    var btn = $('btnDelDoneSelected'); if(!btn) return;
+    var n = document.querySelectorAll('.done-chk:checked').length;
+    btn.textContent = '🗑️ 删除选中（'+n+'）';
+    btn.classList.toggle('dim', n === 0);
+  }
+  function delDoneReqs(ids){
+    if(!isPlanner()){ toast('仅生产计划角色可批量删除已完成需求记录'); return; }
+    if(!ids || !ids.length){ toast('请先勾选要删除的已完成需求记录'); return; }
+    var allowed = ids.map(function(id){ return state.requirements.find(function(x){return x.id===id;}); }).filter(function(r){ return r && reqAllDone(r); });
+    if(!allowed.length){ toast('所选记录并非全部已完成，已忽略'); return; }
+    var names = allowed.map(function(r){ return r.henliusProject||r.atProject||r.id; }).join('、');
+    if(names.length > 120) names = names.slice(0,120)+'…';
+    uiConfirm('批量删除选中的 '+allowed.length+' 条已完成需求记录？\n（排产计划中的批次保留不动）\n涉及：'+names, function(ok){
+      if(!ok) return;
+      var idSet = {};
+      allowed.forEach(function(r){ idSet[r.id]=1; });
+      state.requirements = state.requirements.filter(function(r){ return !idSet[r.id]; });
+      save(); renderAll();
+      addOp('批量删除已完成需求记录', allowed.length+' 条（批次保留）');
+      allowed.forEach(function(r){ if(window.CloudSync) window.CloudSync.delReqCloud(r.id); });
+      _doneSel = {};
+      toast('已删除 '+allowed.length+' 条需求记录（排产计划不受影响）');
+    });
+  }
   // v2.18.0：删除已完成需求的记录——仅移除需求条目，批次保留在排产计划中不受影响
   function delDoneReq(id){
     if(isReader()){ toast('📖 读者权限仅可预览，无法删除需求'); return; }
@@ -1354,6 +1385,7 @@
       save(); renderAll();
       addOp('删除已完成需求记录', (r.henliusProject||r.atProject||r.id)+'（批次保留）');
       if(window.CloudSync) window.CloudSync.delReqCloud(id);
+      delete _doneSel[id]; // v2.18.2：清除多选勾选记录
       toast('已删除需求记录（排产计划中的批次不受影响）');
     });
   }
@@ -1374,7 +1406,7 @@
       state.requirements = state.requirements.filter(function(r){ return !ids[r.id]; });
       save(); renderAll();
       addOp('清理已完成需求记录', allowed.length+' 条（批次保留）');
-      allowed.forEach(function(r){ if(window.CloudSync) window.CloudSync.delReqCloud(r.id); });
+      allowed.forEach(function(r){ if(window.CloudSync) window.CloudSync.delReqCloud(r.id); delete _doneSel[r.id]; });
       toast('已清理 '+allowed.length+' 条需求记录（排产计划不受影响）');
     });
   }
@@ -1852,17 +1884,23 @@
             (r.novelty?' ｜ Novelty:'+r.novelty:'')+
             (r.mabSubtype?' ｜ mAb subtype:'+r.mabSubtype:'')+
             (r.hostCell?' ｜ Host Cell Line:'+r.hostCell:''):'')+(r.note?' ｜ 备注:'+r.note:''));
-      // v2.18.0：全部批次已完成的需求可单独删除记录（批次保留在排产计划中不受影响）
+      // v2.18.2：全部批次已完成的需求可单独删除记录（批次保留在排产计划中不受影响）
       var doneBtn = (st==='已完成' && !isReader() && (isPlanner() || canDelReq(r)))
         ? ' <button class="btn sm" data-act="deldone" data-id="'+r.id+'" title="仅删除本条需求记录（批次均已完成，「📅 排产计划」中的批次保留不动）">🧹 删除记录</button>'
         : '';
-      tr.innerHTML = '<td title="'+esc(tip)+'"><b>'+esc(isEQP ? (r.maintKind||'设备维护') : (r.henliusProject||r.atProject||'-'))+'</b></td>'+
+      // v2.18.2：多选删除列——仅生产计划角色 + 已完成需求显示复选框
+      var doneChk = (st==='已完成' && isPlanner())
+        ? '<input type="checkbox" class="done-chk" data-id="'+r.id+'"'+(!!_doneSel[r.id]?' checked':'')+' title="勾选后批量删除（批次保留不动）">'
+        : '';
+      tr.innerHTML = '<td class="done-col" style="text-align:center">'+doneChk+'</td>'+
+        '<td title="'+esc(tip)+'"><b>'+esc(isEQP ? (r.maintKind||'设备维护') : (r.henliusProject||r.atProject||'-'))+'</b></td>'+
         '<td>'+esc(typeTxt)+'</td>'+
         '<td>'+r.batchCount+' 批</td>'+
         '<td>'+esc(r.dueDate || (r.apsMonth ? r.apsMonth+'（计划月）' : '-'))+'</td>'+
         '<td>'+esc(kindTxt||'-')+'</td>'+
         '<td><span class="pri '+(r.priority==='高'?'high':r.priority==='低'?'low':'mid')+'">'+esc(r.priority)+'</span></td>'+
         '<td>'+esc(r.requester||'-')+'</td>'+
+        '<td>'+esc((r.createdAt||'').slice(0,10))+'</td>'+
         '<td><span class="badge '+stBadge+'">'+st+'</span></td>'+
         '<td>'+(isReader()
           ? '<span class="hint" style="font-size:11px;cursor:help" title="读者权限仅可预览">👀 只读</span>'
@@ -1873,6 +1911,7 @@
               :'<span class="hint" style="font-size:11px;cursor:help;border-bottom:1px dotted" data-act="delhint" data-id="'+r.id+'" title="删除方法：① 用该需求人的账号登录（需求人自动绑定登录账号）；② 或切换到「🏭 生产计划」角色后可删除任意需求">🔒 仅'+esc(r.requester)+'可删</span>')+doneBtn))+'</td>';
       tb.appendChild(tr);
     });
+    updateDelDoneBtn();
   }
 
   // ---------- 渲染：甘特图 ----------
@@ -2837,10 +2876,24 @@
     setTimeout(function(){URL.revokeObjectURL(a.href);}, 1000);
   }
   // 构建完整数据工作簿（需求 + 批次 + 配置），导出与自动备份共用
+  // v2.18.2：快照不再整数组 JSON 写入单个单元格（易超 Excel 单格 32767 字符上限导致备份/删除失败），
+  // 改为「快照列表」+「快照批次」两个工作表；导入时优先读取工作表重建。
   function buildWorkbook(){
     var wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, toSheet(state.requirements), '需求');
     XLSX.utils.book_append_sheet(wb, toSheet(state.batches), '排产批次');
+    // 快照：拆为列表 + 批次明细两张表
+    var snaps = state.snapshots || [];
+    var snapList = [['id','time','source','note','reqCount','warningCount']];
+    var snapBatches = [['snapId','id','reqId','type','line','start','end','project','status','dueDate']];
+    snaps.forEach(function(s){
+      snapList.push([s.id||'', s.time||'', s.source||'auto', s.note||'', s.reqCount||0, s.warningCount||0]);
+      (s.batches||[]).forEach(function(b){
+        snapBatches.push([s.id||'', b.id||'', b.reqId||'', b.type||'', b.line||'其他', b.start||'', b.end||'', b.project||'', b.status||'', b.dueDate||'']);
+      });
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(snapList), '快照列表');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(snapBatches), '快照批次');
     var cfg = [['key','value'],
       ['role', state.role||''], ['user', state.user||''],
       ['ganttAxis', JSON.stringify(state.ganttAxis||{px:2.5,unit:'month'})],
@@ -2850,7 +2903,7 @@
       ['trendLink', state.trendLink?'1':'0'],
       ['rules', state.rules==null?'':JSON.stringify(state.rules)],
       ['refData', state.refData==null?'':JSON.stringify(state.refData)],
-      ['snapshots', JSON.stringify(state.snapshots||[])]];
+      ['snapshots', '']]; // v2.18.2：快照已拆至快照列表/快照批次工作表
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(cfg), '配置');
     return wb;
   }
@@ -2936,6 +2989,22 @@
               else if(k==='trendLink'){ d.trendLink = (v==='1' || v===1 || v===true); }
               else d[k] = v;
             });
+          }
+          // v2.18.2：优先从「快照列表」+「快照批次」工作表重建快照（避免单格 JSON 超长）
+          var iSnapList = wb.SheetNames.indexOf('快照列表'), iSnapBat = wb.SheetNames.indexOf('快照批次');
+          if(iSnapList >= 0 && iSnapBat >= 0){
+            var listRows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[iSnapList]], {header:1});
+            var batRows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[iSnapBat]], {header:1});
+            var snapMap = {};
+            listRows.slice(1).forEach(function(row){
+              if(!row[0]) return;
+              snapMap[row[0]] = { id: row[0], time: row[1]||'', source: row[2]||'auto', note: row[3]||'', reqCount: row[4]||0, warningCount: row[5]||0, batches: [] };
+            });
+            batRows.slice(1).forEach(function(row){
+              var sid = row[0]; if(!sid || !snapMap[sid]) return;
+              snapMap[sid].batches.push({ id:row[1]||'', reqId:row[2]||'', type:row[3]||'', line:row[4]||'其他', start:row[5]||'', end:row[6]||'', project:row[7]||'', status:row[8]||'', dueDate:row[9]||'' });
+            });
+            d.snapshots = Object.keys(snapMap).map(function(k){ return snapMap[k]; });
           }
         }
         if(!d.requirements || !d.batches) throw new Error('格式不正确');
@@ -3129,6 +3198,24 @@
     });
     ['reqFiltStart','reqFiltEnd'].forEach(function(i){ $(i).addEventListener('change', renderReq); });
     $('btnCleanDoneReq').addEventListener('click', cleanDoneReqs);
+    // v2.18.2：已完成需求多选删除（仅生产计划可见）
+    if($('btnDelDoneSelected')) $('btnDelDoneSelected').addEventListener('click', function(){
+      if(!isPlanner()){ toast('仅生产计划角色可使用多选删除'); return; }
+      var ids = Array.prototype.map.call(document.querySelectorAll('.done-chk:checked'), function(c){ return c.getAttribute('data-id'); });
+      delDoneReqs(ids);
+    });
+    if($('doneSelAll')) $('doneSelAll').addEventListener('change', function(){
+      var checked = $('doneSelAll').checked;
+      document.querySelectorAll('.done-chk').forEach(function(c){ c.checked = checked; _doneSel[c.getAttribute('data-id')] = checked; });
+      updateDelDoneBtn();
+    });
+    var reqTbEl = $('reqTable');
+    if(reqTbEl) reqTbEl.querySelector('tbody').addEventListener('change', function(ev){
+      if(ev.target && ev.target.classList && ev.target.classList.contains('done-chk')){
+        _doneSel[ev.target.getAttribute('data-id')] = ev.target.checked; // 跨重绘持久
+        updateDelDoneBtn();
+      }
+    });
     $('batchTable').addEventListener('click', function(ev){
       var btn = ev.target.closest('button[data-act]');
       if(!btn) return;
