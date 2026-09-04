@@ -1,5 +1,5 @@
-// v2.19.0 历史计划导入摘要端点（独立模板 + 不入合并窗）
-// POST /api/notify-hist
+// v2.20.0 历史计划导入摘要端点（独立模板 + 不入合并窗 + 不@——无特定需求方）
+// POST /notify-hist
 // Body: { action:'hist', count, samples:[{batchNo,project,line,start,end}], ts }
 
 export async function onRequestPost({ request, env }) {
@@ -41,7 +41,7 @@ function buildHistMarkdown(b) {
   }
   lines.push('');
   const ts = b.ts ? new Date(b.ts).toLocaleString('zh-CN', { hour12: false }) : new Date().toLocaleString('zh-CN', { hour12: false });
-  lines.push(`> 触发时间：${ts} · 来自临床生产智能排产系统 v2.19.0`);
+  lines.push(`> 触发时间：${ts}`);
 
   return { title, text: lines.join('\n') };
 }
@@ -49,7 +49,6 @@ function buildHistMarkdown(b) {
 async function sendDingtalk(env, md) {
   const webhook = env.DINGTALK_WEBHOOK;
   const secret = env.DINGTALK_SECRET || '';
-  const atAll = env.DINGTALK_AT_ALL === 'true';
   if (!webhook) throw new Error('DINGTALK_WEBHOOK not configured');
 
   let url = webhook;
@@ -74,7 +73,7 @@ async function sendDingtalk(env, md) {
   const payload = {
     msgtype: 'markdown',
     markdown: { title: md.title, text: md.text },
-    at: { isAtAll: atAll }
+    at: { isAtAll: false } // v2.20.0：历史导入摘要不@任何人
   };
 
   const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(payload) });
