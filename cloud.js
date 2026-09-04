@@ -2,6 +2,7 @@
  * cloud.js — CloudBase 云同步层（排产系统 v2.13.0 → v2.15.1：未登记新账号/匿名默认「读者」+ setPerm 失败自动补建 permissions 集合并给出可操作报错 + 三档角色（读者/需求方/生产计划）+ 权限管理（permissions 集合读写、角色实时下发）+ 登录用户名下发（需求人自动绑定账号）+ 账号面板（自助修改密码/退出切换）+ 角色绑定登录身份（方案A权限分层）+ 状态栏点击弹出账号面板 + 邮箱登录（安全加固方案A）+ 确认弹窗走主应用模态 + 清空/导入云端需求同步 + 操作日志上云 op_logs
  *   v2.18.5 权限管理补「删除账号」+ 防删当前登录 + getCurEmail
  *   v2.18.8 watch 路径「需求合并」按云端权威裁剪——修复"A 删了某条后 B 在线仍看到"的删除传播缺失）
+ *   v2.20.0 queryPhoneByEmail（CloudBase queryUser 邮箱→手机号，钉钉@需求方用，正向 localStorage 缓存）
  *
  * 作用：让「需求填报」与「排产计划」在多人浏览器之间实时共享。
  *   · requests    集合：需求（每条需求一个文档，多人提交互不覆盖）
@@ -781,12 +782,45 @@
     saveTimer = setTimeout(pushPlan, 800);
   }
 
+  // ---------- v2.20.0：邮箱→手机号查询（钉钉 @需求方 用） ----------
+  // authRef.queryUser({email}) 走 CloudBase /v1/user/query（需登录态），返回含 phone_number 的用户档案；
+  // 运行时结构未定（可能被隐私策略拦截），防御式解析 + 正向缓存（查到才缓存，查不到不缓存避免负缓存过期问题）
+  var PHONE_CACHE_KEY = 'pcn_phone_cache'; // localStorage：{ email → phone } 永久缓存
+  function loadPhoneCache() {
+    try { return JSON.parse(localStorage.getItem(PHONE_CACHE_KEY) || '{}') || {}; }
+    catch (e) { return {}; }
+  }
+  function queryPhoneByEmail(email) {
+    email = (email || '').trim().toLowerCase();
+    if (!email || !authRef || typeof authRef.queryUser !== 'function') return Promise.resolve('');
+    var cache = loadPhoneCache();
+    if (cache[email]) return Promise.resolve(cache[email]);
+    try {
+      return authRef.queryUser({ email: email }).then(function (res) {
+        var list = (res && (res.data || res.userProfiles || res.list)) || (Array.isArray(res) ? res : []);
+        var u = (list && list.length) ? list[0] : null;
+        var phone = (u && (u.phone_number || u.phoneNumber || u.phone)) || '';
+        if (phone) {
+          try { cache[email] = phone; localStorage.setItem(PHONE_CACHE_KEY, JSON.stringify(cache)); } catch (e) { /* 隐私模式忽略 */ }
+        }
+        return phone;
+      }).catch(function (e) {
+        console.warn('[cloud] queryUser 查询失败（可能被隐私策略拦截）：', e);
+        return '';
+      });
+    } catch (e) {
+      console.warn('[cloud] queryUser 调用异常：', e);
+      return Promise.resolve('');
+    }
+  }
+
   window.CloudSync = {
     connect: connect, isReady: isReady, onSaved: onSaved, logout: logout,
     isPlanAdmin: isPlanAdmin, // v2.13.0 角色查询：主文件 isPlanner() 据此强制身份
     getMyRole: getMyRole,     // v2.15.0 三档角色查询（reader/requester/planner）
     fetchPerms: fetchPerms, setPerm: setPerm, delPerm: delPerm, // v2.15.0 权限管理：角色列表/分配/删除（permissions 集合；delPerm v2.18.5）
     getCurEmail: function () { return curEmail; }, // v2.18.5 当前登录邮箱（权限管理「防删当前登录账号」保护）
+    queryPhoneByEmail: queryPhoneByEmail, // v2.20.0 邮箱→手机号（CloudBase queryUser，钉钉 @需求方 用）
     changePwd: changePwd, // v2.14.0 自助修改密码（参数：旧密码, 新密码）
     pushReq: pushReq, delReqCloud: delReqCloud, delAllReqs: delAllReqs,
     pushPlan: pushPlan, forcePushPlan: forcePushPlan,
