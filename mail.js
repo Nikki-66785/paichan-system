@@ -1,5 +1,7 @@
-// v2.19.1 钉钉通知模块（前端埋点层 + 1h 合并窗调度器）
+// v2.19.2 钉钉通知模块（前端埋点层 + 1h 合并窗调度器）
 // 用法：await mail.notify(action, payloadObj)
+//
+// v2.19.2 变更：new_req（新增需求）不走合并窗、立即发钉钉（时效性强，生产计划需尽快看到）
 //
 // v2.19.1 行为：1h 合并窗（同 batchId 1h 内多次变动合并成一封钉钉消息）
 //   - 每次 notify() → POST /notify → 后台写 KV（merge:<batchId>）
@@ -13,7 +15,7 @@
 //   edit     → saveEdit() 普通分支                   — 「人工调整」通知
 //   final    → saveEdit() 终态分支                   — 「批次终态」通知
 //   delete   → delBatch / delBatchDirect / delBatchesSelected — 「删除批次」通知
-//   new_req  → addReq()                              — 「新需求」通知（合并键=reqId）
+//   new_req  → addReq()                              — 「新需求」通知（v2.19.2 起不走合并窗、立即发）
 //   hist     → btnReimportHist 点击                  — 「历史计划已导入」摘要（不走合并窗，走 /notify-hist）
 //
 // 收件人：当前所有触发都发到钉钉群全员（同群内包含生产计划组 + 需求方）
@@ -102,9 +104,8 @@
   function notify(action, payloadObj){
     var data;
     if(action === 'new_req'){
+      // v2.19.2：新需求立即发，不进合并窗（后端 notify.js 对 new_req 直接走 sendImmediate）
       data = buildReqPayload(payloadObj);
-      // new_req 也走合并窗（合并键=reqId）
-      scheduleFlush(data.reqId);
     } else if(action === 'hist'){
       data = Object.assign({ action:'hist', ts: Date.now() }, payloadObj||{});
       return post(NOTIFY_HIST_URL, data);
