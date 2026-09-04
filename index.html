@@ -197,7 +197,7 @@
 <body class="role-requester">
 
 <header>
-  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.19.2（2026-09-04：新需求提交改为立即推送钉钉——不再走 1h 合并窗，生产计划可第一时间看到新需求；锁定/调整/删除/终态仍走合并窗）。v2.19.1（2026-09-04：钉钉群通知新增 1h 合并窗——同批次 1h 内多次变动合并成一封汇总消息推群；前端 setTimeout 调度 + localStorage 持久化兜底；需 Cloudflare Pages Functions KV bindings 绑定 MAIL_KV，未绑定时退回 v2.19.0 立即发）。v2.19.0：钉钉群机器人通知——生产计划锁定/人工调整/删除/终态四种批次变动，以及新需求提交与历史计划导入摘要，均自动推送到钉钉「排产通知群」；按埋点立即发送。v2.18.8：修复 watch 路径下需求删除不传播给其他在线用户的问题——云端权威裁剪后 A 删的某条 B 也能立即看到；明确生产计划可删任意需求/批次、需求方仅可删自己录入的需求，两者均不互相影响账号登录态与角色分配。v2.18.7：顶栏新增「📖 使用手册」按钮，所有角色可见，点击新窗口打开 help.html；v2.18.6：APS 排产提醒移至需求录入页末尾——避免顶部 banner 与交期/新需求提醒互相挤压；v2.18.5：权限管理可删除账号——移除角色分配后该账号恢复为「读者」仅预览，白名单管理员与当前登录账号不可删除。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.19.2</span></h1>
+  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.20.0（2026-09-04：钉钉通知@需求方——不再@全员，通知按 CloudBase 账号手机号精确提醒需求方本人；需求记录新增 reqEmail 字段，查不到手机号时不@（消息照发）。v2.19.2（2026-09-04：新需求提交改为立即推送钉钉——不再走 1h 合并窗，生产计划可第一时间看到新需求；锁定/调整/删除/终态仍走合并窗）。v2.19.1（2026-09-04：钉钉群通知新增 1h 合并窗——同批次 1h 内多次变动合并成一封汇总消息推群；前端 setTimeout 调度 + localStorage 持久化兜底；需 Cloudflare Pages Functions KV bindings 绑定 MAIL_KV，未绑定时退回 v2.19.0 立即发）。v2.19.0：钉钉群机器人通知——生产计划锁定/人工调整/删除/终态四种批次变动，以及新需求提交与历史计划导入摘要，均自动推送到钉钉「排产通知群」；按埋点立即发送。v2.18.8：修复 watch 路径下需求删除不传播给其他在线用户的问题——云端权威裁剪后 A 删的某条 B 也能立即看到；明确生产计划可删任意需求/批次、需求方仅可删自己录入的需求，两者均不互相影响账号登录态与角色分配。v2.18.7：顶栏新增「📖 使用手册」按钮，所有角色可见，点击新窗口打开 help.html；v2.18.6：APS 排产提醒移至需求录入页末尾——避免顶部 banner 与交期/新需求提醒互相挤压；v2.18.5：权限管理可删除账号——移除角色分配后该账号恢复为「读者」仅预览，白名单管理员与当前登录账号不可删除。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.20.0</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -744,7 +744,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.19.2（新需求提交立即推送钉钉不再走 1h 合并窗，生产计划第一时间可见；锁定/人工调整/删除/终态仍走合并窗·mail.js?v=2193）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.20.0（钉钉通知按手机号@需求方，不再@全员；新需求立即发、批次变动走合并窗不变·cloud.js?v=2200·mail.js?v=2200）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -811,8 +811,8 @@
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
 <script src="cloudbase.full.js?v=2152"></script>
-<script src="cloud.js?v=2191"></script>
-<script src="mail.js?v=2193"></script><!-- 钉钉通知模块（前端埋点层 + 1h 合并窗调度器） -->
+<script src="cloud.js?v=2200"></script>
+<script src="mail.js?v=2200"></script><!-- 钉钉通知模块（前端埋点层 + 1h 合并窗调度器） -->
 <script src="scheduling.js?v=2183"></script>
 <script src="history_data.js"></script>
 <script>
@@ -1233,6 +1233,15 @@
     }
     rebuildVials();
   }
+  // v2.20.0：需求人→登录邮箱（钉钉@需求方用）。仅当需求人=当前登录账号（自动绑定）时可定位；
+  // 手填他人姓名/匿名登录时返回空串（通知查不到手机号→不@，消息照发）
+  function reqEmailOf(requesterName){
+    try{
+      var em = (window.CloudSync && window.CloudSync.getCurEmail) ? (window.CloudSync.getCurEmail()||'') : '';
+      if(!em || !requesterName) return '';
+      return em.toLowerCase().split('@')[0] === String(requesterName).toLowerCase() ? em : '';
+    }catch(e){ return ''; }
+  }
   function readForm(){
     var t = $('f_type').value;
     var isDS = (t==='Mab'||t==='ADC DS');
@@ -1256,6 +1265,7 @@
         lpReleaseDate: '', conditionalRelease: false, processTransferDate: '', mcbDate: '',
         priority: '中',
         requester: $('f_requester').value.trim() || state.user || '',
+        reqEmail: reqEmailOf($('f_requester').value.trim() || state.user || ''), // v2.20.0
         note: $('f_note').value.trim(),
         createdAt: new Date().toISOString()
       };
@@ -1280,6 +1290,7 @@
         lpReleaseDate: '', conditionalRelease: false, processTransferDate: '', mcbDate: '',
         priority: '中',
         requester: $('f_requester').value.trim() || state.user || '',
+        reqEmail: reqEmailOf($('f_requester').value.trim() || state.user || ''), // v2.20.0
         note: $('f_note').value.trim() || $('f_eqpkind').value,
         createdAt: new Date().toISOString()
       };
@@ -1315,6 +1326,7 @@
       mcbDate: $('f_mcbdate').value || '',
       priority: '中', // v2.16.0：需求录入已删除优先级填写，统一默认「中」
       requester: $('f_requester').value.trim(),
+      reqEmail: reqEmailOf($('f_requester').value.trim()), // v2.20.0
       note: $('f_note').value.trim(),
       createdAt: new Date().toISOString()
     };
@@ -3099,7 +3111,7 @@
     // v2.18.3：导出信息工作表（版本/时间/角色/当前筛选条件），便于追溯导出版本与时间范围
     var ui = currentUiFilters();
     var info = [['项','值'],
-      ['系统版本','v2.19.2'],
+      ['系统版本','v2.20.0'],
       ['导出时间', new Date().toISOString()],
       ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
       ['需求列表-时间列', ui.reqFiltField==='createdAt'?'提交时间':'交期'],
@@ -3184,7 +3196,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.19.2'],
+          ['系统版本','v2.20.0'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['筛选条件摘要', formatFiltInfo(ui)]];
@@ -3288,7 +3300,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.19.2'],
+          ['系统版本','v2.20.0'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['批次明细-时间列', ui.filtTField],
@@ -3327,7 +3339,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.19.2'],
+          ['系统版本','v2.20.0'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['需求列表-时间列', ui.reqFiltField==='createdAt'?'提交时间':'交期'],
