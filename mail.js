@@ -1,17 +1,20 @@
-// v2.19.0 钉钉通知模块（前端埋点层）
+// v2.19.1 钉钉通知模块（前端埋点层 + 1h 合并窗调度器）
 // 用法：await mail.notify(action, payloadObj)
 //
-// v2.19.0 范围：提交即发（action 到 CF Pages Functions /api/notify 立即转发钉钉 webhook）
-//   - 1h 合并窗（多设备同步）推迟到 v2.19.1 迭代，用 GitHub Actions cron 扫 KV
-//   - 当前行为：6 路径下任一埋点触发 → 钉钉群立刻收到一条 markdown 卡片
+// v2.19.1 行为：1h 合并窗（同 batchId 1h 内多次变动合并成一封钉钉消息）
+//   - 每次 notify() → POST /api/notify → 后台写 KV（merge:<batchId>）
+//   - 首次 notify 时本地 setTimeout 1h → POST /api/notify-flush（后台发汇总）
+//   - localStorage (pcn_pending_flushes) 持久化未到期调度，页面重载后恢复
+//   - 已过期的项页面加载时立即 flush 兜底
+//   - 若 CF Pages 未绑定 MAIL_KV：服务端退回 v2.19.0 立即发，前端仍调度但 flush 端点会返回 noop
 //
 // 触发源头 / 邮件类型约定：
 //   lock     → lockPlan() / confirmBatch(id)        — 「排产锁定」通知
 //   edit     → saveEdit() 普通分支                   — 「人工调整」通知
 //   final    → saveEdit() 终态分支                   — 「批次终态」通知
 //   delete   → delBatch / delBatchDirect / delBatchesSelected — 「删除批次」通知
-//   new_req  → addReq()                              — 「新需求」通知
-//   hist     → btnReimportHist 点击                  — 「历史计划已导入」摘要（不走 /api/notify，走 /api/notify-hist）
+//   new_req  → addReq()                              — 「新需求」通知（合并键=reqId）
+//   hist     → btnReimportHist 点击                  — 「历史计划已导入」摘要（不走合并窗，走 /api/notify-hist）
 //
 // 收件人：当前所有触发都发到钉钉群全员（同群内包含生产计划组 + 需求方）
 //
@@ -21,6 +24,11 @@
   var CF_WORKER_BASE = 'https://排产通知.pages.dev'; // 用户部署 Pages 后可改成实际域名
   var NOTIFY_URL = CF_WORKER_BASE + '/api/notify';
   var NOTIFY_HIST_URL = CF_WORKER_BASE + '/api/notify-hist';
+  var FLUSH_URL = CF_WORKER_BASE + '/api/notify-flush';
+  var FLUSH_MS = 60 * 60 * 1000; // 1h
+  var STORAGE_KEY = 'pcn_pending_flushes';
+  var pendingFlushes = {}; // batchId -> expiryTs
+  var schedulerReady = false;
 
   // 从 batch 抽出通知需要的核心字段
   function batchCore(b){
@@ -95,11 +103,14 @@
     var data;
     if(action === 'new_req'){
       data = buildReqPayload(payloadObj);
+      // new_req 也走合并窗（合并键=reqId）
+      scheduleFlush(data.reqId);
     } else if(action === 'hist'){
       data = Object.assign({ action:'hist', ts: Date.now() }, payloadObj||{});
       return post(NOTIFY_HIST_URL, data);
     } else {
       data = buildBatchPayload(action, payloadObj);
+      scheduleFlush(data.batchId);
     }
     return post(NOTIFY_URL, data);
   }
@@ -127,6 +138,86 @@
     }
   }
 
+  // ---------- v2.19.1 合并窗调度器 ----------
+
+  // 调度一个 batchId 的 1h 后 flush（仅首次启动，已有调度则跳过）
+  function scheduleFlush(batchId) {
+    if (!batchId) return;
+    if (pendingFlushes[batchId]) return; // 已有调度
+    var expiry = Date.now() + FLUSH_MS;
+    pendingFlushes[batchId] = expiry;
+    savePendingFlushes();
+    setTimeout(function () { executeFlush(batchId); }, FLUSH_MS);
+  }
+
+  // 真正调 flush 端点 + 清掉本地记录
+  function executeFlush(batchId) {
+    delete pendingFlushes[batchId];
+    savePendingFlushes();
+    try {
+      return fetch(FLUSH_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ batchId: batchId })
+      }).then(function (res) {
+        if (!res.ok) {
+          console.warn('[mail] flush failed', res.status, batchId);
+          return { ok: false, status: res.status };
+        }
+        return res.json().catch(function () { return { ok: true }; });
+      }).catch(function (err) {
+        console.warn('[mail] flush error', err, batchId);
+        return { ok: false, error: String(err) };
+      });
+    } catch (e) {
+      console.warn('[mail] flush sync throw', e);
+      return Promise.resolve({ ok: false, error: String(e) });
+    }
+  }
+
+  function savePendingFlushes() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pendingFlushes));
+    } catch (e) { /* localStorage 不可用时静默 */ }
+  }
+
+  function loadPendingFlushes() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return {};
+      var data = JSON.parse(raw);
+      if (!data || typeof data !== 'object') return {};
+      return data;
+    } catch (e) {
+      return {};
+    }
+  }
+
+  // 页面加载时恢复调度：已过期立即 flush，未过期重新 setTimeout
+  function bootstrapFlusher() {
+    if (schedulerReady) return;
+    schedulerReady = true;
+    var saved = loadPendingFlushes();
+    var now = Date.now();
+    Object.keys(saved).forEach(function (batchId) {
+      var expiry = saved[batchId];
+      if (typeof expiry !== 'number' || expiry <= 0) return;
+      if (expiry <= now) {
+        executeFlush(batchId);
+      } else {
+        pendingFlushes[batchId] = expiry;
+        setTimeout(function () { executeFlush(batchId); }, expiry - now);
+      }
+    });
+  }
+
   window.mail = { notify: notify };
+
+  // DOM 就绪后启动调度器（已就绪则立即跑）
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootstrapFlusher);
+  } else {
+    bootstrapFlusher();
+  }
 })();
 
