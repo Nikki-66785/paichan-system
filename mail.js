@@ -2,8 +2,8 @@
 // 用法：await mail.notify(action, payloadObj)
 //
 // v2.19.1 行为：1h 合并窗（同 batchId 1h 内多次变动合并成一封钉钉消息）
-//   - 每次 notify() → POST /api/notify → 后台写 KV（merge:<batchId>）
-//   - 首次 notify 时本地 setTimeout 1h → POST /api/notify-flush（后台发汇总）
+//   - 每次 notify() → POST /notify → 后台写 KV（merge:<batchId>）
+//   - 首次 notify 时本地 setTimeout 1h → POST /notify-flush（后台发汇总）
 //   - localStorage (pcn_pending_flushes) 持久化未到期调度，页面重载后恢复
 //   - 已过期的项页面加载时立即 flush 兜底
 //   - 若 CF Pages 未绑定 MAIL_KV：服务端退回 v2.19.0 立即发，前端仍调度但 flush 端点会返回 noop
@@ -14,17 +14,17 @@
 //   final    → saveEdit() 终态分支                   — 「批次终态」通知
 //   delete   → delBatch / delBatchDirect / delBatchesSelected — 「删除批次」通知
 //   new_req  → addReq()                              — 「新需求」通知（合并键=reqId）
-//   hist     → btnReimportHist 点击                  — 「历史计划已导入」摘要（不走合并窗，走 /api/notify-hist）
+//   hist     → btnReimportHist 点击                  — 「历史计划已导入」摘要（不走合并窗，走 /notify-hist）
 //
 // 收件人：当前所有触发都发到钉钉群全员（同群内包含生产计划组 + 需求方）
 //
 // 失败兜底：若 mail.js 抛错，仅 console.warn，不影响页面写操作
 
 (function () {
-  var CF_WORKER_BASE = 'https://排产通知.pages.dev'; // 用户部署 Pages 后可改成实际域名
-  var NOTIFY_URL = CF_WORKER_BASE + '/api/notify';
-  var NOTIFY_HIST_URL = CF_WORKER_BASE + '/api/notify-hist';
-  var FLUSH_URL = CF_WORKER_BASE + '/api/notify-flush';
+  var CF_WORKER_BASE = 'https://paichan-notify.pages.dev'; // CF Pages 实际域名（用户已建好）
+  var NOTIFY_URL = CF_WORKER_BASE + '/notify';
+  var NOTIFY_HIST_URL = CF_WORKER_BASE + '/notify-hist';
+  var FLUSH_URL = CF_WORKER_BASE + '/notify-flush';
   var FLUSH_MS = 60 * 60 * 1000; // 1h
   var STORAGE_KEY = 'pcn_pending_flushes';
   var pendingFlushes = {}; // batchId -> expiryTs
