@@ -1,5 +1,10 @@
-// v2.19.2 钉钉通知模块（前端埋点层 + 1h 合并窗调度器）
+// v2.20.0 钉钉通知模块（前端埋点层 + 1h 合并窗调度器 + @需求方）
 // 用法：await mail.notify(action, payloadObj)
+//
+// v2.20.0 变更：不再@全员，改@需求方本人——通知前用 CloudSync.queryPhoneByEmail（CloudBase queryUser）
+//   查需求方手机号（需求记录 reqEmail 字段；新需求=提交者当前登录邮箱），payload 带 atMobiles；
+//   查不到（历史需求无 reqEmail / CloudBase 未录手机号 / queryUser 被拦截）→ 不@，消息照发群
+//   hist（历史导入摘要）无特定需求方，不@
 //
 // v2.19.2 变更：new_req（新增需求）不走合并窗、立即发钉钉（时效性强，生产计划需尽快看到）
 //
@@ -18,7 +23,7 @@
 //   new_req  → addReq()                              — 「新需求」通知（v2.19.2 起不走合并窗、立即发）
 //   hist     → btnReimportHist 点击                  — 「历史计划已导入」摘要（不走合并窗，走 /notify-hist）
 //
-// 收件人：当前所有触发都发到钉钉群全员（同群内包含生产计划组 + 需求方）
+// 收件人：消息均发到钉钉群（同群内包含生产计划组 + 需求方）；v2.20.0 起按手机号@需求方本人（不再@全员）
 //
 // 失败兜底：若 mail.js 抛错，仅 console.warn，不影响页面写操作
 
@@ -76,6 +81,7 @@
       batchNo: core.batchNo,
       requesterName: r ? (r.requester||'') : '',
       requesterEmail: r ? (r.requester||'') : '',
+      reqEmail: r ? (r.reqEmail||'') : '', // v2.20.0 需求人登录邮箱（查手机号@需求方用）
       dueDate: r ? (r.dueDate||'') : '',
       priority: r ? (r.priority||'') : '',
       note: core.note || (r ? (r.note||'') : ''),
@@ -95,9 +101,18 @@
       priority: r.priority||'',
       requesterName: r.requester||'',
       requesterEmail: r.requester||'',
+      reqEmail: r.reqEmail||'', // v2.20.0 需求人登录邮箱（查手机号@需求方用）
       note: r.note||'',
       ts: Date.now()
     };
+  }
+
+  // v2.20.0：查需求方手机号（CloudBase queryUser），失败/查不到返回 null（不@，消息照发）
+  function lookupPhone(email){
+    try{
+      if(!email || !window.CloudSync || typeof window.CloudSync.queryPhoneByEmail !== 'function') return Promise.resolve(null);
+      return window.CloudSync.queryPhoneByEmail(email).then(function(ph){ return ph || null; }).catch(function(){ return null; });
+    }catch(e){ return Promise.resolve(null); }
   }
 
   // 主入口
@@ -107,13 +122,18 @@
       // v2.19.2：新需求立即发，不进合并窗（后端 notify.js 对 new_req 直接走 sendImmediate）
       data = buildReqPayload(payloadObj);
     } else if(action === 'hist'){
+      // v2.20.0：历史导入摘要无特定需求方，不@，直接发
       data = Object.assign({ action:'hist', ts: Date.now() }, payloadObj||{});
       return post(NOTIFY_HIST_URL, data);
     } else {
       data = buildBatchPayload(action, payloadObj);
       scheduleFlush(data.batchId);
     }
-    return post(NOTIFY_URL, data);
+    // v2.20.0：查到需求方手机号 → payload 带 atMobiles（后端 @ 需求方）；查不到不带（不@）
+    return lookupPhone(data.reqEmail).then(function(phone){
+      if(phone) data.atMobiles = [phone];
+      return post(NOTIFY_URL, data);
+    });
   }
 
   function post(url, body){
