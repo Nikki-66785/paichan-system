@@ -1,7 +1,9 @@
-// v2.19.2 主通知端点（1h 合并窗）
+// v2.19.3 主通知端点（钉钉卡片格式修订）
 // POST /notify
 // Body: { action, batchId, reqId, project, type, line, start, end, status, batchNo, requesterEmail, requesterName, dueDate, priority, note, ts }
 // Auth: Authorization: Bearer <MAIL_HOOK_SECRET>  ← 用户在 CF Pages Dashboard Secrets 配置
+//
+// v2.19.3 变更：卡片每行一个字段（列表美化）、去「来源」落款；新需求去优先级/备注；批次变动去批次行/优先级/备注/来源
 //
 // v2.19.2 变更：action=new_req 不走合并窗，直接立即发（新需求时效性强）
 //
@@ -111,21 +113,20 @@ export async function onRequestPost({ request, env }) {
 }
 
 function buildMarkdown(b) {
-  // v2.19.2：新需求专用模板（无批次/排程字段，展示数量/交期/优先级）
+  // v2.19.3：新需求卡片精简（去掉优先级/备注/来源），每行一个字段
   if (b.action === 'new_req') {
     const title = `🆕 新需求 · ${b.project || b.reqId}`;
     const lines = [];
     lines.push(`## ${title}`);
     lines.push('');
-    lines.push(`**项目**　${b.project || '-'}`);
-    lines.push(`**类型**　${b.type || '-'}　　**数量**　${b.qty || '-'}`);
-    if (b.dueDate) lines.push(`**交期**　${b.dueDate}`);
-    if (b.priority) lines.push(`**优先级**　${b.priority}`);
-    if (b.requesterName) lines.push(`**需求人**　${b.requesterName}`);
-    if (b.note) lines.push(`**备注**　${b.note}`);
+    lines.push(`- **项目**：${b.project || '-'}`);
+    lines.push(`- **类型**：${b.type || '-'}`);
+    lines.push(`- **数量**：${b.qty || '-'}`);
+    if (b.dueDate) lines.push(`- **交期**：${b.dueDate}`);
+    if (b.requesterName) lines.push(`- **需求人**：${b.requesterName}`);
     lines.push('');
     const ts = b.ts ? new Date(b.ts).toLocaleString('zh-CN', { hour12: false }) : new Date().toLocaleString('zh-CN', { hour12: false });
-    lines.push(`> 触发时间：${ts} · 来自临床生产智能排产系统 v2.19.2`);
+    lines.push(`> 触发时间：${ts}`);
     return { title, text: lines.join('\n') };
   }
 
@@ -136,22 +137,22 @@ function buildMarkdown(b) {
     delete: '🗑️ 删除批次'
   }[b.action] || b.action;
 
+  // v2.19.3：批次变动卡片精简（去掉批次行/优先级/备注/来源），每行一个字段
   const title = `${actionName} · ${b.batchNo || b.batchId || b.reqId}`;
   const lines = [];
   lines.push(`## ${title}`);
   lines.push('');
-  lines.push(`**批次**　${b.batchNo || '-'}　(${b.batchId || b.reqId || '-'})`);
-  lines.push(`**项目**　${b.project || '-'}`);
-  lines.push(`**类型**　${b.type || '-'}　　**产线**　${b.line || '-'}`);
-  lines.push(`**排程**　${b.start || '-'} → ${b.end || '-'}`);
-  lines.push(`**状态**　${b.status || '-'}${b.action === 'lock' ? '　（已锁定，作为已占用产能）' : ''}${b.action === 'final' ? '　（已终态，不再占用产能）' : ''}${b.action === 'delete' ? '　（已删除）' : ''}`);
-  if (b.dueDate) lines.push(`**交期**　${b.dueDate}`);
-  if (b.requesterName) lines.push(`**需求人**　${b.requesterName}`);
-  if (b.priority) lines.push(`**优先级**　${b.priority}`);
-  if (b.note) lines.push(`**备注**　${b.note}`);
+  if (b.project) lines.push(`- **项目**：${b.project}`);
+  if (b.type) lines.push(`- **类型**：${b.type}`);
+  if (b.line) lines.push(`- **产线**：${b.line}`);
+  if (b.start || b.end) lines.push(`- **排程**：${b.start || '-'} → ${b.end || '-'}`);
+  const statusNote = b.action === 'lock' ? '（已锁定，作为已占用产能）' : b.action === 'final' ? '（已终态，不再占用产能）' : b.action === 'delete' ? '（已删除）' : '';
+  lines.push(`- **状态**：${b.status || '-'}${statusNote}`);
+  if (b.dueDate) lines.push(`- **交期**：${b.dueDate}`);
+  if (b.requesterName) lines.push(`- **需求人**：${b.requesterName}`);
   lines.push('');
   const ts = b.ts ? new Date(b.ts).toLocaleString('zh-CN', { hour12: false }) : new Date().toLocaleString('zh-CN', { hour12: false });
-  lines.push(`> 触发时间：${ts} · 来自临床生产智能排产系统 v2.19.2`);
+  lines.push(`> 触发时间：${ts}`);
 
   return { title, text: lines.join('\n') };
 }
@@ -246,13 +247,14 @@ function buildMergedMarkdown(entry) {
   const title = `📋 批次汇总 · ${entry.batchNo || entry.batchId}（${entry.events.length} 次变动）`;
   lines.push(`## ${title}`);
   lines.push('');
-  lines.push(`**批次**　${entry.batchNo || '-'}　(${entry.batchId})`);
-  if (entry.reqId) lines.push(`**需求**　${entry.reqId}`);
-  lines.push(`**项目**　${entry.project || '-'}`);
-  lines.push(`**类型**　${entry.type || '-'}　　**产线**　${entry.line || '-'}`);
-  lines.push(`**排程**　${entry.start || '-'} → ${entry.end || '-'}`);
-  const statusSuffix = entry.locked ? '　（已锁定，作为已占用产能）' : '';
-  lines.push(`**当前状态**　${entry.status || '-'}${statusSuffix}`);
+  if (entry.batchNo) lines.push(`- **批次**：${entry.batchNo}`);
+  if (entry.reqId) lines.push(`- **需求**：${entry.reqId}`);
+  if (entry.project) lines.push(`- **项目**：${entry.project}`);
+  if (entry.type) lines.push(`- **类型**：${entry.type}`);
+  if (entry.line) lines.push(`- **产线**：${entry.line}`);
+  if (entry.start || entry.end) lines.push(`- **排程**：${entry.start || '-'} → ${entry.end || '-'}`);
+  const statusSuffix = entry.locked ? '（已锁定，作为已占用产能）' : '';
+  lines.push(`- **当前状态**：${entry.status || '-'}${statusSuffix}`);
   lines.push('');
   lines.push(`### 📜 变动记录（共 ${entry.events.length} 次，跨越 ${minutes} 分钟）`);
   lines.push('');
@@ -264,6 +266,6 @@ function buildMergedMarkdown(entry) {
   lines.push('');
   const wStart = new Date(entry.windowStart).toLocaleString('zh-CN', { hour12: false });
   const wEnd = new Date(entry.lastUpdate).toLocaleString('zh-CN', { hour12: false });
-  lines.push(`> 窗口：${wStart} → ${wEnd} · 来自临床生产智能排产系统 v2.19.2`);
+  lines.push(`> 窗口：${wStart} → ${wEnd}`);
   return { title, text: lines.join('\n') };
 }
