@@ -123,7 +123,7 @@
   body.role-requester .done-col, body.role-reader .done-col{display:none!important}
   .perm-btn{margin-left:8px;padding:5px 14px;border:none;border-radius:20px;background:#7c3aed;color:#fff;font-size:12.5px;cursor:pointer;white-space:nowrap}
   .perm-btn:hover{background:#6d28d9}
-  /* v2.18.8：使用手册入口（所有角色可见，常驻按钮）；v2.18.8 起 watch 路径需求删除会云端权威传播给所有在线账号 */
+  /* v2.19.0：使用手册入口（所有角色可见，常驻按钮）；v2.19.0 起 watch 路径需求删除会云端权威传播给所有在线账号 */
   .help-btn{margin-left:8px;padding:5px 14px;border:1px solid rgba(255,255,255,.35);border-radius:20px;background:rgba(255,255,255,.18);color:#fff;font-size:12.5px;cursor:pointer;white-space:nowrap;backdrop-filter:blur(4px)}
   .help-btn:hover{background:rgba(255,255,255,.28);border-color:rgba(255,255,255,.55)}
   /* 甘特图 */
@@ -197,7 +197,7 @@
 <body class="role-requester">
 
 <header>
-  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.18.8（2026-09-04：修复 watch 路径下需求删除不传播给其他在线用户的问题——云端权威裁剪后 A 删的某条 B 也能立即看到；明确生产计划可删任意需求/批次、需求方仅可删自己录入的需求，两者均不互相影响账号登录态与角色分配。v2.18.7：顶栏新增「📖 使用手册」按钮，所有角色可见，点击新窗口打开 help.html；v2.18.6：APS 排产提醒移至需求录入页末尾——避免顶部 banner 与交期/新需求提醒互相挤压；v2.18.5：权限管理可删除账号——移除角色分配后该账号恢复为「读者」仅预览，白名单管理员与当前登录账号不可删除）。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.18.8</span></h1>
+  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.19.0（2026-09-04：新增钉钉群机器人通知——生产计划锁定/人工调整/删除/终态四种批次变动，以及新需求提交与历史计划导入摘要，均自动推送到钉钉「排产通知群」；通知由 Cloudflare Pages Functions + 钉钉群机器人 webhook 实现，按埋点立即发送，1h 合并窗将在 v2.19.1 推出）。v2.18.8：修复 watch 路径下需求删除不传播给其他在线用户的问题——云端权威裁剪后 A 删的某条 B 也能立即看到；明确生产计划可删任意需求/批次、需求方仅可删自己录入的需求，两者均不互相影响账号登录态与角色分配。v2.18.7：顶栏新增「📖 使用手册」按钮，所有角色可见，点击新窗口打开 help.html；v2.18.6：APS 排产提醒移至需求录入页末尾——避免顶部 banner 与交期/新需求提醒互相挤压；v2.18.5：权限管理可删除账号——移除角色分配后该账号恢复为「读者」仅预览，白名单管理员与当前登录账号不可删除。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.19.0</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -744,7 +744,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.18.8（删除实时同步·顶栏使用手册入口·APS 排产提醒移至需求录入页末尾·权限管理可删除账号·批量删除放开·列序修正·读者界面与需求方一致·需求列表/批次明细时间筛选）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.19.0（钉钉群通知：锁定/调整/删除/终态四种批次变动+新需求+历史导入摘要自动推群·删除实时同步·顶栏使用手册入口·APS 排产提醒移至需求录入页末尾·权限管理可删除账号·批量删除放开·列序修正·读者界面与需求方一致·需求列表/批次明细时间筛选）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -811,7 +811,8 @@
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
 <script src="cloudbase.full.js?v=2152"></script>
-<script src="cloud.js?v=2188"></script>
+<script src="cloud.js?v=2190"></script>
+<script src="mail.js?v=2190"></script><!-- v2.19.0：钉钉通知模块（前端埋点层） -->
 <script src="scheduling.js?v=2183"></script>
 <script src="history_data.js"></script>
 <script>
@@ -1385,6 +1386,8 @@
     state.requirements.push(r);
     save(); renderAll(); // v2.16.0：改用 renderAll，同步刷新冲突横幅与首次生产汇总表
     if(window.CloudSync) window.CloudSync.pushReq(r); // 需求同步云端
+    // v2.19.0：新增需求 → 钉钉群通知（生产计划组）
+    if(window.mail) window.mail.notify('new_req', r);
     toast('已添加需求，可点击「自动排产」');
     clearFormFields();
   }
@@ -1763,6 +1766,8 @@
       if(!ok) return;
       pend.forEach(function(b){ b.locked=true; b.status='锁定'; });
       addOp('批量锁定', pend.length+' 个批次'); save(); renderAll();
+      // v2.19.0：批量锁定 → 钉钉群通知（每个被锁定批次发一封）
+      if(window.mail){ pend.forEach(function(b){ window.mail.notify('lock', b); }); }
       toast('已锁定 '+pend.length+' 个批次，排产确认完成');
     });
   }
@@ -1771,6 +1776,8 @@
     if(!b || b.locked || isFinal(b)) return;
     b.locked=true; b.status='锁定';
     addOp('确认批次', b.id+'（'+(b.project||b.type||'')+'）'); save(); renderAll();
+    // v2.19.0：单批次确认锁定 → 钉钉群通知
+    if(window.mail) window.mail.notify('lock', b);
     toast('批次已确认锁定');
   }
   function unlockBatch(id){
@@ -2618,9 +2625,13 @@
       if(!ok) return;
       var del = {};
       targets.forEach(function(b){ del[b.id]=1; });
+      // v2.19.0：先快照被删批次（filter 后引用失效）
+      var removed = targets.slice();
       state.batches = state.batches.filter(function(b){ return !del[b.id]; });
       addOp('批量删除批次', targets.length+' 个');
       save(); renderAll();
+      // v2.19.0：批量删除 → 钉钉群通知（每批次一封）
+      if(window.mail){ removed.forEach(function(b){ window.mail.notify('delete', b); }); }
       toast('已删除 '+targets.length+' 个批次');
     });
   }
@@ -2730,6 +2741,8 @@
       b.warning = '';
       b.note = $('e_note').value;
       save(); renderAll(); closeEdit();
+      // v2.19.0：批次终态 → 钉钉群通知
+      if(window.mail) window.mail.notify('final', Object.assign({}, b, { prevStatus: wasFinal ? b.status : '人工' }));
       toast('批次已标记为「'+newStatus+'」，不再占用产能（可删除或调整恢复）');
       return;
     }
@@ -2794,14 +2807,20 @@
     else if(b.status==='锁定'){ b.status='人工'; }
     else if(b.status==='自动'||b.status==='预警'){ b.status='人工'; }
     addOp('人工调整', b.id+'：'+s+'~'+e+(b.locked?'（锁定）':'')); save(); renderAll(); closeEdit();
+    // v2.19.0：人工调整 → 钉钉群通知
+    if(window.mail) window.mail.notify('edit', b);
     toast('已保存调整'+(conflict?'（存在冲突，请关注）':''));
   }
   function delBatch(){
     if(!isPlanner()){ toast('仅生产计划角色可删除批次'); return; }
     uiConfirm('删除该批次？', function(ok){
       if(!ok) return;
+      // v2.19.0：删除前快照（b 是引用，filter 之后引用会失效，先克隆用于通知）
+      var removed = state.batches.find(function(x){return x.id===editingId;});
       state.batches = state.batches.filter(function(x){return x.id!==editingId;});
       addOp('删除批次', editingId); save(); renderAll(); closeEdit();
+      // v2.19.0：删除批次 → 钉钉群通知
+      if(window.mail && removed) window.mail.notify('delete', removed);
       toast('批次已删除');
     });
   }
@@ -2811,8 +2830,12 @@
     if(!b) return;
     uiConfirm('删除该批次？'+(isFinal(b)?'（终态批次）':''), function(ok){
       if(!ok) return;
+      // v2.19.0：同上，先快照
+      var removed = state.batches.find(function(x){return x.id===id;});
       state.batches = state.batches.filter(function(x){return x.id!==id;});
       save(); renderAll();
+      // v2.19.0：删除批次 → 钉钉群通知
+      if(window.mail && removed) window.mail.notify('delete', removed);
       toast('批次已删除');
     });
   }
@@ -3076,7 +3099,7 @@
     // v2.18.3：导出信息工作表（版本/时间/角色/当前筛选条件），便于追溯导出版本与时间范围
     var ui = currentUiFilters();
     var info = [['项','值'],
-      ['系统版本','v2.18.8'],
+      ['系统版本','v2.19.0'],
       ['导出时间', new Date().toISOString()],
       ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
       ['需求列表-时间列', ui.reqFiltField==='createdAt'?'提交时间':'交期'],
@@ -3161,7 +3184,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.18.8'],
+          ['系统版本','v2.19.0'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['筛选条件摘要', formatFiltInfo(ui)]];
@@ -3265,7 +3288,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.18.8'],
+          ['系统版本','v2.19.0'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['批次明细-时间列', ui.filtTField],
@@ -3304,7 +3327,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.18.8'],
+          ['系统版本','v2.19.0'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['需求列表-时间列', ui.reqFiltField==='createdAt'?'提交时间':'交期'],
@@ -3591,7 +3614,7 @@
       toast(btn.dataset.role==='planner' ? '已切换到「生产计划」角色：可确认可行性、人工调整与排产锁定' : '已切换到「需求方」角色：可填写需求并自动排产');
     });
     $('btnPermMgmt').addEventListener('click', openPermMgmt); // v2.15.0：权限管理入口
-    // v2.18.8：使用手册入口（所有角色可见，click → 新窗口打开 help.html）
+    // v2.19.0：使用手册入口（所有角色可见，click → 新窗口打开 help.html）
     $('btnHelp').addEventListener('click', function(){ window.open('help.html','_blank','noopener'); });
     $('btnSaveRules').addEventListener('click', saveRules);
     $('btnResetRules').addEventListener('click', resetRules);
@@ -3601,7 +3624,22 @@
     $('btnReimportHist').addEventListener('click', function(){
       uiConfirm('重新导入历史计划将替换当前所有批次与需求，确定继续？系统将先自动下载备份。', function(ok){
         if(!ok) return;
-        autoBackup(function(bok){ if(bok) resetToHistory(); });
+        autoBackup(function(bok){
+          if(bok){
+            // v2.19.0：导入历史计划 → 钉钉群摘要通知（在 resetToHistory 后异步抓取重建的批次摘要）
+            var _sendHistNotice = function(){
+              try {
+                var samples = (state.batches||[]).filter(function(b){return b.source==='历史';}).slice(0,10).map(function(b){
+                  return { batchNo: b.batchNo||b.id, batchId: b.id, project: b.project||'', line: b.line||'', start: b.start||'', end: b.end||'' };
+                });
+                if(window.mail) window.mail.notify('hist', { count: (state.batches||[]).filter(function(b){return b.source==='历史';}).length, samples: samples });
+              } catch(e){ console.warn('[mail] hist notify error', e); }
+            };
+            resetToHistory();
+            // 渲染完成后异步通知
+            setTimeout(_sendHistNotice, 50);
+          }
+        });
       });
     });
     // 自定义确认弹窗按钮（v2.11.0 ⑱）
