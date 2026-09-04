@@ -1,10 +1,13 @@
-// v2.19.1 合并窗 flush 端点
-// POST /api/notify-flush
+// v2.19.3 合并窗 flush 端点
+// POST /notify-flush
 // Body: { batchId }
 // Auth: Authorization: Bearer <MAIL_HOOK_SECRET>
 //
+// v2.19.3 变更：合并汇总卡片改「每行一个字段」+ 去「来源」落款（与新需求卡片格式统一）
+//
 // 由前端 mail.js 在 1h 合并窗到期时调用：
-//   setTimeout(() => fetch('/api/notify-flush', { method:'POST', body:{batchId} }), 3600000)
+//   setTimeout(() => fetch('/notify-flush', { method:'POST', body:{batchId} }), 3600000)
+//
 //
 // 行为：
 //   - KV 中存在 merge:<batchId>：构造合并 markdown → 发钉钉 → 删除 entry → 返回 {ok, eventCount}
@@ -77,13 +80,14 @@ function buildMergedMarkdown(entry) {
   const title = `📋 批次汇总 · ${entry.batchNo || entry.batchId}（${entry.events.length} 次变动）`;
   lines.push(`## ${title}`);
   lines.push('');
-  lines.push(`**批次**　${entry.batchNo || '-'}　(${entry.batchId})`);
-  if (entry.reqId) lines.push(`**需求**　${entry.reqId}`);
-  lines.push(`**项目**　${entry.project || '-'}`);
-  lines.push(`**类型**　${entry.type || '-'}　　**产线**　${entry.line || '-'}`);
-  lines.push(`**排程**　${entry.start || '-'} → ${entry.end || '-'}`);
-  const statusSuffix = entry.locked ? '　（已锁定，作为已占用产能）' : '';
-  lines.push(`**当前状态**　${entry.status || '-'}${statusSuffix}`);
+  if (entry.batchNo) lines.push(`- **批次**：${entry.batchNo}`);
+  if (entry.reqId) lines.push(`- **需求**：${entry.reqId}`);
+  if (entry.project) lines.push(`- **项目**：${entry.project}`);
+  if (entry.type) lines.push(`- **类型**：${entry.type}`);
+  if (entry.line) lines.push(`- **产线**：${entry.line}`);
+  if (entry.start || entry.end) lines.push(`- **排程**：${entry.start || '-'} → ${entry.end || '-'}`);
+  const statusSuffix = entry.locked ? '（已锁定，作为已占用产能）' : '';
+  lines.push(`- **当前状态**：${entry.status || '-'}${statusSuffix}`);
   lines.push('');
   lines.push(`### 📜 变动记录（共 ${entry.events.length} 次，跨越 ${minutes} 分钟）`);
   lines.push('');
@@ -95,7 +99,7 @@ function buildMergedMarkdown(entry) {
   lines.push('');
   const wStart = new Date(entry.windowStart).toLocaleString('zh-CN', { hour12: false });
   const wEnd = new Date(entry.lastUpdate).toLocaleString('zh-CN', { hour12: false });
-  lines.push(`> 窗口：${wStart} → ${wEnd} · 来自临床生产智能排产系统 v2.19.1`);
+  lines.push(`> 窗口：${wStart} → ${wEnd}`);
   return { title, text: lines.join('\n') };
 }
 
