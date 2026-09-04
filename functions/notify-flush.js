@@ -3,6 +3,8 @@
 // Body: { batchId }
 // Auth: Authorization: Bearer <MAIL_HOOK_SECRET>
 //
+// v2.20.0 变更：合并汇总卡片按 entry.atMobiles @需求方（notify.js 写 KV 时存入；无则不@）
+//
 // v2.19.3 变更：合并汇总卡片改「每行一个字段」+ 去「来源」落款（与新需求卡片格式统一）
 //
 // 由前端 mail.js 在 1h 合并窗到期时调用：
@@ -51,11 +53,11 @@ export async function onRequestPost({ request, env }) {
     return jsonResp({ ok: true, noop: true, batchId });
   }
 
-  // 4. 发 + 删
+  // 4. 发 + 删（v2.20.0：按 entry.atMobiles @需求方）
   const md = buildMergedMarkdown(entry);
   let dingtalk;
   try {
-    dingtalk = await sendDingtalk(env, md);
+    dingtalk = await sendDingtalk(env, md, entry.atMobiles);
   } catch (e) {
     // 发失败也要删（避免卡住后续 flush），但返回错误
     try { await env.MAIL_KV.delete(key); } catch (_) {}
@@ -103,10 +105,10 @@ function buildMergedMarkdown(entry) {
   return { title, text: lines.join('\n') };
 }
 
-async function sendDingtalk(env, md) {
+// v2.20.0：atMobiles 非空 → 按手机号@需求方（卡片末尾追加 @手机号 文本）；否则不@任何人
+async function sendDingtalk(env, md, atMobiles) {
   const webhook = env.DINGTALK_WEBHOOK;
   const secret = env.DINGTALK_SECRET || '';
-  const atAll = env.DINGTALK_AT_ALL === 'true';
 
   if (!webhook) throw new Error('DINGTALK_WEBHOOK not configured');
 
@@ -130,10 +132,18 @@ async function sendDingtalk(env, md) {
     url = `${url}${sep}timestamp=${ts}&sign=${encoded}`;
   }
 
+  let text = md.text;
+  const at = { isAtAll: false }; // v2.20.0：不再@全员
+  const phones = Array.isArray(atMobiles) ? atMobiles.filter(Boolean) : [];
+  if (phones.length) {
+    at.atMobiles = phones;
+    text = md.text + '\n\n' + phones.map(function (p) { return '@' + p; }).join(' ');
+  }
+
   const payload = {
     msgtype: 'markdown',
-    markdown: { title: md.title, text: md.text },
-    at: { isAtAll: atAll }
+    markdown: { title: md.title, text: text },
+    at: at
   };
 
   const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(payload) });
