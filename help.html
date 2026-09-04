@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>排产系统 · 使用者操作手册</title>
+<style>
+  :root{
+    --main:#1e40af; --main-2:#2563eb; --main-bg:#eff6ff;
+    --purple:#7c3aed; --purple-bg:#f5f3ff;
+    --green:#15803d; --green-bg:#f0fdf4;
+    --amber:#b45309; --amber-bg:#fffbeb;
+    --red:#b91c1c; --red-bg:#fef2f2;
+    --ink:#0f172a; --ink-2:#475569; --ink-3:#94a3b8;
+    --line:#e2e8f0; --card:#ffffff; --bg:#f8fafc;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.75;font-size:15px}
+  .wrap{max-width:980px;margin:0 auto;padding:0 20px 80px}
+
+  /* ===== 顶部 ===== */
+  header.hero{background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 55%,#4f46e5 100%);color:#fff;padding:44px 0 36px;margin-bottom:0}
+  .hero-in{max-width:980px;margin:0 auto;padding:0 20px}
+  .hero h1{font-size:28px;letter-spacing:1px;margin-bottom:10px}
+  .hero p{font-size:15.5px;opacity:.92;max-width:760px}
+  .hero .ver{margin-top:14px;display:inline-block;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:3px 14px;font-size:13px}
+
+  /* ===== 四步流程 ===== */
+  .flow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:26px 0 6px}
+  .flow .st{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;position:relative;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  .flow .st b{display:block;font-size:15.5px;margin-bottom:2px}
+  .flow .st small{color:var(--ink-2);font-size:12.5px;line-height:1.55;display:block}
+  .flow .num{position:absolute;top:-11px;left:14px;background:var(--main-2);color:#fff;font-size:12px;font-weight:700;border-radius:999px;padding:1px 9px}
+
+  /* ===== 导航条 ===== */
+  nav.toc{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.95);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);margin-top:14px}
+  nav.toc .in{max-width:980px;margin:0 auto;padding:9px 20px;display:flex;flex-wrap:wrap;gap:6px}
+  nav.toc a{font-size:13px;color:var(--ink-2);text-decoration:none;padding:4px 11px;border-radius:999px;border:1px solid var(--line);background:#fff}
+  nav.toc a:hover{color:var(--main-2);border-color:var(--main-2)}
+
+  /* ===== 章节 ===== */
+  section.ch{margin-top:38px}
+  h2.sec{font-size:21px;padding-left:14px;border-left:5px solid var(--main-2);margin-bottom:6px}
+  .sub{color:var(--ink-2);font-size:14px;margin:2px 0 14px 19px}
+  h3{font-size:17px;margin:26px 0 10px;color:#1e293b}
+  h3 .ic{margin-right:6px}
+  p.para{margin:8px 0;color:#334155}
+  ul.list{margin:8px 0 8px 4px;padding-left:22px;color:#334155}
+  ul.list li{margin:4px 0}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+
+  /* 角色三卡 */
+  .roles{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:16px 0}
+  .role{border-radius:14px;padding:18px;border:1px solid var(--line)}
+  .role h4{font-size:17px;margin-bottom:4px}
+  .role .who{font-size:12.5px;color:var(--ink-2);margin-bottom:10px}
+  .role ul{padding-left:20px;font-size:13.5px;color:#334155}
+  .role ul li{margin:3px 0}
+  .role-r{background:#fff}
+  .role-q{background:var(--main-bg);border-color:#bfdbfe}
+  .role-p{background:var(--purple-bg);border-color:#ddd6fe}
+
+  /* 表格 */
+  table.tbl{width:100%;border-collapse:collapse;background:#fff;margin:12px 0;font-size:13.5px;border-radius:10px;overflow:hidden}
+  table.tbl th{background:#f1f5f9;color:#1e293b;text-align:left;padding:9px 12px;border-bottom:2px solid var(--line);white-space:nowrap}
+  table.tbl td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top;color:#334155}
+  table.tbl tr:last-child td{border-bottom:none}
+  .yes{color:var(--green);font-weight:700}
+  .no{color:var(--red);font-weight:700}
+  .mid{color:var(--amber);font-weight:700}
+
+  /* 步骤 */
+  ol.steps{margin:10px 0 10px 4px;padding-left:26px;counter-reset:step}
+  ol.steps li{margin:10px 0;color:#334155;position:relative}
+  ol.steps li b{color:#1e293b}
+  .ui{display:inline-block;background:#fff;border:1px solid #cbd5e1;border-radius:7px;padding:0 8px;font-size:13px;white-space:nowrap;color:#0f172a}
+
+  /* 提示框 */
+  .tip{border-radius:12px;padding:13px 16px;margin:12px 0;font-size:14px;border:1px solid}
+  .tip b{display:block;margin-bottom:2px;font-size:14.5px}
+  .tip-i{background:var(--main-bg);border-color:#bfdbfe;color:#1e3a8a}
+  .tip-w{background:var(--amber-bg);border-color:#fde68a;color:#92400e}
+  .tip-d{background:var(--red-bg);border-color:#fecaca;color:#991b1b}
+  .tip-g{background:var(--green-bg);border-color:#bbf7d0;color:#166534}
+
+  .kbd{display:inline-block;background:#1e293b;color:#fff;font-size:12px;border-radius:5px;padding:0 8px;font-family:Consolas,monospace}
+
+  /* 术语表 */
+  dl.terms{display:grid;grid-template-columns:130px 1fr;gap:0;font-size:13.5px}
+  dl.terms dt{background:#f8fafc;border-bottom:1px solid var(--line);padding:8px 12px;font-weight:700;color:#1e293b}
+  dl.terms dd{border-bottom:1px solid var(--line);padding:8px 12px;color:#334155;margin:0}
+  dl.terms dt:last-of-type,dl.terms dd:last-of-type{border-bottom:none}
+
+  .q{background:#fff;border:1px solid var(--line);border-left:4px solid var(--main-2);border-radius:10px;padding:12px 16px;margin:10px 0}
+  .q b{color:#1e293b}
+  .q p{margin:4px 0 0;color:#475569;font-size:14px}
+
+  footer.foot{margin-top:50px;border-top:1px solid var(--line);padding-top:16px;color:var(--ink-3);font-size:12.5px;text-align:center}
+
+  @media (max-width:820px){
+    .roles,.flow{grid-template-columns:1fr 1fr}
+    dl.terms{grid-template-columns:1fr}
+    .hero h1{font-size:22px}
+  }
+  @media (max-width:560px){
+    .roles,.flow{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-in">
+    <h1>📦 临床生产智能排产系统 · 使用者操作手册</h1>
+    <p>这份手册用大白话讲清楚「系统是干什么的、你该点哪里、点错了会怎样」。请先对照下面的流程总览了解全局，再按你的身份跳到自己对应的章节。</p>
+    <span class="ver">配套版本：v2.18.6（对应页面右上角版本标签）</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- 流程总览 -->
+  <div class="flow">
+    <div class="st"><span class="num">①</span><b>📋 提需求</b><small>需求方按实际生产需要填写并提交（选类型 CB / DP / Mab / ADC / APS / EQP）</small></div>
+    <div class="st"><span class="num">②</span><b>⚙️ 自动排产</b><small>生产计划点击「🚀 立即排产」，系统按产线产能与规则生成<b>草案</b>（还没定死）</small></div>
+    <div class="st"><span class="num">③</span><b>✅ 确认调整</b><small>生产计划核对甘特图/批次表，可拖拽调整、可逐条「确认」；交期有风险会出横幅提醒</small></div>
+    <div class="st"><span class="num">④</span><b>🔒 排产锁定</b><small>确认无误后「排产锁定」——锁定的批次成为<b>已占用产能</b>，之后自动重排不会动它们</small></div>
+  </div>
+
+  <nav class="toc"><div class="in">
+    <a href="#s0">🧭 我该看哪章</a>
+    <a href="#s1">👥 角色与权限</a>
+    <a href="#s2">🗂️ 页面总览</a>
+    <a href="#s3">📋 我是需求方</a>
+    <a href="#s4">🛠️ 我是生产计划</a>
+    <a href="#s5">👀 我是读者</a>
+    <a href="#s6">🛡️ 权限管理（管理员）</a>
+    <a href="#s7">📤 导出与备份</a>
+    <a href="#s8">❓ 常见问题</a>
+    <a href="#s9">📖 小词典</a>
+  </div></nav>
+
+  <!-- 0 我该看哪章 -->
+  <section class="ch" id="s0">
+    <h2 class="sec">🧭 我该看哪一章？</h2>
+    <p class="sub">30 秒定位：先想清楚你在系统里的身份（登录后页面顶部会显示你的名字与角色提示）。</p>
+    <div class="roles">
+      <div class="role role-r">
+        <h4>👀 读者</h4>
+        <div class="who">审计、领导、临时查看</div>
+        <ul><li>只能看，不能改</li><li>按钮看得到但点了会被拦</li><li>👉 看 <a href="#s5">第 5 章</a></li></ul>
+      </div>
+      <div class="role role-q">
+        <h4>📋 需求方</h4>
+        <div class="who">项目经理、上游提交方</div>
+        <ul><li>提交自己的需求、改自己的、删自己的</li><li>查看排产计划（只读）</li><li>👉 看 <a href="#s3">第 3 章</a></li></ul>
+      </div>
+      <div class="role role-p">
+        <h4>🛠️ 生产计划</h4>
+        <div class="who">计划员、管理员</div>
+        <ul><li>全部功能：排产/锁定/删除/导出</li><li>还能进数据管理、权限管理</li><li>👉 看 <a href="#s4">第 4 章</a>（管理员另看 <a href="#s6">第 6 章</a>）</li></ul>
+      </div>
+    </div>
+    <div class="tip tip-w">
+      <b>⚠️ 不知道自己是什么角色？</b>
+      登录后页面顶部横幅或提示区会说明当前权限。如果你看到「👀 当前账号为「读者」权限…」的蓝色横幅，说明你目前只是读者；需要提交需求时，请联系生产计划管理员在「🛡️ 权限管理」里把你的账号提升为「需求方」。
+    </div>
+  </section>
+
+  <!-- 1 角色与权限 -->
+  <section class="ch" id="s1">
+    <h2 class="sec">👥 角色与权限：谁能做什么</h2>
+    <p class="sub">系统按「读者 → 需求方 → 生产计划」三档授权。越往右权限越大，生产计划拥有全部权限。</p>
+
+    <table class="tbl">
+      <tr><th style="min-width:190px">能做什么</th><th>👀 读者</th><th>📋 需求方</th><th>🛠️ 生产计划</th></tr>
+      <tr><td>查看需求录入页（表单 + 列表）</td><td class="yes">✅</td><td class="yes">✅</td><td class="yes">✅</td></tr>
+      <tr><td>提交需求</td><td class="no">❌（被拦截）</td><td class="yes">✅（自动记为本人）</td><td class="yes">✅</td></tr>
+      <tr><td>编辑 / 删除<b>本人</b>的需求</td><td class="no">❌</td><td class="yes">✅</td><td class="yes">✅</td></tr>
+      <tr><td>删除任意需求 / 批量删除</td><td class="no">❌</td><td class="no">❌</td><td class="yes">✅</td></tr>
+      <tr><td>查看排产计划（甘特图 / 批次表）</td><td class="yes">✅（只读）</td><td class="yes">✅（只读）</td><td class="yes">✅</td></tr>
+      <tr><td>自动排产 / 清空排产 / 人工调整批次</td><td class="no">❌</td><td class="no">❌</td><td class="yes">✅</td></tr>
+      <tr><td>确认批次 / 排产锁定 / 解锁</td><td class="no">❌</td><td class="no">❌</td><td class="yes">✅</td></tr>
+      <tr><td>📊 参考数据 / ⚙️ 规则参数 / 💾 数据管理</td><td class="no">❌</td><td class="no">❌</td><td class="yes">✅</td></tr>
+      <tr><td>🛡️ 权限管理（分配账号角色）</td><td class="no">❌</td><td class="no">❌</td><td class="yes">✅</td></tr>
+      <tr><td>设备维护（EQP）类需求</td><td class="no">❌</td><td class="no">❌</td><td class="yes">✅</td></tr>
+    </table>
+
+    <div class="tip tip-i">
+      <b>💡 两条安全设计（遇到别慌）</b>
+      ① 没权限的按钮<b>不会显示</b>给你；② 就算有人用技术手段把按钮调出来，点了也会弹「角色权限不足」提示并被拦截——数据不会被动。所以读者在需求录入页<b>看得到表单和按钮</b>、但一点就提示，这是故意为之：让你知道有哪些功能，需要就找管理员开权限。
+    </div>
+  </section>
+
+  <!-- 2 页面总览 -->
+  <section class="ch" id="s2">
+    <h2 class="sec">🗂️ 页面总览：顶部 6 个标签页</h2>
+    <table class="tbl">
+      <tr><th>标签</th><th>用途</th><th>谁能看到</th></tr>
+      <tr><td>📋 需求录入</td><td>填写 / 提交需求；看需求列表（含 APS 排产提醒，在页面<b>最底部</b>）</td><td>全员</td></tr>
+      <tr><td>📅 排产计划</td><td>甘特图 + 批次明细表；排产、人工调整、确认、锁定都在这里</td><td>全员（非生产计划只读）</td></tr>
+      <tr><td>📈 排产分析</td><td>快照对比：看计划漂移（drift）、趋势（trend），下载快照备份</td><td>全员</td></tr>
+      <tr><td>📊 参考数据</td><td>字段字典、批次类型等参考</td><td class="no">仅生产计划</td></tr>
+      <tr><td>⚙️ 规则参数</td><td>调整 Mab / DP 周期天数、APS 提醒月份等排产规则</td><td class="no">仅生产计划</td></tr>
+      <tr><td>💾 数据管理</td><td>导入 / 导出 Excel、清空数据、自动备份</td><td class="no">仅生产计划</td></tr>
+    </table>
+    <div class="tip tip-i">
+      <b>💡 顶部工具栏还有一行实时统计</b>：需求数 / 批次数 / 锁定数 / 待确认数 / 预警数。数字随操作实时变化，「预警」>0 说明有交期风险，点进「📅 排产计划」看橙色横幅详情。
+    </div>
+  </section>
+
+  <!-- 3 需求方 -->
+  <section class="ch" id="s3">
+    <h2 class="sec">📋 我是需求方：怎么提交一条需求</h2>
+    <p class="sub">需求方负责「把生产需求讲清楚」：选对类型、填对字段、交期准确，排产才靠谱。</p>
+
+    <h3><span class="ic">1️⃣</span> 提交新需求</h3>
+    <div class="card">
+      <ol class="steps">
+        <li>进入 <span class="ui">📋 需求录入</span> 页，左侧是填表区，右侧是需求列表。</li>
+        <li>第一步选<b>产品类型</b>——这一步决定后面出现哪些字段，请对照下表选：
+        <table class="tbl" style="margin-top:8px">
+          <tr><th>类型</th><th>是什么</th><th>你要准备的关键信息</th></tr>
+          <tr><td><b>CB</b>（细胞库）</td><td>细胞库新建 / 扩增</td><td>选「新建 / 扩增」、产线、MCB 或扩增日期</td></tr>
+          <tr><td><b>DP</b>（制剂）</td><td>水针 / 冻干 / CM / ADC 制剂生产</td><td>剂型、产线（C7 / CM / SJ2 等）、浓度、瓶规——浓度瓶规必填，冻干剂型还要冻干放大测试信息</td></tr>
+          <tr><td><b>Mab</b>（单抗）</td><td>单抗原液生产</td><td>产线（SJ1 / SJ2）；首次生产必填 Titer；MCB 建库必填工艺转移日期</td></tr>
+          <tr><td><b>ADC</b></td><td>ADC 制剂（字段同 DP）</td><td>同 DP，另含 LP 放行日期</td></tr>
+          <tr><td><b>APS</b>（培养基模拟灌装）</td><td>按<b>月份</b>提交的模拟灌装需求</td><td>产线（C7CM DP / SJ2 ADC / SJ2CM DP 之一）+ 月份（yyyy-MM）+ 剂型</td></tr>
+          <tr><td><b>EQP</b>（设备维护）</td><td>产线维护窗口</td><td><b>仅生产计划可见可选</b>：产线 + 起止日期 + 维护类型</td></tr>
+        </table>
+        </li>
+        <li>按提示填写其余字段。<b>交期请尽量真实</b>——系统会拿它和排产完成日期对比，交期太紧会出「交期差异」预警横幅。</li>
+        <li>点 <span class="ui">提交需求</span>。成功后列表顶部出现你这条需求，状态为「待排产」。</li>
+        <li>提交后你可以在列表行上点<b>编辑</b>或<b>删除</b>（仅限本人提交的需求）。已提交且正在排产的需求改内容，可能影响已生成的排产，请谨慎。</li>
+      </ol>
+      <div class="tip tip-w"><b>⚠️ 小提醒</b>优先级不用填，系统统一按「中」处理（v2.16.0 起）。</div>
+    </div>
+
+    <h3><span class="ic">2️⃣</span> 在列表里快速找需求</h3>
+    <div class="card">
+      <p class="para">列表上方有两组筛选项，组合使用可以快速缩小范围：</p>
+      <ul class="list">
+        <li><b>需求人</b>下拉：只看某个人的需求。</li>
+        <li><b>时间字段</b>切换：按「提交时间」还是按「交期」来过滤。</li>
+        <li><b>时间范围</b>：全部 / 近 1 周 / 近 1 月 / 近 3 月 / 自定义起止。</li>
+      </ul>
+      <div class="tip tip-d"><b>🔍 找不到自己以前的需求？</b>九成是时间范围挡住的——把范围切到「全部」再找。交期模式的「全部」与提交时间模式的「全部」看的字段不同，记得两边都试试。</div>
+    </div>
+
+    <h3><span class="ic">3️⃣</span> 提交后做什么</h3>
+    <div class="card">
+      <ol class="steps">
+        <li>等生产计划排产。排产后切到 <span class="ui">📅 排产计划</span>，看<b>甘特图</b>上你的批次排在哪条产线、什么时间（此页对你只读，改不了）。</li>
+        <li>如果批次完成时间晚于你的交期，系统会在「📋 需求录入」顶部出橙色预警，或在「📅 排产计划」出横幅——<b>发现交期冲突请主动找生产计划沟通</b>，优先保交期还是保产线节奏，由计划员权衡。</li>
+        <li>页面底部有 <b>🔔 APS 排产提醒</b>：告诉你哪几个产线组合的哪几个月还没安排「培养基模拟灌装」。如果你负责提交 APS 需求，请按提醒在需求录入里选「APS」类型按月补齐提交。</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 4 生产计划 -->
+  <section class="ch" id="s4">
+    <h2 class="sec">🛠️ 我是生产计划：从需求到锁定</h2>
+    <p class="sub">你的日常：看需求 → 排产（草案）→ 人工调整 → 确认/锁定。记住一条主线——<b>「自动排产只出草案，锁定才算数」</b>。</p>
+
+    <h3><span class="ic">1️⃣</span> 处理需求列表（含批量删除）</h3>
+    <div class="card">
+      <ul class="list">
+        <li>在 <span class="ui">📋 需求录入</span> 勾选需求行左侧的复选框，表头全选框会跟着变（空 → 半选「—」→ 全选）；底部按钮 <span class="ui">🗑️ 删除选中（N）</span> 会实时显示已选数量，<b>没勾选时按钮是置灰禁用的</b>。</li>
+        <li>批量删除的规则（重要）：<b>已完成的需求 → 只删需求记录，它对应的排产批次保留</b>；<b>未完成的需求 → 连同它的排产批次一起删除</b>。系统会再次弹窗问你确认，看清楚再点。</li>
+        <li>灰色且不可勾选的行 = 历史锁定批次，不允许批量操作（防止误删已锁定的计划）。</li>
+      </ul>
+    </div>
+
+    <h3><span class="ic">2️⃣</span> 排产四步：排 → 看 → 调 → 锁</h3>
+    <div class="card">
+      <ol class="steps">
+        <li><b>🚀 立即排产</b>：进入 <span class="ui">📅 排产计划</span>，点 <span class="ui">🚀 立即排产</span>（有未安排需求时顶部横幅里也有同款按钮）。系统按产能与规则生成<b>草案批次</b>，对应需求变为「待确认」。若产生冲突（如交期不够），页面上方会出现<b>告警横幅</b>逐条说明。</li>
+        <li><b>看</b>：上面甘特图看产线占用节奏，下面批次明细表看每一批的「产线 / 开始 / 下罐(灌装) / 完成」四列（见下方解释）。</li>
+        <li><b>调</b>：甘特图上拖拽批次，或点批次在弹窗里改日期/状态，人工调整冲突批次。把批次改成「中止 / 失败 / 取消」= 终态，该批次不再占产能，只留记录。</li>
+        <li><b>锁</b>：没问题后逐条点 <span class="ui">确认</span>，或直接 <span class="ui">🔒 排产锁定（确认全部待确认批次）</span>。锁定后这批计划成为<b>已占用产能</b>——以后再次自动排产会绕着它们排，不会被推翻。</li>
+      </ol>
+      <div class="tip tip-g"><b>✅ 为什么要有「确认 / 锁定」这一步？</b>机器排出来的只是建议。确认锁定 = 人拍板：这些产线时段已经被占了，别动。这是系统「起草与确认解耦」的核心设计，避免自动重排反复推翻已定计划。</div>
+    </div>
+
+    <h3><span class="ic">3️⃣</span> 批次表四列怎么看</h3>
+    <div class="card">
+      <table class="tbl">
+        <tr><th>列</th><th>含义</th><th>通俗解释</th></tr>
+        <tr><td><b>开始</b></td><td>实际开始生产日期</td><td>这一批什么时候开工</td></tr>
+        <tr><td><b>下罐 / 灌装</b></td><td>Mab 类=「下罐」（收获）；DP/ADC 类=「灌装」</td><td>单抗看下罐日，制剂看灌装日</td></tr>
+        <tr><td><b>完成</b></td><td>生产完成（不含目检包装）</td><td>车间里生产工序全部干完的日子</td></tr>
+        <tr><td><b>包装完成</b></td><td>仅正式 DP 显示</td><td>完成日期 + 包装天数（默认 10 天）</td></tr>
+        <tr><td><b>交期</b></td><td>对应需求的期望交期</td><td>拿「完成」和它比，晚了就是预警</td></tr>
+      </table>
+      <p class="para" style="font-size:13.5px;color:var(--ink-2)">「完成」刻意不算包装：不同产线节奏可比、又单独看包装时间——这是对齐《排产逻辑.xlsx》的约定。</p>
+    </div>
+
+    <h3><span class="ic">4️⃣</span> APS 排产提醒怎么处理</h3>
+    <div class="card">
+      <p class="para">「📋 需求录入」页<b>最底部</b>的 <b>🔔 APS 排产提醒</b>横幅会列出：哪些产线组合的哪几个月还没有安排培养基模拟灌装批次。</p>
+      <ul class="list">
+        <li>有<b>未安排的月份</b> → 要么提醒需求方去提交对应月份的 APS 需求，要么你确认该月确实不用排。</li>
+        <li>提醒的月份范围可在 <span class="ui">⚙️ 规则参数</span> 里调整（比如 C7CM DP 默认提醒 3/8/12 月，可改）。</li>
+      </ul>
+    </div>
+
+    <h3><span class="ic">5️⃣</span> 快照与排产分析</h3>
+    <div class="card">
+      <ul class="list">
+        <li>系统在<b>每次排产后</b>自动存快照，<b>每 2 周</b>存定期快照（含人工调整结果）；你也可手动存关键节点快照。</li>
+        <li><span class="ui">📈 排产分析</span> 默认对比最近两次快照：看批次<b>日期漂移</b>、新增/取消，掌握计划稳定性。</li>
+        <li>对比不满意可以回到「📅 排产计划」调整；要留存证据就点 <span class="ui">⬇ 下载快照</span> 导出 Excel。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 5 读者 -->
+  <section class="ch" id="s5">
+    <h2 class="sec">👀 我是读者：我能看什么</h2>
+    <div class="card">
+      <p class="para">读者通常是审计、领导或临时查看人员。v2.18.3 起，读者进入「📋 需求录入」看到的界面<b>与需求方完全一致</b>（表单、按钮都在），但任何<b>写操作</b>——提交、编辑、删除、排产——点击后都会弹提示「📖 读者权限仅可预览」并被拦下，不会产生任何数据变更。</p>
+      <ul class="list">
+        <li>✅ 可以看：需求列表、排产计划（只读）、排产分析、所有筛选和导出。</li>
+        <li>❌ 不可以：提交/改/删需求、排产、锁定、进参考数据/规则参数/数据管理/权限管理。</li>
+      </ul>
+      <div class="tip tip-w"><b>💡 想从「读者」变成「需求方」？</b>请联系生产计划管理员，在「🛡️ 权限管理」里把你的账号角色改为「需求方」——改完<b>不用刷新页面</b>，你的界面会自动更新。</div>
+    </div>
+  </section>
+
+  <!-- 6 权限管理 -->
+  <section class="ch" id="s6">
+    <h2 class="sec">🛡️ 权限管理（管理员 / 生产计划专用）</h2>
+    <div class="card">
+      <ol class="steps">
+        <li>点顶部 <span class="ui">🛡️ 权限管理</span> 打开账号列表。每行 = 一个云端账号 + 当前角色。</li>
+        <li><b>分配 / 调整角色</b>：行内下拉框选「读者 / 需求方 / 生产计划」，系统自动保存。对方在线时<b>即时生效</b>，无需刷新。</li>
+        <li><b>删除账号的角色</b>（v2.18.5 起）：点行右侧 <span class="ui">🗑️ 删除</span>，确认后该账号恢复为「读者」——只收回填报/排产等权限，<b>不会删除云端账号本身</b>，之后可随时重新分配。</li>
+        <li>两个保护，注意看提示：
+          <ul class="list">
+            <li><b>白名单管理员</b>行（如主管理员账号）没有删除按钮——系统保证至少留一个管理员，防锁死。</li>
+            <li><b>当前登录账号</b>的删除按钮是置灰的——你不能删除自己。</li>
+          </ul>
+        </li>
+        <li>底部提示：账号需先在腾讯云控制台「身份验证 → 用户管理」里创建，才能在这里分配角色。</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 7 导出备份 -->
+  <section class="ch" id="s7">
+    <h2 class="sec">📤 导出与备份：数据不丢</h2>
+    <table class="tbl">
+      <tr><th>在哪点</th><th>按钮</th><th>导出内容</th></tr>
+      <tr><td>📋 需求录入</td><td><span class="ui">⬇️ 导出需求清单 (Excel)</span></td><td>需求清单（23 列，含筛选条件摘要）</td></tr>
+      <tr><td>📅 排产计划</td><td><span class="ui">导出Excel(.xlsx)</span></td><td>排产批次明细（13 列）</td></tr>
+      <tr><td>📈 排产分析</td><td><span class="ui">⬇ 下载快照</span></td><td>全部快照：列表 + 批次明细</td></tr>
+      <tr><td>💾 数据管理</td><td><span class="ui">⬇️ 导出全部数据 (Excel)</span></td><td>一整套：需求 / 批次 / 快照 / 配置，最全备份</td></tr>
+    </table>
+    <div class="card">
+      <p class="para">每份导出的 Excel 都自带一张「导出信息」表：导出时间、系统版本、当前角色、当时用的筛选条件——拿着导出文件能说清"这是哪一版、按什么口径导的"。</p>
+      <div class="tip tip-g"><b>🛡️ 自动备份机制</b>：在「💾 数据管理」执行危险操作（如清空数据、导入覆盖）前，系统会<b>自动先生成一份</b>「排产系统自动备份_时间戳.xlsx」推到云端，再让你确认执行。误操作也有后悔药。</div>
+      <div class="tip tip-i"><b>💡 数据存在哪？</b>在线模式数据存云端（腾讯云 CloudBase）+ 本机浏览器各一份，自动双向同步；未登录或网络不可用时降级为本地模式，只影响这台电脑。多台电脑使用请登录同一云端账号。</div>
+    </div>
+  </section>
+
+  <!-- 8 FAQ -->
+  <section class="ch" id="s8">
+    <h2 class="sec">❓ 常见问题</h2>
+
+    <div class="q"><b>Q1：页面看起来和同事的不一样 / 功能点了没反应？</b>
+      <p>多半是浏览器缓存了旧版本。请按 <span class="kbd">Ctrl+F5</span>（Mac 为 <span class="kbd">Cmd+Shift+R</span>）强制刷新，然后看页面右上角版本标签是否显示 <b>v2.18.6</b>。版本标签消失了 = 还在跑旧缓存。</p></div>
+
+    <div class="q"><b>Q2：我看到「提交 / 排产」按钮，但点了弹提示不让用？</b>
+      <p>你是「读者」角色。按钮故意显示但点不了，是让你知道系统有哪些功能。联系生产计划管理员提升角色即可。</p></div>
+
+    <div class="q"><b>Q3：删除选中按钮是灰的，点不了？</b>
+      <p>说明当前没有勾选任何可操作行（0 勾选时按钮真正禁用，这是 v2.18.4 起的安全设计）。先去行首勾选；灰色禁勾的行是历史锁定批次，不能批量操作。</p></div>
+
+    <div class="q"><b>Q4：删除选中的需求会连带删掉排产批次吗？</b>
+      <p>看需求状态：<b>已完成</b>的需求只删需求记录、对应批次保留（历史数据不动）；<b>未完成</b>的需求会连同它的排产批次一起删除。弹窗确认时会有说明。</p></div>
+
+    <div class="q"><b>Q5：橙色 / 红色横幅是什么意思？</b>
+      <p>橙色「交期差异」：某些批次的完成日期晚于需求交期，点进去看差几天，找计划员协调；排产告警横幅则说明自动排产时有冲突（如产线被占），需要人工调整。</p></div>
+
+    <div class="q"><b>Q6：APS 排产提醒（页面底部蓝色横幅）要我做什么？</b>
+      <p>它只是提示"哪些产线组合的哪几个月还没安排培养基模拟灌装"——不是报错。需求方按提醒提交对应月份的 APS 需求，或计划员确认该月不排即可。月份规则可在「⚙️ 规则参数」调整。</p></div>
+
+    <div class="q"><b>Q7：为什么我改了需求/批次，同事那边没变化？</b>
+      <p>确认已登录云端账号并处于在线状态；权限管理改角色是即时下发的，但需求/批次数据走云端同步，正常是自动的，偶尔需要等几秒或刷新一次。若长期不同步，检查网络与账号登录。</p></div>
+
+    <div class="q"><b>Q8：排产结果和我预期不一样，能手动改吗？</b>
+      <p>能。自动排产只是草案：在「📅 排产计划」的甘特图上拖拽批次、或点批次弹窗改日期/状态即可；改成「中止/失败/取消」终态的批次不再占产能。改完记得对受影响的批次「确认 / 锁定」。</p></div>
+
+    <div class="q"><b>Q9：会不会有人误删全部数据？</b>
+      <p>三道保险：① 危险操作前自动备份 Excel 到云端；② 批量删除有二次确认弹窗；③ 历史锁定批次勾选被禁用。加上云端数据在，最大风险也就是删了草稿级记录，可用备份恢复。</p></div>
+  </section>
+
+  <!-- 9 词典 -->
+  <section class="ch" id="s9">
+    <h2 class="sec">📖 小词典</h2>
+    <div class="card">
+      <dl class="terms">
+        <dt>需求（req）</dt><dd>上游提出的一个生产任务，如「做一批 DP 制剂」。</dd>
+        <dt>批次（batch）</dt><dd>排产后把需求落到具体产线 + 时间段的产物，一个需求可能拆成多个批次。</dd>
+        <dt>草案 / 待确认</dt><dd>自动排产生成的批次，还没人拍板，可被下次重排改变。</dd>
+        <dt>锁定</dt><dd>生产计划确认后的批次，作为已占用产能保护起来。</dd>
+        <dt>CB / DP / Mab / ADC</dt><dd>四种产品类型：细胞库、制剂、单抗、ADC 偶联药。</dd>
+        <dt>APS / EQP</dt><dd>培养基模拟灌装（按月提报）、设备维护（计划员专用）。</dd>
+        <dt>下罐（harvest）</dt><dd>Mab 类培养结束收获上清的关键节点。</dd>
+        <dt>灌装（fill）</dt><dd>DP / ADC 制剂装入瓶/器皿的工序节点。</dd>
+        <dt>甘特图</dt><dd>横轴时间、纵轴产线的排产总览图，可拖拽调整。</dd>
+        <dt>快照</dt><dd>某一时刻排产计划的完整"照片"，用于对比漂移和留档。</dd>
+        <dt>预警 / 交期差异</dt><dd>排产完成时间晚于需求交期的风险提示。</dd>
+      </dl>
+    </div>
+  </section>
+
+  <footer class="foot">
+    排产系统使用者操作手册 · 配套 v2.18.6（2026-09-04）· 术语与按钮名称与线上系统保持一致 ·
+    如界面与本文不符，先 Ctrl+F5 确认版本，再联系系统维护人员
+  </footer>
+</div>
+</body>
+</html>
