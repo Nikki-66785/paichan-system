@@ -1,7 +1,11 @@
-// v2.19.3 主通知端点（钉钉卡片格式修订）
+// v2.20.0 主通知端点（钉钉@需求方）
 // POST /notify
-// Body: { action, batchId, reqId, project, type, line, start, end, status, batchNo, requesterEmail, requesterName, dueDate, priority, note, ts }
+// Body: { action, batchId, reqId, project, type, line, start, end, status, batchNo, requesterEmail, requesterName, reqEmail, dueDate, priority, note, atMobiles, ts }
 // Auth: Authorization: Bearer <MAIL_HOOK_SECRET>  ← 用户在 CF Pages Dashboard Secrets 配置
+//
+// v2.20.0 变更：不再@全员，改@需求方本人——payload 带 atMobiles（前端 CloudBase queryUser 查的手机号）时
+//   at:{atMobiles,isAtAll:false}，卡片末尾追加 @手机号 文本（钉钉高亮要求）；无 atMobiles → 不@，消息照发。
+//   KV entry 存 atMobiles 供 flush 合并汇总时 @。旧 @全员开关（AT_ALL env）不再生效。
 //
 // v2.19.3 变更：卡片每行一个字段（列表美化）、去「来源」落款；新需求去优先级/备注；批次变动去批次行/优先级/备注/来源
 //
@@ -76,6 +80,7 @@ export async function onRequestPost({ request, env }) {
       end: body.end || '',
       status: body.status || '',
       locked: !!body.locked,
+      atMobiles: Array.isArray(body.atMobiles) ? body.atMobiles : [], // v2.20.0 @需求方
       windowStart: now,
       lastUpdate: now,
       events: []
@@ -92,6 +97,7 @@ export async function onRequestPost({ request, env }) {
   if (body.end) entry.end = body.end;
   if (body.status) entry.status = body.status;
   entry.locked = !!body.locked;
+  if (Array.isArray(body.atMobiles) && body.atMobiles.length) entry.atMobiles = body.atMobiles; // v2.20.0 字段以最新一次为准
   entry.lastUpdate = now;
   entry.events.push({ action: body.action, ts: now });
 
@@ -157,10 +163,10 @@ function buildMarkdown(b) {
   return { title, text: lines.join('\n') };
 }
 
-async function sendDingtalk(env, md) {
+// v2.20.0：atMobiles 非空 → 按手机号@需求方（卡片末尾追加 @手机号 文本，钉钉高亮要求）；否则不@任何人
+async function sendDingtalk(env, md, atMobiles) {
   const webhook = env.DINGTALK_WEBHOOK;
   const secret = env.DINGTALK_SECRET || '';
-  const atAll = env.DINGTALK_AT_ALL === 'true';
 
   if (!webhook) throw new Error('DINGTALK_WEBHOOK not configured');
 
@@ -185,10 +191,18 @@ async function sendDingtalk(env, md) {
     url = `${url}${sep}timestamp=${ts}&sign=${encoded}`;
   }
 
+  let text = md.text;
+  const at = { isAtAll: false }; // v2.20.0：不再@全员
+  const phones = Array.isArray(atMobiles) ? atMobiles.filter(Boolean) : [];
+  if (phones.length) {
+    at.atMobiles = phones;
+    text = md.text + '\n\n' + phones.map(function (p) { return '@' + p; }).join(' ');
+  }
+
   const payload = {
     msgtype: 'markdown',
-    markdown: { title: md.title, text: md.text },
-    at: { isAtAll: atAll }
+    markdown: { title: md.title, text: text },
+    at: at
   };
 
   const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(payload) });
@@ -209,11 +223,11 @@ function jsonResp(obj, status) {
 
 // ---------- v2.19.1 helpers ----------
 
-// 立即发：MAIL_KV 缺失时的 fallback（行为等同 v2.19.0）
+// 立即发：MAIL_KV 缺失时的 fallback（行为等同 v2.19.0 立即发；v2.20.0 起带 atMobiles @需求方）
 async function sendImmediate(env, body) {
   const md = buildMarkdown(body);
   try {
-    const res = await sendDingtalk(env, md);
+    const res = await sendDingtalk(env, md, body.atMobiles);
     return jsonResp({ ok: true, merged: false, dingtalk: res });
   } catch (e) {
     return jsonResp({ ok: false, error: String(e) }, 500);
@@ -225,7 +239,7 @@ async function flushMerged(env, entry) {
   const md = buildMergedMarkdown(entry);
   let result;
   try {
-    result = await sendDingtalk(env, md);
+    result = await sendDingtalk(env, md, entry.atMobiles); // v2.20.0 合并汇总也@需求方
   } catch (e) {
     result = { err: String(e) };
   }
