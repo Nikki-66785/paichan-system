@@ -1,5 +1,7 @@
 /* =====================================================
- * cloud.js — CloudBase 云同步层（排产系统 v2.13.0 → v2.15.1：未登记新账号/匿名默认「读者」+ setPerm 失败自动补建 permissions 集合并给出可操作报错 + 三档角色（读者/需求方/生产计划）+ 权限管理（permissions 集合读写、角色实时下发）+ 登录用户名下发（需求人自动绑定账号）+ 账号面板（自助修改密码/退出切换）+ 角色绑定登录身份（方案A权限分层）+ 状态栏点击弹出账号面板 + 邮箱登录（安全加固方案A）+ 确认弹窗走主应用模态 + 清空/导入云端需求同步 + 操作日志上云 op_logs）
+ * cloud.js — CloudBase 云同步层（排产系统 v2.13.0 → v2.15.1：未登记新账号/匿名默认「读者」+ setPerm 失败自动补建 permissions 集合并给出可操作报错 + 三档角色（读者/需求方/生产计划）+ 权限管理（permissions 集合读写、角色实时下发）+ 登录用户名下发（需求人自动绑定账号）+ 账号面板（自助修改密码/退出切换）+ 角色绑定登录身份（方案A权限分层）+ 状态栏点击弹出账号面板 + 邮箱登录（安全加固方案A）+ 确认弹窗走主应用模态 + 清空/导入云端需求同步 + 操作日志上云 op_logs
+ *   v2.18.5 权限管理补「删除账号」+ 防删当前登录 + getCurEmail
+ *   v2.18.8 watch 路径「需求合并」按云端权威裁剪——修复"A 删了某条后 B 在线仍看到"的删除传播缺失）
  *
  * 作用：让「需求填报」与「排产计划」在多人浏览器之间实时共享。
  *   · requests    集合：需求（每条需求一个文档，多人提交互不覆盖）
@@ -380,16 +382,23 @@
   function applyCloudReqs(cloudReqs, cloudPlan, initial) {
     var localReqs = (hook.getReqs && hook.getReqs()) || [];
 
-    // 需求合并：以本地顺序为基准；云端有 → 用云端版本（云端权威）；云端新增 → 追加末尾；本地独有（离线提交）→ 保留并补传云端
+    // 需求合并：场景二分——
+    //   initial（首次打开页面）：保留本地独有条目（视为上次未推送成功的新增，下方 localOnly.pushReq 补传），云端权威覆盖
+    //   watch（他人删/改/新增的实时推送）：云端权威——云端已删的本地必须移除（v2.18.8 修复"删除后其他在线用户看不到"）
+    // 旧逻辑（v2.18.7 及之前）一视同仁保留 localOnly，导致 A 删了某条后 B 在线仍看到——按统一 latest 语义对"删除"会丢传播
     var cloudById = {}, localById = {};
     cloudReqs.forEach(function (d) { if (d && d.data && d.data.id) cloudById[d.data.id] = d.data; });
     localReqs.forEach(function (r) { localById[r.id] = r; });
-    var merged = localReqs.map(function (r) { return cloudById[r.id] || r; });
+    var merged = initial
+      ? localReqs.map(function (r) { return cloudById[r.id] || r; })
+      : localReqs.filter(function (r) { return cloudById[r.id]; })
+                  .map(function (r) { return cloudById[r.id]; });
     var newIds = [];
     Object.keys(cloudById).forEach(function (id) {
       if (!localById[id]) { merged.push(cloudById[id]); newIds.push(id); }
     });
-    var localOnly = localReqs.filter(function (r) { return !cloudById[r.id]; });
+    // v2.18.8：watch 路径下"本地有云端无"=云端已删，不再补传；只在 initial 时识别为待补传的新增
+    var localOnly = initial ? localReqs.filter(function (r) { return !cloudById[r.id]; }) : [];
 
     if (hook.applyReqs) hook.applyReqs(merged);
     // 共享收尾：保存本地 + 刷新界面 + 首次同步补传（dirty 分支异步确认后也要执行，故提取为函数）
