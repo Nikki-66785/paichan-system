@@ -1,7 +1,9 @@
-// v2.19.1 主通知端点（1h 合并窗）
-// POST /api/notify
+// v2.19.2 主通知端点（1h 合并窗）
+// POST /notify
 // Body: { action, batchId, reqId, project, type, line, start, end, status, batchNo, requesterEmail, requesterName, dueDate, priority, note, ts }
 // Auth: Authorization: Bearer <MAIL_HOOK_SECRET>  ← 用户在 CF Pages Dashboard Secrets 配置
+//
+// v2.19.2 变更：action=new_req 不走合并窗，直接立即发（新需求时效性强）
 //
 // v2.19.1 行为：1h 合并窗（需 CF Pages → Functions → KV bindings 绑定命名空间 MAIL_KV）
 //   - KV 缺失：退回 v2.19.0 行为（立即发，不报错）
@@ -27,6 +29,11 @@ export async function onRequestPost({ request, env }) {
 
   const { action } = body;
   if (!action) return jsonResp({ error: 'missing action' }, 400);
+
+  // v2.19.2：新需求立即发，不进合并窗
+  if (action === 'new_req') {
+    return sendImmediate(env, body);
+  }
 
   // 3. feature detect：MAIL_KV 未配置时退回 v2.19.0 立即发
   if (!env.MAIL_KV) {
@@ -104,6 +111,24 @@ export async function onRequestPost({ request, env }) {
 }
 
 function buildMarkdown(b) {
+  // v2.19.2：新需求专用模板（无批次/排程字段，展示数量/交期/优先级）
+  if (b.action === 'new_req') {
+    const title = `🆕 新需求 · ${b.project || b.reqId}`;
+    const lines = [];
+    lines.push(`## ${title}`);
+    lines.push('');
+    lines.push(`**项目**　${b.project || '-'}`);
+    lines.push(`**类型**　${b.type || '-'}　　**数量**　${b.qty || '-'}`);
+    if (b.dueDate) lines.push(`**交期**　${b.dueDate}`);
+    if (b.priority) lines.push(`**优先级**　${b.priority}`);
+    if (b.requesterName) lines.push(`**需求人**　${b.requesterName}`);
+    if (b.note) lines.push(`**备注**　${b.note}`);
+    lines.push('');
+    const ts = b.ts ? new Date(b.ts).toLocaleString('zh-CN', { hour12: false }) : new Date().toLocaleString('zh-CN', { hour12: false });
+    lines.push(`> 触发时间：${ts} · 来自临床生产智能排产系统 v2.19.2`);
+    return { title, text: lines.join('\n') };
+  }
+
   const actionName = {
     lock: '🔒 排产锁定',
     edit: '✏️ 人工调整',
@@ -126,7 +151,7 @@ function buildMarkdown(b) {
   if (b.note) lines.push(`**备注**　${b.note}`);
   lines.push('');
   const ts = b.ts ? new Date(b.ts).toLocaleString('zh-CN', { hour12: false }) : new Date().toLocaleString('zh-CN', { hour12: false });
-  lines.push(`> 触发时间：${ts} · 来自临床生产智能排产系统 v2.19.1`);
+  lines.push(`> 触发时间：${ts} · 来自临床生产智能排产系统 v2.19.2`);
 
   return { title, text: lines.join('\n') };
 }
@@ -239,6 +264,6 @@ function buildMergedMarkdown(entry) {
   lines.push('');
   const wStart = new Date(entry.windowStart).toLocaleString('zh-CN', { hour12: false });
   const wEnd = new Date(entry.lastUpdate).toLocaleString('zh-CN', { hour12: false });
-  lines.push(`> 窗口：${wStart} → ${wEnd} · 来自临床生产智能排产系统 v2.19.1`);
+  lines.push(`> 窗口：${wStart} → ${wEnd} · 来自临床生产智能排产系统 v2.19.2`);
   return { title, text: lines.join('\n') };
 }
