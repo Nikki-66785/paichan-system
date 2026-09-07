@@ -3,6 +3,11 @@
 // Body: { action, batchId, reqId, project, type, line, start, end, status, batchNo, requesterEmail, requesterName, reqEmail, dueDate, priority, note, atMobiles, ts }
 // Auth: Authorization: Bearer <MAIL_HOOK_SECRET>  ← 用户在 CF Pages Dashboard Secrets 配置
 //
+// v2.20.1 修复浏览器直连：加 CORS 头 + onRequestOptions 预检 + Origin 白名单鉴权
+//   （v2.19.0 起前端 mail.js 跨域直连本端点，但 ①未带 Bearer→401 ②OPTIONS 预检 405，
+//    浏览器触发的通知从未通过；冒烟脚本带 Bearer 直连掩盖了该问题）
+//   鉴权：Bearer <MAIL_HOOK_SECRET>（脚本路径）或 Origin ∈ 白名单（浏览器路径）二选一
+//
 // v2.20.0 变更：不再@全员，改@需求方本人——payload 带 atMobiles（前端 CloudBase queryUser 查的手机号）时
 //   at:{atMobiles,isAtAll:false}，卡片末尾追加 @手机号 文本（钉钉高亮要求）；无 atMobiles → 不@，消息照发。
 //   KV entry 存 atMobiles 供 flush 合并汇总时 @。旧 @全员开关（AT_ALL env）不再生效。
@@ -20,11 +25,32 @@
 // 前端配套：mail.js 在首次埋点时 setTimeout 1h → POST /api/notify-flush
 // flush 端点详见 functions/notify-flush.js
 
+// v2.20.1：跨域支持——允许前端（GitHub Pages）直连
+const ALLOWED_ORIGINS = ['https://nikki-66785.github.io'];
+
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+  };
+}
+
+export function onRequestOptions() {
+  return new Response(null, { status: 204, headers: corsHeaders() });
+}
+
+// v2.20.1：Bearer（脚本）或 Origin 白名单（浏览器）任一通过即放行
+function isAuthed(request, env) {
+  const auth = request.headers.get('Authorization') || '';
+  if (env.MAIL_HOOK_SECRET && auth === 'Bearer ' + env.MAIL_HOOK_SECRET) return true;
+  const origin = request.headers.get('Origin') || '';
+  return ALLOWED_ORIGINS.indexOf(origin) !== -1;
+}
+
 export async function onRequestPost({ request, env }) {
   // 1. auth
-  const auth = request.headers.get('Authorization') || '';
-  const expected = 'Bearer ' + (env.MAIL_HOOK_SECRET || '');
-  if (!env.MAIL_HOOK_SECRET || auth !== expected) {
+  if (!isAuthed(request, env)) {
     return jsonResp({ error: 'unauthorized' }, 401);
   }
 
@@ -217,7 +243,7 @@ async function sendDingtalk(env, md, atMobiles) {
 function jsonResp(obj, status) {
   return new Response(JSON.stringify(obj), {
     status: status || 200,
-    headers: { 'Content-Type': 'application/json' }
+    headers: Object.assign({ 'Content-Type': 'application/json' }, corsHeaders())
   });
 }
 
