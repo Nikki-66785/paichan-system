@@ -1,6 +1,10 @@
 // v2.20.0 钉钉通知模块（前端埋点层 + 1h 合并窗调度器 + @需求方）
 // 用法：await mail.notify(action, payloadObj)
 //
+// v2.20.2 变更：新需求（new_req）固定@生产计划手机号（用户在钉钉指定的规则：18918901089），
+//   不再动态查需求方手机号（queryUser 查询不可靠/可能被隐私策略拦截导致不@）。
+//   其余动作（lock/edit/final/delete 合并窗）维持 v2.20.0：按 reqEmail 动态查需求方手机号，查不到不@。
+//
 // v2.20.0 变更：不再@全员，改@需求方本人——通知前用 CloudSync.queryPhoneByEmail（CloudBase queryUser）
 //   查需求方手机号（需求记录 reqEmail 字段；新需求=提交者当前登录邮箱），payload 带 atMobiles；
 //   查不到（历史需求无 reqEmail / CloudBase 未录手机号 / queryUser 被拦截）→ 不@，消息照发群
@@ -20,10 +24,11 @@
 //   edit     → saveEdit() 普通分支                   — 「人工调整」通知
 //   final    → saveEdit() 终态分支                   — 「批次终态」通知
 //   delete   → delBatch / delBatchDirect / delBatchesSelected — 「删除批次」通知
-//   new_req  → addReq()                              — 「新需求」通知（v2.19.2 起不走合并窗、立即发）
+//   new_req  → addReq()                              — 「新需求」通知（v2.19.2 起不走合并窗、立即发；v2.20.2 起固定@生产计划）
 //   hist     → btnReimportHist 点击                  — 「历史计划已导入」摘要（不走合并窗，走 /notify-hist）
 //
-// 收件人：消息均发到钉钉群（同群内包含生产计划组 + 需求方）；v2.20.0 起按手机号@需求方本人（不再@全员）
+// 收件人：消息均发到钉钉群（同群内包含生产计划组 + 需求方）；
+//   v2.20.0 起新需求等按手机号@需求方本人（不再@全员）；v2.20.2 起新需求固定@生产计划手机号
 //
 // 失败兜底：若 mail.js 抛错，仅 console.warn，不影响页面写操作
 
@@ -34,6 +39,7 @@
   var FLUSH_URL = CF_WORKER_BASE + '/notify-flush';
   var FLUSH_MS = 60 * 60 * 1000; // 1h
   var STORAGE_KEY = 'pcn_pending_flushes';
+  var PROD_PLAN_PHONES = ['18918901089']; // v2.20.2：生产计划手机号（新需求固定@），用户钉钉指定
   var pendingFlushes = {}; // batchId -> expiryTs
   var schedulerReady = false;
 
@@ -120,7 +126,10 @@
     var data;
     if(action === 'new_req'){
       // v2.19.2：新需求立即发，不进合并窗（后端 notify.js 对 new_req 直接走 sendImmediate）
+      // v2.20.2：新需求固定@生产计划（手机号 18918901089），不再动态查需求方手机号（用户指定规则）
       data = buildReqPayload(payloadObj);
+      data.atMobiles = PROD_PLAN_PHONES;
+      return post(NOTIFY_URL, data);
     } else if(action === 'hist'){
       // v2.20.0：历史导入摘要无特定需求方，不@，直接发
       data = Object.assign({ action:'hist', ts: Date.now() }, payloadObj||{});
@@ -128,12 +137,12 @@
     } else {
       data = buildBatchPayload(action, payloadObj);
       scheduleFlush(data.batchId);
+      // v2.20.0：查到需求方手机号 → payload 带 atMobiles（后端 @ 需求方）；查不到不带（不@）
+      return lookupPhone(data.reqEmail).then(function(phone){
+        if(phone) data.atMobiles = [phone];
+        return post(NOTIFY_URL, data);
+      });
     }
-    // v2.20.0：查到需求方手机号 → payload 带 atMobiles（后端 @ 需求方）；查不到不带（不@）
-    return lookupPhone(data.reqEmail).then(function(phone){
-      if(phone) data.atMobiles = [phone];
-      return post(NOTIFY_URL, data);
-    });
   }
 
   function post(url, body){
