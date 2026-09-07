@@ -3,6 +3,9 @@
 // Body: { batchId }
 // Auth: Bearer <MAIL_HOOK_SECRET>（脚本）或 Origin ∈ 白名单（浏览器，v2.20.1）
 //
+// v2.20.2 变更：toLocaleString 加 timeZone:'Asia/Shanghai'——CF Workers 默认 UTC，
+//   此前合并汇总卡片的变动时间/窗口显示成 UTC。
+//
 // v2.20.0 变更：合并汇总卡片按 entry.atMobiles @需求方（notify.js 写 KV 时存入；无则不@）
 //
 // v2.19.3 变更：合并汇总卡片改「每行一个字段」+ 去「来源」落款（与新需求卡片格式统一）
@@ -114,13 +117,13 @@ function buildMergedMarkdown(entry) {
   lines.push(`### 📜 变动记录（共 ${entry.events.length} 次，跨越 ${minutes} 分钟）`);
   lines.push('');
   for (const ev of entry.events) {
-    const ts = new Date(ev.ts).toLocaleString('zh-CN', { hour12: false });
+    const ts = new Date(ev.ts).toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' });
     const an = actionName[ev.action] || ev.action;
     lines.push(`- ${an} · ${ts}`);
   }
   lines.push('');
-  const wStart = new Date(entry.windowStart).toLocaleString('zh-CN', { hour12: false });
-  const wEnd = new Date(entry.lastUpdate).toLocaleString('zh-CN', { hour12: false });
+  const wStart = new Date(entry.windowStart).toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' });
+  const wEnd = new Date(entry.lastUpdate).toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' });
   lines.push(`> 窗口：${wStart} → ${wEnd}`);
   return { title, text: lines.join('\n') };
 }
