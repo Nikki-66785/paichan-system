@@ -105,6 +105,8 @@
   .ref-editing input{background:#fffbeb}
   .pri{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700}
   .pri.high{background:#fee2e2;color:#b91c1c}.pri.mid{background:#fef3c7;color:#92400e}.pri.low{background:#dcfce7;color:#166534}
+  .pri.p1{background:#fee2e2;color:#b91c1c}.pri.p2{background:#ffedd5;color:#c2410c}.pri.p3{background:#fef3c7;color:#92400e}.pri.p4{background:#dcfce7;color:#166534}.pri.p5{background:#e5e7eb;color:#4b5563}
+  select[data-prip]{border:1px solid #d1d5db;border-radius:10px;font-weight:700;cursor:pointer}
   .st{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700}
   .st.lock{background:#e2e8f0;color:#334155}.st.auto{background:#dbeafe;color:#1d4ed8}.st.warn{background:#fef3c7;color:#b45309;border:1px solid var(--warn-line)}.st.manual{background:#ede9fe;color:#6d28d9}
   .st.dead{background:#ffedd5;color:#c2410c;border:1px solid #fdba74}.st.fail{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5}.st.cancel{background:#e2e8f0;color:#64748b;border:1px solid #cbd5e1}
@@ -205,7 +207,7 @@
 <body class="role-requester">
 
 <header>
-  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.20.6（2026-09-07：产能分析/上限口径调整——冻干放大测试与 APS 不再作为独立 capKey，改为按 batch.line 归入对应产线（SJ2 ADC DP→ADC DP、C7CM DP→CM DP·C7、SJ2CM DP→CM DP·SJ2），规则参数上限配置收敛为 10 行）。v2.20.5（2026-09-07：新增「各生产类型上限批次数」+「产能情况」分析——规则参数面板可按 capKey（CB/Mab/Mab DS：SJ1/Mab DS：SJ2/ADC DS/ADC DP/CM DP·C7/CM DP·SJ2/参比品/EQP）填写上限批次数，留空=无上限；排产分析面板新增按年份或自定义起止的产能情况表，显示已用/剩余/利用率，超额行整行变红，CB 行=MCB+WCB 之和，EQP 行=设备维护+设备验证+贴签包装+包装 之和）。v2.20.4（2026-09-07：需求录入表单两日期字段与筛选框改为上下堆叠布局，不再并排一行；结构拆为独立 .form-row / .toolbar 纵向排列，元素 ID 全部保留）。v2.20.2（2026-09-07：钉钉新需求固定@生产计划手机号 18918901089，不再动态查需求方；触发时间/窗口改为北京时区显示（此前显示成 UTC）。v2.20.0（2026-09-04：钉钉通知@需求方——不再@全员，通知按 CloudBase 账号手机号精确提醒需求方本人；需求记录新增 reqEmail 字段，查不到手机号时不@（消息照发）。v2.19.2（2026-09-04：新需求提交改为立即推送钉钉——不再走 1h 合并窗，生产计划可第一时间看到新需求；锁定/调整/删除/终态仍走合并窗）。v2.19.1（2026-09-04：钉钉群通知新增 1h 合并窗——同批次 1h 内多次变动合并成一封汇总消息推群；前端 setTimeout 调度 + localStorage 持久化兜底；需 Cloudflare Pages Functions KV bindings 绑定 MAIL_KV，未绑定时退回 v2.19.0 立即发）。v2.19.0：钉钉群机器人通知——生产计划锁定/人工调整/删除/终态四种批次变动，以及新需求提交与历史计划导入摘要，均自动推送到钉钉「排产通知群」；按埋点立即发送。v2.18.8：修复 watch 路径下需求删除不传播给其他在线用户的问题——云端权威裁剪后 A 删的某条 B 也能立即看到；明确生产计划可删任意需求/批次、需求方仅可删自己录入的需求，两者均不互相影响账号登录态与角色分配。v2.18.7：顶栏新增「📖 使用手册」按钮，所有角色可见，点击新窗口打开 help.html；v2.18.6：APS 排产提醒移至需求录入页末尾——避免顶部 banner 与交期/新需求提醒互相挤压；v2.18.5：权限管理可删除账号——移除角色分配后该账号恢复为「读者」仅预览，白名单管理员与当前登录账号不可删除。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.20.6</span></h1>
+  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.20.8（2026-09-07：项目优先级智能排产——生产计划可在需求表格优先级列按项目设定 P1–P5 五档优先级（行内下拉，同项目全部需求联动，云端 plan_state 同步全员可见，需求方仍不可自填）；自动排产排序键升级为「优先级→交期→提交时间」（交期早先排，无交期排最后）；旧值兼容映射 高→P2/中→P3/低→P4；导出优先级列输出生效值。v2.20.7（2026-09-07：产能情况表备注列补全——ADC DP / CM DP·C7 / CM DP·SJ2 三行均标注 batch.line 归并规则，并注明冻干放大测试/APS 按此线归入；上限配置与产能分析收敛为 10 行口径）。v2.20.6（2026-09-07：产能分析/上限口径调整——冻干放大测试与 APS 不再作为独立 capKey，改为按 batch.line 归入对应产线（SJ2 ADC DP→ADC DP、C7CM DP→CM DP·C7、SJ2CM DP→CM DP·SJ2），规则参数上限配置收敛为 10 行）。v2.20.5（2026-09-07：新增「各生产类型上限批次数」+「产能情况」分析——规则参数面板可按 capKey（CB/Mab/Mab DS：SJ1/Mab DS：SJ2/ADC DS/ADC DP/CM DP·C7/CM DP·SJ2/参比品/EQP）填写上限批次数，留空=无上限；排产分析面板新增按年份或自定义起止的产能情况表，显示已用/剩余/利用率，超额行整行变红，CB 行=MCB+WCB 之和，EQP 行=设备维护+设备验证+贴签包装+包装 之和）。v2.20.4（2026-09-07：需求录入表单两日期字段与筛选框改为上下堆叠布局，不再并排一行；结构拆为独立 .form-row / .toolbar 纵向排列，元素 ID 全部保留）。v2.20.2（2026-09-07：钉钉新需求固定@生产计划手机号 18918901089，不再动态查需求方；触发时间/窗口改为北京时区显示（此前显示成 UTC）。v2.20.0（2026-09-04：钉钉通知@需求方——不再@全员，通知按 CloudBase 账号手机号精确提醒需求方本人；需求记录新增 reqEmail 字段，查不到手机号时不@（消息照发）。v2.19.2（2026-09-04：新需求提交改为立即推送钉钉——不再走 1h 合并窗，生产计划可第一时间看到新需求；锁定/调整/删除/终态仍走合并窗）。v2.19.1（2026-09-04：钉钉群通知新增 1h 合并窗——同批次 1h 内多次变动合并成一封汇总消息推群；前端 setTimeout 调度 + localStorage 持久化兜底；需 Cloudflare Pages Functions KV bindings 绑定 MAIL_KV，未绑定时退回 v2.19.0 立即发）。v2.19.0：钉钉群机器人通知——生产计划锁定/人工调整/删除/终态四种批次变动，以及新需求提交与历史计划导入摘要，均自动推送到钉钉「排产通知群」；按埋点立即发送。v2.18.8：修复 watch 路径下需求删除不传播给其他在线用户的问题——云端权威裁剪后 A 删的某条 B 也能立即看到；明确生产计划可删任意需求/批次、需求方仅可删自己录入的需求，两者均不互相影响账号登录态与角色分配。v2.18.7：顶栏新增「📖 使用手册」按钮，所有角色可见，点击新窗口打开 help.html；v2.18.6：APS 排产提醒移至需求录入页末尾——避免顶部 banner 与交期/新需求提醒互相挤压；v2.18.5：权限管理可删除账号——移除角色分配后该账号恢复为「读者」仅预览，白名单管理员与当前登录账号不可删除。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.20.8</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -779,7 +781,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.20.6（冻干放大测试/APS 按 batch.line 归入产线；新需求固定@生产计划手机号，触发时间按北京时区显示；各生产类型上限批次数+产能分析新增；批次变动合并窗不变·cloud.js?v=2200·mail.js?v=2202）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.20.8（项目优先级智能排产：生产计划按项目设 P1–P5，自动排产按优先级→交期→提交时间排序；产能情况表备注补全：ADC DP/CM DP·C7/CM DP·SJ2 标注 batch.line 归并+冻干/APS 归入；冻干放大测试/APS 按 batch.line 归产线；新需求固定@生产计划手机号，触发时间按北京时区显示；各生产类型上限批次数+产能分析新增；批次变动合并窗不变·cloud.js?v=2200·mail.js?v=2202·scheduling.js?v=2208）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -848,7 +850,7 @@
 <script src="cloudbase.full.js?v=2152"></script>
 <script src="cloud.js?v=2200"></script>
 <script src="mail.js?v=2202"></script><!-- 钉钉通知模块（前端埋点层 + 1h 合并窗调度器） -->
-<script src="scheduling.js?v=2183"></script>
+<script src="scheduling.js?v=2208"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -1270,6 +1272,31 @@
   }
   // v2.20.0：需求人→登录邮箱（钉钉@需求方用）。仅当需求人=当前登录账号（自动绑定）时可定位；
   // 手填他人姓名/匿名登录时返回空串（通知查不到手机号→不@，消息照发）
+  // ---------- v2.20.8：项目优先级（P1 最高 – P5 最低，生产计划设定）----------
+  // 旧值映射：高→P2 / 中→P3 / 低→P4（保留相对意图）；未设项目的需求默认 P3
+  var PRI_LEVELS = ['P1','P2','P3','P4','P5'];
+  var PRI_LEGACY = { '高':'P2', '中':'P3', '低':'P4' };
+  // 生效优先级：项目优先级（生产计划设定）> 需求自身旧值映射 > 默认 P3
+  function effPriority(r){
+    var pp = state.projectPriority || {};
+    var proj = (r && (r.henliusProject || r.atProject)) || '';
+    if(proj && pp[proj]) return pp[proj];
+    var p = (r && r.priority) || '';
+    if(PRI_LEGACY[p]) return PRI_LEGACY[p];
+    if(PRI_LEVELS.indexOf(p) >= 0) return p;
+    return 'P3';
+  }
+  function priCls(v){ return 'p' + String(v||'P3').charAt(1); }
+  // planner 在需求表格行内设置项目优先级（同项目全部需求联动；云端 plan_state 同步全员可见）
+  function setProjectPriority(proj, val){
+    if(!proj){ toast('该需求无项目号，无法设置项目优先级'); return; }
+    if(!isPlanner()){ toast('仅「生产计划」角色可设置项目优先级'); renderReq(); return; }
+    if(PRI_LEVELS.indexOf(val) < 0) return;
+    if(!state.projectPriority) state.projectPriority = {};
+    state.projectPriority[proj] = val;
+    save(); renderReq();
+    toast('项目 '+proj+' 优先级已设为 '+val+'（该项目全部需求生效），重新「自动排产」后排序生效');
+  }
   function reqEmailOf(requesterName){
     try{
       var em = (window.CloudSync && window.CloudSync.getCurEmail) ? (window.CloudSync.getCurEmail()||'') : '';
@@ -1638,6 +1665,7 @@
       var remain = (parseInt(r.batchCount,10)||1) - lockedFormal;
       if(remain<=0) return;
       var nr = Object.assign({}, r);
+      nr.priority = effPriority(r); // v2.20.8：项目优先级（P1–P5）合并后再进入排产引擎
       nr.batchCount = remain;
       reqs2.push(nr);
     });
@@ -2041,13 +2069,18 @@
       var doneChk = isPlanner()
         ? '<input type="checkbox" class="done-chk" data-id="'+r.id+'"'+(!!_doneSel[r.id]?' checked':'')+' title="'+(st==='已完成'?'已完成——勾选删除仅删需求记录（排产批次保留）':'勾选删除将连同其排产批次一并删除')+'">'
         : '';
+      var _pri = effPriority(r), _proj = r.henliusProject || r.atProject || '';
+      var priCell = (isPlanner() && _proj)
+        ? '<select data-prip="'+esc(_proj)+'" data-rid="'+r.id+'" title="设置项目优先级（P1 最高 – P5 最低），对该项目全部需求生效；重新「自动排产」后排序生效">'+
+          PRI_LEVELS.map(function(p){ return '<option value="'+p+'"'+(p===_pri?' selected':'')+'>'+p+'</option>'; }).join('')+'</select>'
+        : '<span class="pri '+priCls(_pri)+'">'+_pri+'</span>';
       tr.innerHTML = '<td class="done-col" style="text-align:center">'+doneChk+'</td>'+
-        '<td title="'+esc(tip)+'"><b>'+esc(isEQP ? (r.maintKind||'设备维护') : (r.henliusProject||r.atProject||'-'))+'</b></td>'+
+        '<td title="'+esc(tip)+'"><b>'+esc(isEQP ? (r.maintKind||'设备维护') : (_proj||'-'))+'</b></td>'+
         '<td>'+esc(typeTxt)+'</td>'+
         '<td>'+r.batchCount+' 批</td>'+
         '<td>'+esc(r.dueDate || (r.apsMonth ? r.apsMonth+'（计划月）' : '-'))+'</td>'+
         '<td>'+esc(kindTxt||'-')+'</td>'+
-        '<td><span class="pri '+(r.priority==='高'?'high':r.priority==='低'?'low':'mid')+'">'+esc(r.priority)+'</span></td>'+
+        '<td>'+priCell+'</td>'+
         '<td>'+esc(r.requester||'-')+'</td>'+
         '<td>'+esc((r.createdAt||'').slice(0,10))+'</td>'+
         '<td><span class="badge '+stBadge+'">'+st+'</span></td>'+
@@ -2981,7 +3014,7 @@
 
   // ---------- 规则参数页 ----------
   // v2.20.5：产能上限 capKey 配置与归一函数
-  // 12 个 capKey：CB(合并 MCB+WCB)/Mab/Mab DS:SJ1/Mab DS:SJ2/ADC DS/ADC DP/CM DP·C7/CM DP·SJ2/冻干放大测试/APS/参比品/EQP
+  // 10 个 capKey：CB(合并 MCB+WCB)/Mab/Mab DS:SJ1/Mab DS:SJ2/ADC DS/ADC DP/CM DP·C7/CM DP·SJ2/参比品/EQP
   // EQP 行合并 4 类（设备维护/设备验证/贴签包装/包装）；CB 行合并 2 类（MCB+WCB）
   var CAP_KEYS = [
     { key:'CB',          label:'CB 细胞库',  product:'CB',     line:'SJ2 CB',         note:'MCB + WCB 之和' },
@@ -2989,9 +3022,9 @@
     { key:'Mab DS：SJ1', label:'Mab DS：SJ1', product:'Mab',    line:'SJ1DS',          note:'' },
     { key:'Mab DS：SJ2', label:'Mab DS：SJ2', product:'Mab',    line:'SJ2DS',          note:'' },
     { key:'ADC DS',      label:'ADC DS',      product:'ADC DS', line:'SJ2 ADC DS',     note:'' },
-    { key:'ADC DP',      label:'ADC DP',      product:'ADC DP', line:'SJ2 ADC DP',     note:'' },
-    { key:'CM DP·C7',    label:'CM DP·C7',    product:'DP',     line:'C7CM DP',        note:'b.line=C7CM DP 或 batch.type=CM DP 默认归此' },
-    { key:'CM DP·SJ2',   label:'CM DP·SJ2',   product:'DP',     line:'SJ2CM DP',       note:'batch.line=SJ2CM DP 时' },
+    { key:'ADC DP',      label:'ADC DP',      product:'ADC DP', line:'SJ2 ADC DP',     note:'b.line=SJ2 ADC DP 时（含冻干放大测试/APS 按此线归入）' },
+    { key:'CM DP·C7',    label:'CM DP·C7',    product:'DP',     line:'C7CM DP',        note:'b.line=C7CM DP 或 batch.type=CM DP 默认归此（冻干放大测试/APS 按此线归入）' },
+    { key:'CM DP·SJ2',   label:'CM DP·SJ2',   product:'DP',     line:'SJ2CM DP',       note:'batch.line=SJ2CM DP 时（冻干放大测试/APS 按此线归入）' },
     { key:'参比品',      label:'参比品',      product:'EQP',    line:'（按 batch.line）', note:'' },
     { key:'EQP',         label:'EQP',         product:'EQP',    line:'（按 batch.line）', note:'设备维护+设备验证+贴签包装+包装 之和' }
   ];
@@ -3323,7 +3356,7 @@
     // v2.18.3：导出信息工作表（版本/时间/角色/当前筛选条件），便于追溯导出版本与时间范围
     var ui = currentUiFilters();
     var info = [['项','值'],
-      ['系统版本','v2.20.6'],
+      ['系统版本','v2.20.8'],
       ['导出时间', new Date().toISOString()],
       ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
       ['需求列表-时间列', ui.reqFiltField==='createdAt'?'提交时间':'交期'],
@@ -3408,7 +3441,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.20.6'],
+          ['系统版本','v2.20.8'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['筛选条件摘要', formatFiltInfo(ui)]];
@@ -3512,7 +3545,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.20.6'],
+          ['系统版本','v2.20.8'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['批次明细-时间列', ui.filtTField],
@@ -3539,7 +3572,7 @@
           isEQP ? (r.maintKind||'设备维护') : (r.henliusProject||r.atProject||''),
           typeTxt, isEQP ? (r.maintKind||'-') : (r.batchKind||(r.gmp?'GMP生产':'Non-GMP')), r.batchCount,
           isEQP ? (r.maintStart+'~'+r.maintEnd) : (r.dueDate||''),
-          r.priority||'', r.requester||'', reqStatus(r),
+          effPriority(r), r.requester||'', reqStatus(r),
           isEQP ? (r.maintLine||'') : (r.spec||''),
           r.stage||'', r.budget||'', r.firstProduction?'是':'否',
           r.molType||'', r.target||'', r.novelty||'', r.mabSubtype||'', r.hostCell||'',
@@ -3551,7 +3584,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.20.6'],
+          ['系统版本','v2.20.8'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['需求列表-时间列', ui.reqFiltField==='createdAt'?'提交时间':'交期'],
@@ -3656,6 +3689,12 @@
         if(rr) toast('该需求由「'+(rr.requester||'-')+'」提交。删除方法：用该需求人的账号登录（需求人自动绑定登录账号），或切换到「🏭 生产计划」角色后可删除任意需求');
       }
       else delReq(btn.dataset.id);
+    });
+    // v2.20.8：planner 行内下拉设置项目优先级（P1–P5）
+    $('reqTable').addEventListener('change', function(ev){
+      var sel = ev.target && ev.target.closest ? ev.target.closest('select[data-prip]') : null;
+      if(!sel) return;
+      setProjectPriority(sel.getAttribute('data-prip'), sel.value);
     });
     $('btnSchedule').addEventListener('click', doSchedule);
     $('btnClearPlan').addEventListener('click', clearPlan);
@@ -4012,7 +4051,7 @@
         setUser: onCloudUser, // v2.14.0：登录用户名下发（需求人自动绑定登录账号）
         getReqs: function(){ return state.requirements; },
         uiConfirm: uiConfirm, // v2.11.0 ⑱：cloud.js 冲突检测/新鲜度弹窗走主应用自定义模态
-        getPlan: function(){ return { batches: state.batches, rules: state.rules, refData: state.refData, ganttAxis: state.ganttAxis, ganttLines: state.ganttLines, ganttRange: state.ganttRange, trendRange: state.trendRange, trendLink: !!state.trendLink, snapshots: state.snapshots }; },
+        getPlan: function(){ return { batches: state.batches, rules: state.rules, refData: state.refData, ganttAxis: state.ganttAxis, ganttLines: state.ganttLines, ganttRange: state.ganttRange, trendRange: state.trendRange, trendLink: !!state.trendLink, snapshots: state.snapshots, projectPriority: state.projectPriority || {} }; },
         applyReqs: function(reqs){ _echoSave = true; state.requirements = reqs; },
         onRemoteReqs: function(n){ showNewReqBanner(n); },
         // v2.10.0 本地新鲜度：本地修改是否尚未成功上云（推送失败/节流窗口内刷新）
@@ -4031,6 +4070,7 @@
           if(p.trendRange) state.trendRange = p.trendRange;
           if(p.trendLink != null) state.trendLink = !!p.trendLink;
           if(p.snapshots) state.snapshots = p.snapshots;
+          if(p.projectPriority) state.projectPriority = p.projectPriority; // v2.20.8：项目优先级云端同步
         },
         // 远端数据应用后刷新界面：若用户正在表单输入，暂缓重绘到 blur，避免清掉正在编辑的内容（v2.10.0）
         afterSync: function(){ save(); renderRules(); safeRenderAll(); _echoSave = false; }
