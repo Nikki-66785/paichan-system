@@ -3,6 +3,12 @@
 // Body: { action, batchId, reqId, project, type, line, start, end, status, batchNo, requesterEmail, requesterName, reqEmail, dueDate, priority, note, atMobiles, ts }
 // Auth: Authorization: Bearer <MAIL_HOOK_SECRET>  ← 用户在 CF Pages Dashboard Secrets 配置
 //
+// v2.20.3 变更：new_req 后端兜底强制@生产计划（手机号 18918901089）——用户的刚性规则。
+//   原因：@逻辑原在 mail.js 前端（new_req 注入 atMobiles），但浏览器若缓存旧版 mail.js（?v=2200，
+//   走 lookupPhone 动态查需求方手机号，查不到即不带 atMobiles），提交的新需求卡片就不会@。
+//   现在后端在 action==='new_req' 时无条件覆盖 body.atMobiles=['18918901089']，保证必定@生产计划，
+//   与前端版本无关（前端新版注入同样的值，无冲突）。
+//
 // v2.20.2 变更：所有 toLocaleString 加 timeZone:'Asia/Shanghai'——CF Workers 默认 UTC，
 //   此前触发时间/窗口显示成 UTC（如北京时间 09:08 显示成 01:08）。
 //
@@ -67,6 +73,9 @@ export async function onRequestPost({ request, env }) {
 
   // v2.19.2：新需求立即发，不进合并窗
   if (action === 'new_req') {
+    // v2.20.3：后端兜底强制@生产计划——即使前端 mail.js 因缓存跑旧版（lookupPhone 查不到手机号未带
+    //   atMobiles），也保证新需求卡片必定@生产计划（用户的刚性规则）。
+    body.atMobiles = ['18918901089'];
     return sendImmediate(env, body);
   }
 
