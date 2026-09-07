@@ -25,6 +25,8 @@
  *         v2.18.0 起 APS 需求随单携带项目阶段/条件放行/剂型并透传到批次
  *   - 排产方向：正排优先（最早可开工），正排找不到槽位时按交期倒排
  *         兜底；最早可排完成日晚于交期时标预警（此时已无满足交期的槽位）
+ * v2.20.8：需求排序键升级——优先级 P1–P5（旧值 高→P2/中→P3/低→P4）
+ *         → 交期早先排（无交期排最后）→ 提交时间
  * ========================================================= */
 (function (root) {
   'use strict';
@@ -300,11 +302,15 @@
     // 批次 id 从 startSeq 起递增（UI 传入当前最大 NB 编号+1，避免跨次排产 id 冲突）
     ctx.seq = startSeq || 1;
     var out = [];
-    var pr = { 高: 0, 中: 1, 低: 2 };
+    // v2.20.8：优先级 P1–P5（旧值 高→P2/中→P3/低→P4，未识别默认 P3）
+    // 排序：优先级 → 交期（早的先排，无交期排最后 9999）→ 提交时间
+    var pr = { 'P1': 0, 'P2': 1, 'P3': 2, 'P4': 3, 'P5': 4, '高': 1, '中': 2, '低': 3 };
     var sorted = (reqs || []).slice().sort(function (a, b) {
-      var pa = pr[a.priority] != null ? pr[a.priority] : 1;
-      var pb = pr[b.priority] != null ? pr[b.priority] : 1;
+      var pa = pr[a.priority] != null ? pr[a.priority] : 2;
+      var pb = pr[b.priority] != null ? pr[b.priority] : 2;
       if (pa !== pb) return pa - pb;
+      var da = a.dueDate || '9999-12-31', db = b.dueDate || '9999-12-31';
+      if (da !== db) return da < db ? -1 : 1;
       return String(a.createdAt || '') < String(b.createdAt || '') ? -1 : 1;
     });
 
