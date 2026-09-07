@@ -1,7 +1,7 @@
 // v2.19.3 合并窗 flush 端点
 // POST /notify-flush
 // Body: { batchId }
-// Auth: Authorization: Bearer <MAIL_HOOK_SECRET>
+// Auth: Bearer <MAIL_HOOK_SECRET>（脚本）或 Origin ∈ 白名单（浏览器，v2.20.1）
 //
 // v2.20.0 变更：合并汇总卡片按 entry.atMobiles @需求方（notify.js 写 KV 时存入；无则不@）
 //
@@ -20,11 +20,31 @@
 //   - delete 不存在的 key 不会报错
 //   - 多 tab / 重复 flush 安全
 
+// v2.20.1：跨域支持——允许前端（GitHub Pages）直连（修复浏览器 flush 401/预检 405）
+const ALLOWED_ORIGINS = ['https://nikki-66785.github.io'];
+
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+  };
+}
+
+export function onRequestOptions() {
+  return new Response(null, { status: 204, headers: corsHeaders() });
+}
+
+function isAuthed(request, env) {
+  const auth = request.headers.get('Authorization') || '';
+  if (env.MAIL_HOOK_SECRET && auth === 'Bearer ' + env.MAIL_HOOK_SECRET) return true;
+  const origin = request.headers.get('Origin') || '';
+  return ALLOWED_ORIGINS.indexOf(origin) !== -1;
+}
+
 export async function onRequestPost({ request, env }) {
   // 1. auth
-  const auth = request.headers.get('Authorization') || '';
-  const expected = 'Bearer ' + (env.MAIL_HOOK_SECRET || '');
-  if (!env.MAIL_HOOK_SECRET || auth !== expected) {
+  if (!isAuthed(request, env)) {
     return jsonResp({ error: 'unauthorized' }, 401);
   }
 
@@ -158,6 +178,6 @@ async function sendDingtalk(env, md, atMobiles) {
 function jsonResp(obj, status) {
   return new Response(JSON.stringify(obj), {
     status: status || 200,
-    headers: { 'Content-Type': 'application/json' }
+    headers: Object.assign({ 'Content-Type': 'application/json' }, corsHeaders())
   });
 }
