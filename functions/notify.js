@@ -3,6 +3,9 @@
 // Body: { action, batchId, reqId, project, type, line, start, end, status, batchNo, requesterEmail, requesterName, reqEmail, dueDate, priority, note, atMobiles, ts }
 // Auth: Authorization: Bearer <MAIL_HOOK_SECRET>  ← 用户在 CF Pages Dashboard Secrets 配置
 //
+// v2.20.2 变更：所有 toLocaleString 加 timeZone:'Asia/Shanghai'——CF Workers 默认 UTC，
+//   此前触发时间/窗口显示成 UTC（如北京时间 09:08 显示成 01:08）。
+//
 // v2.20.1 修复浏览器直连：加 CORS 头 + onRequestOptions 预检 + Origin 白名单鉴权
 //   （v2.19.0 起前端 mail.js 跨域直连本端点，但 ①未带 Bearer→401 ②OPTIONS 预检 405，
 //    浏览器触发的通知从未通过；冒烟脚本带 Bearer 直连掩盖了该问题）
@@ -157,7 +160,7 @@ function buildMarkdown(b) {
     if (b.dueDate) lines.push(`- **交期**：${b.dueDate}`);
     if (b.requesterName) lines.push(`- **需求人**：${b.requesterName}`);
     lines.push('');
-    const ts = b.ts ? new Date(b.ts).toLocaleString('zh-CN', { hour12: false }) : new Date().toLocaleString('zh-CN', { hour12: false });
+    const ts = b.ts ? new Date(b.ts).toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' }) : new Date().toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' });
     lines.push(`> 触发时间：${ts}`);
     return { title, text: lines.join('\n') };
   }
@@ -183,7 +186,7 @@ function buildMarkdown(b) {
   if (b.dueDate) lines.push(`- **交期**：${b.dueDate}`);
   if (b.requesterName) lines.push(`- **需求人**：${b.requesterName}`);
   lines.push('');
-  const ts = b.ts ? new Date(b.ts).toLocaleString('zh-CN', { hour12: false }) : new Date().toLocaleString('zh-CN', { hour12: false });
+  const ts = b.ts ? new Date(b.ts).toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' }) : new Date().toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' });
   lines.push(`> 触发时间：${ts}`);
 
   return { title, text: lines.join('\n') };
@@ -299,13 +302,13 @@ function buildMergedMarkdown(entry) {
   lines.push(`### 📜 变动记录（共 ${entry.events.length} 次，跨越 ${minutes} 分钟）`);
   lines.push('');
   for (const ev of entry.events) {
-    const ts = new Date(ev.ts).toLocaleString('zh-CN', { hour12: false });
+    const ts = new Date(ev.ts).toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' });
     const an = actionName[ev.action] || ev.action;
     lines.push(`- ${an} · ${ts}`);
   }
   lines.push('');
-  const wStart = new Date(entry.windowStart).toLocaleString('zh-CN', { hour12: false });
-  const wEnd = new Date(entry.lastUpdate).toLocaleString('zh-CN', { hour12: false });
+  const wStart = new Date(entry.windowStart).toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' });
+  const wEnd = new Date(entry.lastUpdate).toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' });
   lines.push(`> 窗口：${wStart} → ${wEnd}`);
   return { title, text: lines.join('\n') };
 }
