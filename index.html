@@ -327,8 +327,11 @@
           <div class="form-row">
             <div class="f chk"><input type="checkbox" id="f_cond"><label for="f_cond">需要条件放行</label></div>
           </div>
+          <!-- v2.20.4：两个日期字段不再并列，改为上下各占一行（原并排时标签文字重叠过长） -->
           <div class="form-row">
             <div class="f"><label>正式工艺转移完成日期 <span style="color:#dc2626;font-weight:400">（MCB建库必填；Mab/ADC DS/DP首次生产必填）</span>，之后1个月才可投产</label><input id="f_transfer" type="date"></div>
+          </div>
+          <div class="form-row">
             <div class="f" id="dueWrap"><label>期望完成日期（交期）*</label><input id="f_due" type="date"></div>
           </div>
           <div class="form-row" id="mcbDateRow">
@@ -395,29 +398,34 @@
           <span class="hint plan-only">生产计划角色可在本页删除任意需求（每行「删除」按钮）；批次确认与调整在「📅 排产计划」页</span>
         </div>
         <!-- v2.18.0：需求列表筛选（需求人 + 时间）与已完成需求记录清理；v2.18.3：时间筛选支持按「提交时间 / 交期」字段切换 -->
-        <div class="toolbar" style="margin-bottom:8px">
-          <span class="hint">筛选：</span>
-          <label class="hint">需求人 <select id="reqFiltPerson" title="按需求人筛选"><option value="">全部</option></select></label>
-          <label class="hint">时间 <select id="reqFiltField" title="按哪个时间列筛选">
-            <option value="createdAt">提交时间</option>
-            <option value="due">交期</option>
-          </select>
-          <select id="reqFiltTime" title="时间范围">
-            <option value="all">全部</option>
-            <option value="1w">近1周</option>
-            <option value="1m">近1月</option>
-            <option value="3m">近3月</option>
-            <option value="custom">自定义</option>
-          </select></label>
-          <span id="reqFiltDates" style="display:none;align-items:center;gap:4px">
+        <!-- v2.20.4：筛选框不再全部并排一行，改为筛选条件各占一行后再放按钮组 -->
+        <div class="toolbar" style="margin-bottom:8px;flex-direction:column;align-items:stretch">
+          <div class="hint" style="margin-bottom:4px">筛选：</div>
+          <label class="hint" style="display:flex;gap:6px;align-items:center;margin-bottom:6px">需求人 <select id="reqFiltPerson" title="按需求人筛选" style="max-width:220px"><option value="">全部</option></select></label>
+          <label class="hint" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px">时间
+            <select id="reqFiltField" title="按哪个时间列筛选">
+              <option value="createdAt">提交时间</option>
+              <option value="due">交期</option>
+            </select>
+            <select id="reqFiltTime" title="时间范围">
+              <option value="all">全部</option>
+              <option value="1w">近1周</option>
+              <option value="1m">近1月</option>
+              <option value="3m">近3月</option>
+              <option value="custom">自定义</option>
+            </select>
+          </label>
+          <span id="reqFiltDates" style="display:none;align-items:center;gap:4px;margin-bottom:6px">
             <input type="date" id="reqFiltStart" title="起始日期（含）" style="width:130px">
             <span class="hint">~</span>
             <input type="date" id="reqFiltEnd" title="结束日期（含）" style="width:130px">
           </span>
-          <span class="hint" id="reqFiltInfo"></span>
-          <span class="spacer"></span>
-          <button class="btn sm" id="btnCleanDoneReq" title="删除所有批次均已完成的需求数据（仅清理需求记录，「📅 排产计划」中的批次保留不动）">🧹 清理已完成需求记录</button>
-          <button class="btn sm danger plan-only" id="btnDelDoneSelected" title="删除选中的需求（仅生产计划角色）：已完成→仅删需求记录、批次保留；未完成→连同其排产批次一并删除">🗑️ 删除选中（0）</button>
+          <span class="hint" id="reqFiltInfo" style="margin-bottom:6px"></span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:2px">
+            <span class="spacer"></span>
+            <button class="btn sm" id="btnCleanDoneReq" title="删除所有批次均已完成的需求数据（仅清理需求记录，「📅 排产计划」中的批次保留不动）">🧹 清理已完成需求记录</button>
+            <button class="btn sm danger plan-only" id="btnDelDoneSelected" title="删除选中的需求（仅生产计划角色）：已完成→仅删需求记录、批次保留；未完成→连同其排产批次一并删除">🗑️ 删除选中（0）</button>
+          </div>
         </div>
         <div class="req-tbl scroll-tbl">
           <table id="reqTable">
