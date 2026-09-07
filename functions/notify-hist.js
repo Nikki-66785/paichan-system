@@ -2,6 +2,8 @@
 // POST /notify-hist
 // Body: { action:'hist', count, samples:[{batchNo,project,line,start,end}], ts }
 // Auth: Bearer <MAIL_HOOK_SECRET>（脚本）或 Origin ∈ 白名单（浏览器，v2.20.1）
+//
+// v2.20.2 变更：toLocaleString 加 timeZone:'Asia/Shanghai'——CF Workers 默认 UTC，此前触发时间显示成 UTC。
 
 // v2.20.1：跨域支持——允许前端（GitHub Pages）直连（修复浏览器通知 401/预检 405）
 const ALLOWED_ORIGINS = ['https://nikki-66785.github.io'];
@@ -61,7 +63,7 @@ function buildHistMarkdown(b) {
     if (samples.length > 10) lines.push(`… 共 ${count} 条，详情见系统「📅 排产计划」`);
   }
   lines.push('');
-  const ts = b.ts ? new Date(b.ts).toLocaleString('zh-CN', { hour12: false }) : new Date().toLocaleString('zh-CN', { hour12: false });
+  const ts = b.ts ? new Date(b.ts).toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' }) : new Date().toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' });
   lines.push(`> 触发时间：${ts}`);
 
   return { title, text: lines.join('\n') };
