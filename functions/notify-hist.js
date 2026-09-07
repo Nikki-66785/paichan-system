@@ -1,11 +1,32 @@
 // v2.20.0 历史计划导入摘要端点（独立模板 + 不入合并窗 + 不@——无特定需求方）
 // POST /notify-hist
 // Body: { action:'hist', count, samples:[{batchNo,project,line,start,end}], ts }
+// Auth: Bearer <MAIL_HOOK_SECRET>（脚本）或 Origin ∈ 白名单（浏览器，v2.20.1）
+
+// v2.20.1：跨域支持——允许前端（GitHub Pages）直连（修复浏览器通知 401/预检 405）
+const ALLOWED_ORIGINS = ['https://nikki-66785.github.io'];
+
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+  };
+}
+
+export function onRequestOptions() {
+  return new Response(null, { status: 204, headers: corsHeaders() });
+}
+
+function isAuthed(request, env) {
+  const auth = request.headers.get('Authorization') || '';
+  if (env.MAIL_HOOK_SECRET && auth === 'Bearer ' + env.MAIL_HOOK_SECRET) return true;
+  const origin = request.headers.get('Origin') || '';
+  return ALLOWED_ORIGINS.indexOf(origin) !== -1;
+}
 
 export async function onRequestPost({ request, env }) {
-  const auth = request.headers.get('Authorization') || '';
-  const expected = 'Bearer ' + (env.MAIL_HOOK_SECRET || '');
-  if (!env.MAIL_HOOK_SECRET || auth !== expected) {
+  if (!isAuthed(request, env)) {
     return jsonResp({ error: 'unauthorized' }, 401);
   }
 
@@ -88,6 +109,6 @@ async function sendDingtalk(env, md) {
 function jsonResp(obj, status) {
   return new Response(JSON.stringify(obj), {
     status: status || 200,
-    headers: { 'Content-Type': 'application/json' }
+    headers: Object.assign({ 'Content-Type': 'application/json' }, corsHeaders())
   });
 }
