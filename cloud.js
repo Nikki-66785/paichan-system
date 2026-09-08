@@ -567,15 +567,16 @@
   // 因此统一用 upsert：先 update，updated===0（不存在）再 set 创建
   function upsert(coll, id, payload, label) {
     return db.collection(coll).doc(id).update(payload).then(function (res) {
-      if (res && res.code) { console.warn('[cloud] ' + label + '更新被拒：', res.code, res.message || ''); return false; }
+      if (res && res.code) { console.warn('[cloud] ' + label + '更新被拒：', res.code, res.message || ''); return { fail: (res.message || ('code ' + res.code)) }; }
       if (res && res.updated > 0) return true;
       return db.collection(coll).doc(id).set(payload).then(function (r2) {
-        if (r2 && r2.code) { console.warn('[cloud] ' + label + '写入被拒：', r2.code, r2.message || ''); return false; }
+        if (r2 && r2.code) { console.warn('[cloud] ' + label + '写入被拒：', r2.code, r2.message || ''); return { fail: (r2.message || ('code ' + r2.code)) }; }
         return true;
       });
     }).catch(function (e) {
-      console.warn('[cloud] ' + label + '写入失败：', e);
-      return false;
+      var msg = (e && (e.message || e.errMsg)) ? (e.message || e.errMsg) : ('错误对象 ' + Object.prototype.toString.call(e));
+      console.warn('[cloud] ' + label + '写入失败：', msg, e);
+      return { fail: msg };
     });
   }
   function pushReq(r) {
@@ -758,10 +759,11 @@
     } catch (e) { /* 体积测量失败不影响推送 */ }
     // v2.10.0 推送结果回调：成功清除本地脏标记；失败显式告知用户（不再静默吞掉，防止刷新后被云端旧版覆盖）
     upsert(PLAN_COLL, PLAN_ID, { data: p, updatedAt: ts }, '计划').then(function (ok) {
-      if (ok) {
+      if (ok === true) {
         if (hook.clearDirty) hook.clearDirty();
       } else {
-        if (hook.onPushFail) hook.onPushFail();
+        var reason = (ok && ok.fail) ? ok.fail : '';
+        if (hook.onPushFail) hook.onPushFail(reason);
       }
     });
   }
