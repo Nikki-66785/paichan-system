@@ -207,7 +207,7 @@
 <body class="role-requester">
 
 <header>
-  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.20.8（2026-09-07：项目优先级智能排产——生产计划可在需求表格优先级列按项目设定 P1–P5 五档优先级（行内下拉，同项目全部需求联动，云端 plan_state 同步全员可见，需求方仍不可自填）；自动排产排序键升级为「优先级→交期→提交时间」（交期早先排，无交期排最后）；旧值兼容映射 高→P2/中→P3/低→P4；导出优先级列输出生效值。v2.20.7（2026-09-07：产能情况表备注列补全——ADC DP / CM DP·C7 / CM DP·SJ2 三行均标注 batch.line 归并规则，并注明冻干放大测试/APS 按此线归入；上限配置与产能分析收敛为 10 行口径）。v2.20.6（2026-09-07：产能分析/上限口径调整——冻干放大测试与 APS 不再作为独立 capKey，改为按 batch.line 归入对应产线（SJ2 ADC DP→ADC DP、C7CM DP→CM DP·C7、SJ2CM DP→CM DP·SJ2），规则参数上限配置收敛为 10 行）。v2.20.5（2026-09-07：新增「各生产类型上限批次数」+「产能情况」分析——规则参数面板可按 capKey（CB/Mab/Mab DS：SJ1/Mab DS：SJ2/ADC DS/ADC DP/CM DP·C7/CM DP·SJ2/参比品/EQP）填写上限批次数，留空=无上限；排产分析面板新增按年份或自定义起止的产能情况表，显示已用/剩余/利用率，超额行整行变红，CB 行=MCB+WCB 之和，EQP 行=设备维护+设备验证+贴签包装+包装 之和）。v2.20.4（2026-09-07：需求录入表单两日期字段与筛选框改为上下堆叠布局，不再并排一行；结构拆为独立 .form-row / .toolbar 纵向排列，元素 ID 全部保留）。v2.20.2（2026-09-07：钉钉新需求固定@生产计划手机号 18918901089，不再动态查需求方；触发时间/窗口改为北京时区显示（此前显示成 UTC）。v2.20.0（2026-09-04：钉钉通知@需求方——不再@全员，通知按 CloudBase 账号手机号精确提醒需求方本人；需求记录新增 reqEmail 字段，查不到手机号时不@（消息照发）。v2.19.2（2026-09-04：新需求提交改为立即推送钉钉——不再走 1h 合并窗，生产计划可第一时间看到新需求；锁定/调整/删除/终态仍走合并窗）。v2.19.1（2026-09-04：钉钉群通知新增 1h 合并窗——同批次 1h 内多次变动合并成一封汇总消息推群；前端 setTimeout 调度 + localStorage 持久化兜底；需 Cloudflare Pages Functions KV bindings 绑定 MAIL_KV，未绑定时退回 v2.19.0 立即发）。v2.19.0：钉钉群机器人通知——生产计划锁定/人工调整/删除/终态四种批次变动，以及新需求提交与历史计划导入摘要，均自动推送到钉钉「排产通知群」；按埋点立即发送。v2.18.8：修复 watch 路径下需求删除不传播给其他在线用户的问题——云端权威裁剪后 A 删的某条 B 也能立即看到；明确生产计划可删任意需求/批次、需求方仅可删自己录入的需求，两者均不互相影响账号登录态与角色分配。v2.18.7：顶栏新增「📖 使用手册」按钮，所有角色可见，点击新窗口打开 help.html；v2.18.6：APS 排产提醒移至需求录入页末尾——避免顶部 banner 与交期/新需求提醒互相挤压；v2.18.5：权限管理可删除账号——移除角色分配后该账号恢复为「读者」仅预览，白名单管理员与当前登录账号不可删除。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.20.8</span></h1>
+  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.20.9（2026-09-07：修复产能上限 typeCaps 不上云——规则参数里填写的各生产类型上限批次数此前只存本机浏览器（getPlan 未携带 typeCaps），现纳入 plan_state 云端同步（getPlan 返回带 typeCaps、applyPlan 读取），生产计划填写的上限全员可见可共享；同步失败提示升级为透传具体错误码（onPushFail 收到 reason 并拼接展示），便于定位「计划写入失败」根因；取消每次自动排产后自动生成快照——快照来源仅剩定期（每 2 周）与人工两种，历史 auto 快照保留展示）。v2.20.8（2026-09-07：项目优先级智能排产——生产计划可在需求表格优先级列按项目设定 P1–P5 五档优先级（行内下拉，同项目全部需求联动，云端 plan_state 同步全员可见，需求方仍不可自填）；自动排产排序键升级为「优先级→交期→提交时间」（交期早先排，无交期排最后）；旧值兼容映射 高→P2/中→P3/低→P4；导出优先级列输出生效值。v2.20.7（2026-09-07：产能情况表备注列补全——ADC DP / CM DP·C7 / CM DP·SJ2 三行均标注 batch.line 归并规则，并注明冻干放大测试/APS 按此线归入；上限配置与产能分析收敛为 10 行口径）。v2.20.6（2026-09-07：产能分析/上限口径调整——冻干放大测试与 APS 不再作为独立 capKey，改为按 batch.line 归入对应产线（SJ2 ADC DP→ADC DP、C7CM DP→CM DP·C7、SJ2CM DP→CM DP·SJ2），规则参数上限配置收敛为 10 行）。v2.20.5（2026-09-07：新增「各生产类型上限批次数」+「产能情况」分析——规则参数面板可按 capKey（CB/Mab/Mab DS：SJ1/Mab DS：SJ2/ADC DS/ADC DP/CM DP·C7/CM DP·SJ2/参比品/EQP）填写上限批次数，留空=无上限；排产分析面板新增按年份或自定义起止的产能情况表，显示已用/剩余/利用率，超额行整行变红，CB 行=MCB+WCB 之和，EQP 行=设备维护+设备验证+贴签包装+包装 之和）。v2.20.4（2026-09-07：需求录入表单两日期字段与筛选框改为上下堆叠布局，不再并排一行；结构拆为独立 .form-row / .toolbar 纵向排列，元素 ID 全部保留）。v2.20.2（2026-09-07：钉钉新需求固定@生产计划手机号 18918901089，不再动态查需求方；触发时间/窗口改为北京时区显示（此前显示成 UTC）。v2.20.0（2026-09-04：钉钉通知@需求方——不再@全员，通知按 CloudBase 账号手机号精确提醒需求方本人；需求记录新增 reqEmail 字段，查不到手机号时不@（消息照发）。v2.19.2（2026-09-04：新需求提交改为立即推送钉钉——不再走 1h 合并窗，生产计划可第一时间看到新需求；锁定/调整/删除/终态仍走合并窗）。v2.19.1（2026-09-04：钉钉群通知新增 1h 合并窗——同批次 1h 内多次变动合并成一封汇总消息推群；前端 setTimeout 调度 + localStorage 持久化兜底；需 Cloudflare Pages Functions KV bindings 绑定 MAIL_KV，未绑定时退回 v2.19.0 立即发）。v2.19.0：钉钉群机器人通知——生产计划锁定/人工调整/删除/终态四种批次变动，以及新需求提交与历史计划导入摘要，均自动推送到钉钉「排产通知群」；按埋点立即发送。v2.18.8：修复 watch 路径下需求删除不传播给其他在线用户的问题——云端权威裁剪后 A 删的某条 B 也能立即看到；明确生产计划可删任意需求/批次、需求方仅可删自己录入的需求，两者均不互相影响账号登录态与角色分配。v2.18.7：顶栏新增「📖 使用手册」按钮，所有角色可见，点击新窗口打开 help.html；v2.18.6：APS 排产提醒移至需求录入页末尾——避免顶部 banner 与交期/新需求提醒互相挤压；v2.18.5：权限管理可删除账号——移除角色分配后该账号恢复为「读者」仅预览，白名单管理员与当前登录账号不可删除。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.20.9</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -561,7 +561,7 @@
     <div class="card" style="padding:10px 16px">
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <h2 style="margin:0">📈 排产分析</h2>
-        <span class="hint">每次「自动排产」及每 2 周自动记录快照，也可手动保存人工快照，可对比日期漂移与月度批次趋势</span>
+        <span class="hint">每 2 周自动记录快照，也可手动保存人工快照，可对比日期漂移与月度批次趋势</span>
         <span class="spacer" style="flex:1"></span>
         <button class="btn sm plan-only" id="btnManualSnap">📸 保存人工快照</button>
         <input id="manualSnapNote" class="plan-only" placeholder="快照备注（可选，50字内，如：3月排产会议确认版）" title="人工快照备注，点击「保存人工快照」时随快照记录" style="width:230px;padding:4px 10px;border:1px solid rgba(100,116,139,.35);border-radius:8px;font-size:12px;background:rgba(255,255,255,.85);color:#0f172a;outline:none">
@@ -584,7 +584,7 @@
         <button class="btn sm" id="btnDownloadSnap" title="将全部快照导出为 Excel（快照列表 + 批次明细）">⬇ 下载快照</button>
       </div>
       <div class="hint" id="driftUnplanned" style="display:none;background:#fef3c7;color:#92400e;padding:6px 10px;border-radius:8px;margin-bottom:8px"></div>
-      <div class="hint" id="driftHint">快照来源：自动排产（每次排产后）、定期快照（每 2 周自动保存，含人工调整结果）、人工快照（手动保存的关键节点版本）。快照仅记录<b>拍照时间未完成的批次及其后续</b>（已完成的批次不再进入快照，也不计为「取消」）。默认对比最近两次快照，可在上方下拉任选基准与对比版本（含人工快照）。除日期漂移外，对比快照中「新增」的批次（基准无此批次）与「取消」的批次（基准有、对比已移除）也会在表中列出并计入汇总。工具栏「下载快照」可将全部快照导出为 Excel。</div>
+      <div class="hint" id="driftHint">快照来源：定期快照（每 2 周自动保存，含人工调整结果）、人工快照（手动保存的关键节点版本），以及历史自动排产快照（v2.20.9 起排产不再自动生成快照）。快照仅记录<b>拍照时间未完成的批次及其后续</b>（已完成的批次不再进入快照，也不计为「取消」）。默认对比最近两次快照，可在上方下拉任选基准与对比版本（含人工快照）。除日期漂移外，对比快照中「新增」的批次（基准无此批次）与「取消」的批次（基准有、对比已移除）也会在表中列出并计入汇总。工具栏「下载快照」可将全部快照导出为 Excel。</div>
       <div class="scroll-tbl" style="max-height:320px">
         <table class="tbl" id="driftTable">
           <thead><tr><th>类型</th><th>项目</th><th>产线</th><th>上次排产</th><th>本次排产</th><th>漂移(天)</th><th>来源</th><th>状态</th></tr></thead>
@@ -736,7 +736,7 @@
         <p>· <b>批量解锁与刷新自动排产</b>：生产计划可在批次表首列勾选多个锁定批次「批量解锁」；「刷新自动排产」按当前需求重新排产所有未锁定批次（锁定批次与终态批次保持不变）。</p>
         <p>· <b>需求导出</b>：需求列表可一键导出 Excel/CSV（项目、类型、批次类型、交期、状态、规格、阶段、预算、首次生产分子信息等全部填报字段）。</p>
         <p>· <b>甘特图视图</b>：产线支持多选过滤；时间范围（全部/近1月/近3月/近6月/自定义）与时间轴密度（px/天）、刻度单位（月/周/天）可调，设置保存在本地。</p>
-        <p>· <b>排产分析</b>：每次「自动排产」记录快照（自动排产），每 2 周自动记录一次定期快照（含人工调整结果），可分析批次日期漂移、月度批次趋势与准时率；快照按来源分别限额保留：自动排产 15 条 / 定期 10 条 / 人工 5 条。<b>v2.18.0 起快照仅记录拍照时间未完成的批次及其后续</b>（已完成批次不再进入快照，也不计为「取消」）；<b>v2.18.2 起自动备份改为「快照列表 + 快照批次」两张工作表</b>，避开 Excel 单格 32767 字符上限，避免删除/清空快照时备份中止。</p>
+        <p>· <b>排产分析</b>：每 2 周自动记录一次定期快照（含人工调整结果），可手动保存人工快照，可分析批次日期漂移、月度批次趋势与准时率；<b>v2.20.9 起自动排产不再自动生成快照</b>（历史自动排产快照保留展示）；快照按来源分别限额保留：自动排产 10 条 / 定期 5 条 / 人工 4 条（针对历史数据）。<b>v2.18.0 起快照仅记录拍照时间未完成的批次及其后续</b>（已完成批次不再进入快照，也不计为「取消」）；<b>v2.18.2 起自动备份改为「快照列表 + 快照批次」两张工作表</b>，避开 Excel 单格 32767 字符上限，避免删除/清空快照时备份中止。</p>
         <p>· <b>需求列表</b>：支持按需求人筛选；时间筛选可按「提交时间 / 交期」字段切换，范围支持 全部/近1周/近1月/近3月/自定义，筛选后显示「x / y 条」；每行展示「提交时间」列；<b>v2.18.2 起</b>已完成需求（全部批次锁定/终态且完成日期已过）可由生产计划角色多选后一次性删除记录（批次保留在「📅 排产计划」中不受影响）。</p>
         <p>· <b>批次明细筛选</b>：<b>v2.18.3 起</b>在类型 / 产线 / 状态 / 项目搜索之外，可按「开始 / 完成 / 交期」任一时间列 + 范围（全部 / 近1周 / 近1月 / 近3月 / 近6月 / 自定义）筛选批次，各条件叠加生效。</p>
         <p>· <b>读者权限</b>：<b>v2.18.3 起</b>读者在「需求录入」页看到与需求方一致的表单与按钮（含编辑 / 删除 / 自动排产等）；点击任何写操作均提示「读者权限仅可预览」并被拦截，不会产生数据变更；生产计划专属功能（排产锁定、参考数据、规则参数、数据管理等）对读者仍不可见。</p>
@@ -781,7 +781,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.20.8（项目优先级智能排产：生产计划按项目设 P1–P5，自动排产按优先级→交期→提交时间排序；产能情况表备注补全：ADC DP/CM DP·C7/CM DP·SJ2 标注 batch.line 归并+冻干/APS 归入；冻干放大测试/APS 按 batch.line 归产线；新需求固定@生产计划手机号，触发时间按北京时区显示；各生产类型上限批次数+产能分析新增；批次变动合并窗不变·cloud.js?v=2200·mail.js?v=2202·scheduling.js?v=2208）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.20.9（修复产能上限 typeCaps 上云：规则参数上限全员共享；同步失败提示透传错误码；自动排产不再自动生成快照、历史快照保留展示；项目优先级智能排产：生产计划按项目设 P1–P5，自动排产按优先级→交期→提交时间排序；产能情况表备注补全：ADC DP/CM DP·C7/CM DP·SJ2 标注 batch.line 归并+冻干/APS 归入；冻干放大测试/APS 按 batch.line 归产线；新需求固定@生产计划手机号，触发时间按北京时区显示；各生产类型上限批次数+产能分析新增；批次变动合并窗不变·cloud.js?v=2201·mail.js?v=2202·scheduling.js?v=2208）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -848,7 +848,7 @@
 
 <script>window.CLOUD_CONFIG = { envId: 'cmpaichan-d6g3ewghh84696f03' };</script>
 <script src="cloudbase.full.js?v=2152"></script>
-<script src="cloud.js?v=2200"></script>
+<script src="cloud.js?v=2201"></script>
 <script src="mail.js?v=2202"></script><!-- 钉钉通知模块（前端埋点层 + 1h 合并窗调度器） -->
 <script src="scheduling.js?v=2208"></script>
 <script src="history_data.js"></script>
@@ -1676,18 +1676,7 @@
     state.batches.forEach(function(b){ var m = /^NB(\d+)$/.exec(b.id||''); if(m) maxN = Math.max(maxN, parseInt(m[1],10)); });
     var res = sched.schedule(reqs2, locked, maxN + 1);
     state.batches = locked.concat(res.batches);
-    // 保存排产快照（用于排产分析：日期漂移/月度趋势/历史记录；source=auto 自动排产 / periodic 每2周定期 / manual 人工保存）
-    if(!state.snapshots) state.snapshots = [];
-    state.snapshots.push({
-      id: 'snap'+Date.now(),
-      time: new Date().toISOString(),
-      source: 'auto',
-      reqCount: state.requirements.length,
-      warningCount: res.warnings.length,
-      batches: snapshotBatches()
-    });
-    // 按来源限额保留快照（auto 15 / periodic 10 / manual 5）
-    trimSnapshots();
+    // v2.20.9：不再在每次自动排产后自动生成快照（快照来源仅剩定期/人工；历史 auto 快照保留展示）
     save(); renderAll();
     // 告警横幅
     var warnBanner = $('warnBanner');
@@ -3356,7 +3345,7 @@
     // v2.18.3：导出信息工作表（版本/时间/角色/当前筛选条件），便于追溯导出版本与时间范围
     var ui = currentUiFilters();
     var info = [['项','值'],
-      ['系统版本','v2.20.8'],
+      ['系统版本','v2.20.9'],
       ['导出时间', new Date().toISOString()],
       ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
       ['需求列表-时间列', ui.reqFiltField==='createdAt'?'提交时间':'交期'],
@@ -3441,7 +3430,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.20.8'],
+          ['系统版本','v2.20.9'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['筛选条件摘要', formatFiltInfo(ui)]];
@@ -3545,7 +3534,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.20.8'],
+          ['系统版本','v2.20.9'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['批次明细-时间列', ui.filtTField],
@@ -3584,7 +3573,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.20.8'],
+          ['系统版本','v2.20.9'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['需求列表-时间列', ui.reqFiltField==='createdAt'?'提交时间':'交期'],
@@ -4051,13 +4040,13 @@
         setUser: onCloudUser, // v2.14.0：登录用户名下发（需求人自动绑定登录账号）
         getReqs: function(){ return state.requirements; },
         uiConfirm: uiConfirm, // v2.11.0 ⑱：cloud.js 冲突检测/新鲜度弹窗走主应用自定义模态
-        getPlan: function(){ return { batches: state.batches, rules: state.rules, refData: state.refData, ganttAxis: state.ganttAxis, ganttLines: state.ganttLines, ganttRange: state.ganttRange, trendRange: state.trendRange, trendLink: !!state.trendLink, snapshots: state.snapshots, projectPriority: state.projectPriority || {} }; },
+        getPlan: function(){ return { batches: state.batches, rules: state.rules, refData: state.refData, ganttAxis: state.ganttAxis, ganttLines: state.ganttLines, ganttRange: state.ganttRange, trendRange: state.trendRange, trendLink: !!state.trendLink, snapshots: state.snapshots, projectPriority: state.projectPriority || {}, typeCaps: state.typeCaps || {} }; },
         applyReqs: function(reqs){ _echoSave = true; state.requirements = reqs; },
         onRemoteReqs: function(n){ showNewReqBanner(n); },
         // v2.10.0 本地新鲜度：本地修改是否尚未成功上云（推送失败/节流窗口内刷新）
         isDirty: function(){ return localStorage.getItem(LS_KEY+'_dirty') === '1'; },
         clearDirty: function(){ try{ localStorage.removeItem(LS_KEY+'_dirty'); }catch(e){} },
-        onPushFail: function(){ toast('⚠️ 云端同步失败：本地修改未上云。请勿直接关闭页面——可稍后重试或导出备份（刷新页面上次修改可能被云端旧版覆盖）', 6000); },
+        onPushFail: function(reason){ toast('⚠️ 云端同步失败：本地修改未上云。' + (reason ? '（' + reason + '）' : '') + '请勿直接关闭页面——可稍后重试或导出备份（刷新页面上次修改可能被云端旧版覆盖）', 7000); },
         applyPlan: function(p){
           _echoSave = true;
           if(!p) return;
@@ -4071,6 +4060,7 @@
           if(p.trendLink != null) state.trendLink = !!p.trendLink;
           if(p.snapshots) state.snapshots = p.snapshots;
           if(p.projectPriority) state.projectPriority = p.projectPriority; // v2.20.8：项目优先级云端同步
+          if(p.typeCaps) state.typeCaps = p.typeCaps; // v2.20.9：产能上限云端同步（按年份分桶，全员共享）
         },
         // 远端数据应用后刷新界面：若用户正在表单输入，暂缓重绘到 blur，避免清掉正在编辑的内容（v2.10.0）
         afterSync: function(){ save(); renderRules(); safeRenderAll(); _echoSave = false; }
