@@ -3,6 +3,9 @@
  *   v2.18.5 权限管理补「删除账号」+ 防删当前登录 + getCurEmail
  *   v2.18.8 watch 路径「需求合并」按云端权威裁剪——修复"A 删了某条后 B 在线仍看到"的删除传播缺失）
  *   v2.20.0 queryPhoneByEmail（CloudBase queryUser 邮箱→手机号，钉钉@需求方用，正向 localStorage 缓存）
+ *   v2.20.9 upsert 失败返回 {fail:msg} + doPushPlan 判定 ok===true + onPushFail(reason) 透传错误码
+ *   v2.20.10 upsert update 阶段 data 字段改用 db.command.set 整体替换——修复云端 rules=null 时
+ *           再保存规则报 Cannot create field 'adcDp' in element (rules: null) 的深合并写入失败
  *
  * 作用：让「需求填报」与「排产计划」在多人浏览器之间实时共享。
  *   · requests    集合：需求（每条需求一个文档，多人提交互不覆盖）
@@ -565,8 +568,17 @@
   // ① set() payload 不能含 _id（INVALID_PARAM 且不 reject，静默失败）
   // ② doc(id).set() 只能新建，文档已存在时报 E11000 duplicate key
   // 因此统一用 upsert：先 update，updated===0（不存在）再 set 创建
+  // v2.20.10 第三个坑：update() 对嵌套对象按点号路径合并写入——云端字段为 null（如「恢复默认规则」
+  // 推过 rules=null）而新值为对象时，报 Cannot create field 'adcDp' in element (rules: null) 整次失败。
+  // data 字段改用 db.command.set 包裹 → 整字段替换不展开子路径；SDK 无 set 指令时退回原行为。
   function upsert(coll, id, payload, label) {
-    return db.collection(coll).doc(id).update(payload).then(function (res) {
+    var arg = payload;
+    if (db && db.command && typeof db.command.set === 'function' && payload && payload.data && typeof payload.data === 'object') {
+      arg = {};
+      Object.keys(payload).forEach(function (k) { if (k !== 'data') arg[k] = payload[k]; });
+      arg.data = db.command.set(payload.data);
+    }
+    return db.collection(coll).doc(id).update(arg).then(function (res) {
       if (res && res.code) { console.warn('[cloud] ' + label + '更新被拒：', res.code, res.message || ''); return { fail: (res.message || ('code ' + res.code)) }; }
       if (res && res.updated > 0) return true;
       return db.collection(coll).doc(id).set(payload).then(function (r2) {
