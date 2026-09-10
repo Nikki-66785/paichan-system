@@ -247,7 +247,7 @@
 <body class="role-requester">
 
 <header>
-  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.20.19（2026-09-10：修复已删除需求复活——新增云端删除墓碑，首次同步时命中墓碑的本地旧缓存不再补传回云端并自动清理，删除云端失败改为明确提示，清空全部/导入覆盖时一并清空墓碑；cloud.js 缓存版本同步升级）。页面版本：v2.20.18（2026-09-10：三项优化——①权限管理弹窗暗色适配：弹窗内联配色改用 CSS 变量，暗色模式下不再是刺眼白底；②打开排产计划页甘特图自动横向滚动到今日附近，不用手动拖动查找；③使用手册配套版本同步到 v2.20.18，新增暗色模式与复制需求两条 FAQ。）。页面版本：v2.20.17（2026-09-10：顶栏标题移除 🧬 图标，标题更简洁）。页面版本：v2.20.16（2026-09-10：三项优化——①顶栏标题精简：主标题字号与 logo 缩小、顶栏内边距收紧、版本号改小徽章样式，标题不再喧宾夺主；②暗色模式：顶栏新增「🌙 暗色」切换按钮，全站深色配色，偏好保存在本机、刷新后保持；③需求表格新增「📋 复制」按钮：一键把已有需求全部信息回填到录入表单，微调后即可作为新需求提交，重复录入不再从头填写。）。页面版本：v2.20.15（2026-09-10：视觉精化——①卡片悬停浮起+阴影加深 ②弹窗遮罩淡入+毛玻璃、弹窗缩放弹入 ③顶栏统计数字加大加重 ④主按钮悬停浮起 ⑤甘特图批次条渐变高光+悬停浮起 ⑥状态徽章加圆点与微描边 ⑦表格行悬停过渡。纯 CSS 改动，不涉及任何业务逻辑与数据结构。）。页面版本：v2.20.14（2026-09-09：三项优化——①需求表单防丢失：填写过程自动暂存草稿到本机，误关/误刷新先弹确认，重新打开自动恢复，提交成功自动清除；②人工调整批次弹窗新增「项目优先级」下拉（项目级生效，保存后提示重新自动排产）；③使用手册更新到 v2.20.14：补齐 v2.20.9–13 功能说明（上限云共享与分年设置、优先级集中管理、体积预警面板、快照来源变化、APS/EQP 隐藏交期）并新增错误码透传、草稿恢复两条 FAQ。）。页面版本：v2.20.13（2026-09-09：三处增强——①规则参数新增「🎯 项目优先级」集中管理卡片，自动汇总需求与批次中的全部项目号，统一设 P1–P5，无需求行的项目也有入口；②产能上限区新增「复制上年/清空本年」按钮，减少分年设置重复录入；③数据管理页新增云端体积估算面板，进度条直观看批次/快照/规则占用，超 800KB 红色预警并引导删旧快照。）。页面版本：v2.20.12（2026-09-08：三处体验优化——①APS 培养基模拟灌装同设备维护一样隐藏期望完成日期字段，APS 按计划月份排产、dueDate 恒为空；②切换产能上限生效年份时若当前年份有未保存修改，先弹确认再重绘，防止误丢；③需求表格设备维护行交期列改显维护区间开始~结束日期，不再显示语义混淆的单一日期。）。页面版本：v2.20.11（2026-09-08：①修复产能上限各年份串值——上限输入区此前固定读当前年份桶且年份下拉默认选中 y-1，不跟随生效年份下拉，切换年份看到的都是同一份值、保存时还会把显示值写进所选年份桶；现下拉默认当年、切换即重绘对应年份桶再保存。②设备维护保养需求不再显示期望完成日期（交期自动=维护结束日期，仅用于排序/显示）。v2.20.10（2026-09-08：修复规则参数云同步失败——CloudBase update 对嵌套对象按点号路径合并写入，云端 rules=null（此前点过「恢复默认规则」推过 null）时再点「保存规则」会报 Cannot create field 'adcDp' in element (rules: null)，整次写入失败；现 upsert 的 update 阶段把 data 字段用 db.command.set 包裹，整字段替换不展开子路径，SDK 无该指令时退回原行为；该 bug 由 v2.20.9 错误码透传首次暴露）。v2.20.9（2026-09-07：修复产能上限 typeCaps 不上云——规则参数里填写的各生产类型上限批次数此前只存本机浏览器（getPlan 未携带 typeCaps），现纳入 plan_state 云端同步（getPlan 返回带 typeCaps、applyPlan 读取），生产计划填写的上限全员可见可共享；同步失败提示升级为透传具体错误码（onPushFail 收到 reason 并拼接展示），便于定位「计划写入失败」根因；取消每次自动排产后自动生成快照——快照来源仅剩定期（每 2 周）与人工两种，历史 auto 快照保留展示）。v2.20.8（2026-09-07：项目优先级智能排产——生产计划可在需求表格优先级列按项目设定 P1–P5 五档优先级（行内下拉，同项目全部需求联动，云端 plan_state 同步全员可见，需求方仍不可自填）；自动排产排序键升级为「优先级→交期→提交时间」（交期早先排，无交期排最后）；旧值兼容映射 高→P2/中→P3/低→P4；导出优先级列输出生效值。v2.20.7（2026-09-07：产能情况表备注列补全——ADC DP / CM DP·C7 / CM DP·SJ2 三行均标注 batch.line 归并规则，并注明冻干放大测试/APS 按此线归入；上限配置与产能分析收敛为 10 行口径）。v2.20.6（2026-09-07：产能分析/上限口径调整——冻干放大测试与 APS 不再作为独立 capKey，改为按 batch.line 归入对应产线（SJ2 ADC DP→ADC DP、C7CM DP→CM DP·C7、SJ2CM DP→CM DP·SJ2），规则参数上限配置收敛为 10 行）。v2.20.5（2026-09-07：新增「各生产类型上限批次数」+「产能情况」分析——规则参数面板可按 capKey（CB/Mab/Mab DS：SJ1/Mab DS：SJ2/ADC DS/ADC DP/CM DP·C7/CM DP·SJ2/参比品/EQP）填写上限批次数，留空=无上限；排产分析面板新增按年份或自定义起止的产能情况表，显示已用/剩余/利用率，超额行整行变红，CB 行=MCB+WCB 之和，EQP 行=设备维护+设备验证+贴签包装+包装 之和）。v2.20.4（2026-09-07：需求录入表单两日期字段与筛选框改为上下堆叠布局，不再并排一行；结构拆为独立 .form-row / .toolbar 纵向排列，元素 ID 全部保留）。v2.20.2（2026-09-07：钉钉新需求固定@生产计划手机号 18918901089，不再动态查需求方；触发时间/窗口改为北京时区显示（此前显示成 UTC）。v2.20.0（2026-09-04：钉钉通知@需求方——不再@全员，通知按 CloudBase 账号手机号精确提醒需求方本人；需求记录新增 reqEmail 字段，查不到手机号时不@（消息照发）。v2.19.2（2026-09-04：新需求提交改为立即推送钉钉——不再走 1h 合并窗，生产计划可第一时间看到新需求；锁定/调整/删除/终态仍走合并窗）。v2.19.1（2026-09-04：钉钉群通知新增 1h 合并窗——同批次 1h 内多次变动合并成一封汇总消息推群；前端 setTimeout 调度 + localStorage 持久化兜底；需 Cloudflare Pages Functions KV bindings 绑定 MAIL_KV，未绑定时退回 v2.19.0 立即发）。v2.19.0：钉钉群机器人通知——生产计划锁定/人工调整/删除/终态四种批次变动，以及新需求提交与历史计划导入摘要，均自动推送到钉钉「排产通知群」；按埋点立即发送。v2.18.8：修复 watch 路径下需求删除不传播给其他在线用户的问题——云端权威裁剪后 A 删的某条 B 也能立即看到；明确生产计划可删任意需求/批次、需求方仅可删自己录入的需求，两者均不互相影响账号登录态与角色分配。v2.18.7：顶栏新增「📖 使用手册」按钮，所有角色可见，点击新窗口打开 help.html；v2.18.6：APS 排产提醒移至需求录入页末尾——避免顶部 banner 与交期/新需求提醒互相挤压；v2.18.5：权限管理可删除账号——移除角色分配后该账号恢复为「读者」仅预览，白名单管理员与当前登录账号不可删除。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.20.19</span></h1>
+  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.20.20（2026-09-10：排产分析页新增可视化分析——产能负载总览含月度负载柱状图与上限线、10 类产线利用率热力图；交期风险清单含平均交期余量与超期最严项目；项目组合视图按项目汇总批次量、时间跨度与优先级；需求漏斗呈现提交→已排产→已锁定→已完成四阶段及转化率。数据全部来自现有批次、需求与上限配置，不新增字段）。页面版本：v2.20.19（2026-09-10：修复已删除需求复活——新增云端删除墓碑，首次同步时命中墓碑的本地旧缓存不再补传回云端并自动清理，删除云端失败改为明确提示，清空全部/导入覆盖时一并清空墓碑；cloud.js 缓存版本同步升级）。页面版本：v2.20.18（2026-09-10：三项优化——①权限管理弹窗暗色适配：弹窗内联配色改用 CSS 变量，暗色模式下不再是刺眼白底；②打开排产计划页甘特图自动横向滚动到今日附近，不用手动拖动查找；③使用手册配套版本同步到 v2.20.18，新增暗色模式与复制需求两条 FAQ。）。页面版本：v2.20.17（2026-09-10：顶栏标题移除 🧬 图标，标题更简洁）。页面版本：v2.20.16（2026-09-10：三项优化——①顶栏标题精简：主标题字号与 logo 缩小、顶栏内边距收紧、版本号改小徽章样式，标题不再喧宾夺主；②暗色模式：顶栏新增「🌙 暗色」切换按钮，全站深色配色，偏好保存在本机、刷新后保持；③需求表格新增「📋 复制」按钮：一键把已有需求全部信息回填到录入表单，微调后即可作为新需求提交，重复录入不再从头填写。）。页面版本：v2.20.15（2026-09-10：视觉精化——①卡片悬停浮起+阴影加深 ②弹窗遮罩淡入+毛玻璃、弹窗缩放弹入 ③顶栏统计数字加大加重 ④主按钮悬停浮起 ⑤甘特图批次条渐变高光+悬停浮起 ⑥状态徽章加圆点与微描边 ⑦表格行悬停过渡。纯 CSS 改动，不涉及任何业务逻辑与数据结构。）。页面版本：v2.20.14（2026-09-09：三项优化——①需求表单防丢失：填写过程自动暂存草稿到本机，误关/误刷新先弹确认，重新打开自动恢复，提交成功自动清除；②人工调整批次弹窗新增「项目优先级」下拉（项目级生效，保存后提示重新自动排产）；③使用手册更新到 v2.20.14：补齐 v2.20.9–13 功能说明（上限云共享与分年设置、优先级集中管理、体积预警面板、快照来源变化、APS/EQP 隐藏交期）并新增错误码透传、草稿恢复两条 FAQ。）。页面版本：v2.20.13（2026-09-09：三处增强——①规则参数新增「🎯 项目优先级」集中管理卡片，自动汇总需求与批次中的全部项目号，统一设 P1–P5，无需求行的项目也有入口；②产能上限区新增「复制上年/清空本年」按钮，减少分年设置重复录入；③数据管理页新增云端体积估算面板，进度条直观看批次/快照/规则占用，超 800KB 红色预警并引导删旧快照。）。页面版本：v2.20.12（2026-09-08：三处体验优化——①APS 培养基模拟灌装同设备维护一样隐藏期望完成日期字段，APS 按计划月份排产、dueDate 恒为空；②切换产能上限生效年份时若当前年份有未保存修改，先弹确认再重绘，防止误丢；③需求表格设备维护行交期列改显维护区间开始~结束日期，不再显示语义混淆的单一日期。）。页面版本：v2.20.11（2026-09-08：①修复产能上限各年份串值——上限输入区此前固定读当前年份桶且年份下拉默认选中 y-1，不跟随生效年份下拉，切换年份看到的都是同一份值、保存时还会把显示值写进所选年份桶；现下拉默认当年、切换即重绘对应年份桶再保存。②设备维护保养需求不再显示期望完成日期（交期自动=维护结束日期，仅用于排序/显示）。v2.20.10（2026-09-08：修复规则参数云同步失败——CloudBase update 对嵌套对象按点号路径合并写入，云端 rules=null（此前点过「恢复默认规则」推过 null）时再点「保存规则」会报 Cannot create field 'adcDp' in element (rules: null)，整次写入失败；现 upsert 的 update 阶段把 data 字段用 db.command.set 包裹，整字段替换不展开子路径，SDK 无该指令时退回原行为；该 bug 由 v2.20.9 错误码透传首次暴露）。v2.20.9（2026-09-07：修复产能上限 typeCaps 不上云——规则参数里填写的各生产类型上限批次数此前只存本机浏览器（getPlan 未携带 typeCaps），现纳入 plan_state 云端同步（getPlan 返回带 typeCaps、applyPlan 读取），生产计划填写的上限全员可见可共享；同步失败提示升级为透传具体错误码（onPushFail 收到 reason 并拼接展示），便于定位「计划写入失败」根因；取消每次自动排产后自动生成快照——快照来源仅剩定期（每 2 周）与人工两种，历史 auto 快照保留展示）。v2.20.8（2026-09-07：项目优先级智能排产——生产计划可在需求表格优先级列按项目设定 P1–P5 五档优先级（行内下拉，同项目全部需求联动，云端 plan_state 同步全员可见，需求方仍不可自填）；自动排产排序键升级为「优先级→交期→提交时间」（交期早先排，无交期排最后）；旧值兼容映射 高→P2/中→P3/低→P4；导出优先级列输出生效值。v2.20.7（2026-09-07：产能情况表备注列补全——ADC DP / CM DP·C7 / CM DP·SJ2 三行均标注 batch.line 归并规则，并注明冻干放大测试/APS 按此线归入；上限配置与产能分析收敛为 10 行口径）。v2.20.6（2026-09-07：产能分析/上限口径调整——冻干放大测试与 APS 不再作为独立 capKey，改为按 batch.line 归入对应产线（SJ2 ADC DP→ADC DP、C7CM DP→CM DP·C7、SJ2CM DP→CM DP·SJ2），规则参数上限配置收敛为 10 行）。v2.20.5（2026-09-07：新增「各生产类型上限批次数」+「产能情况」分析——规则参数面板可按 capKey（CB/Mab/Mab DS：SJ1/Mab DS：SJ2/ADC DS/ADC DP/CM DP·C7/CM DP·SJ2/参比品/EQP）填写上限批次数，留空=无上限；排产分析面板新增按年份或自定义起止的产能情况表，显示已用/剩余/利用率，超额行整行变红，CB 行=MCB+WCB 之和，EQP 行=设备维护+设备验证+贴签包装+包装 之和）。v2.20.4（2026-09-07：需求录入表单两日期字段与筛选框改为上下堆叠布局，不再并排一行；结构拆为独立 .form-row / .toolbar 纵向排列，元素 ID 全部保留）。v2.20.2（2026-09-07：钉钉新需求固定@生产计划手机号 18918901089，不再动态查需求方；触发时间/窗口改为北京时区显示（此前显示成 UTC）。v2.20.0（2026-09-04：钉钉通知@需求方——不再@全员，通知按 CloudBase 账号手机号精确提醒需求方本人；需求记录新增 reqEmail 字段，查不到手机号时不@（消息照发）。v2.19.2（2026-09-04：新需求提交改为立即推送钉钉——不再走 1h 合并窗，生产计划可第一时间看到新需求；锁定/调整/删除/终态仍走合并窗）。v2.19.1（2026-09-04：钉钉群通知新增 1h 合并窗——同批次 1h 内多次变动合并成一封汇总消息推群；前端 setTimeout 调度 + localStorage 持久化兜底；需 Cloudflare Pages Functions KV bindings 绑定 MAIL_KV，未绑定时退回 v2.19.0 立即发）。v2.19.0：钉钉群机器人通知——生产计划锁定/人工调整/删除/终态四种批次变动，以及新需求提交与历史计划导入摘要，均自动推送到钉钉「排产通知群」；按埋点立即发送。v2.18.8：修复 watch 路径下需求删除不传播给其他在线用户的问题——云端权威裁剪后 A 删的某条 B 也能立即看到；明确生产计划可删任意需求/批次、需求方仅可删自己录入的需求，两者均不互相影响账号登录态与角色分配。v2.18.7：顶栏新增「📖 使用手册」按钮，所有角色可见，点击新窗口打开 help.html；v2.18.6：APS 排产提醒移至需求录入页末尾——避免顶部 banner 与交期/新需求提醒互相挤压；v2.18.5：权限管理可删除账号——移除角色分配后该账号恢复为「读者」仅预览，白名单管理员与当前登录账号不可删除。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.20.20</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -686,6 +686,47 @@
         <div id="capAnalysis"></div>
       </div>
     </div>
+    <!-- v2.20.20：可视化分析（产能负载总览 / 交期风险 / 项目组合 / 需求漏斗） -->
+    <div class="card">
+      <h2>产能负载总览 <span class="tag">月度已排批次数 vs 上限 · 产线利用率热力图</span></h2>
+      <div class="toolbar" style="margin-bottom:10px">
+        <label class="hint">年份 <select id="vizCapYear" title="统计年份（按批次开始日期 b.start 归属）"></select></label>
+        <label class="hint">类型 <select id="vizCapKey" title="口径同「产能情况」的 10 类 capKey；「全部类型」= 汇总所有可归类批次，上限线取各类型已配置上限之和"></select></label>
+        <span class="spacer" style="flex:1"></span>
+        <span class="hint" id="vizCapSum"></span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;align-items:start">
+        <div>
+          <div style="font-size:12px;color:var(--sub);margin-bottom:8px">月度负载（柱=已排批次 · 虚线=上限）</div>
+          <div id="vizLoadChart"></div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:var(--sub);margin-bottom:8px">产线利用率热力图（红=超上限）</div>
+          <div id="vizHeat"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>交期风险 <span class="tag">批次计划完成日期晚于需求交期的明细</span></h2>
+      <div id="vizRiskSummary"></div>
+      <div class="scroll-tbl" style="max-height:300px;margin-top:10px">
+        <table class="tbl" id="vizRiskTable">
+          <thead><tr><th>项目</th><th>类型</th><th>产线</th><th>计划完成</th><th>需求交期</th><th>超期(天)</th><th>状态</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="empty" id="vizRiskEmpty" style="display:none">暂无交期风险（所有批次计划完成日期均不晚于需求交期）</div>
+      <div class="hint" style="margin-top:8px">口径：批次 <code>b.end</code>（计划完成）晚于对应需求 <code>dueDate</code> 即计为风险，超期天数取整；未填交期或无关联需求的批次不参与统计。此表为<b>计划口径</b>，不代表实际交付结果。</div>
+    </div>
+    <div class="card">
+      <h2>项目组合视图 <span class="tag">按项目汇总批次量 / 时间跨度 / 优先级</span></h2>
+      <div id="vizProject"></div>
+    </div>
+    <div class="card">
+      <h2>需求漏斗 <span class="tag">提交 → 已排产 → 已锁定 → 已完成</span></h2>
+      <div id="vizFunnel"></div>
+      <div class="hint" style="margin-top:8px" id="vizFunnelHint"></div>
+    </div>
     <!-- 排产历史 -->
     <div class="card">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
@@ -822,7 +863,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.20.19（修复已删需求复活：新增云端删除墓碑 del_tomb，首次同步命中墓碑的本地旧缓存不再补传回云端并自动清理，删除失败改为明确提示，清空全部/导入覆盖时一并清空墓碑·cloud.js?v=2219）。v2.20.18（优化：权限管理弹窗暗色适配；排产计划页甘特图自动滚动到今日；使用手册同步 v2.20.18）。v2.20.17（顶栏标题移除 🧬 图标）。v2.20.16（优化：顶栏标题精简——主标题与 logo 缩小、内边距收紧；暗色模式——顶栏「🌙 暗色」一键切换、偏好本机记忆；需求表格「📋 复制」按钮——回填表单快速重复录入）。v2.20.15（视觉精化：卡片/按钮/甘特条悬停浮起；弹窗动画；徽章圆点；统计数字加大）。v2.20.14（优化：需求表单草稿防丢失；人工调整弹窗可设项目优先级；使用手册更新至 v2.20.14）。v2.20.13（增强：项目优先级集中管理卡片；上限区复制上年/清空本年；数据管理页云端体积估算面板）。v2.20.12（体验优化：APS 隐藏期望完成日期；切年份未保存上限先确认；设备维护行交期列显维护区间）。v2.20.11（修复产能上限各年份串值：上限输入区改为跟随生效年份下拉分年显示与保存，下拉默认当年；设备维护保养需求不再显示期望完成日期，交期自动=维护结束日期）·v2.20.10（修复规则参数云同步失败：CloudBase update 对嵌套对象按点号路径合并写入，云端 rules 为 null 时再保存规则报 Cannot create field 导致整次写入失败，upsert 的 data 字段改用 db.command.set 整体替换，不再展开子路径·cloud.js?v=2202）·v2.20.9（修复产能上限 typeCaps 上云：规则参数上限全员共享；同步失败提示透传错误码；自动排产不再自动生成快照、历史快照保留展示；项目优先级智能排产：生产计划按项目设 P1–P5，自动排产按优先级→交期→提交时间排序；产能情况表备注补全：ADC DP/CM DP·C7/CM DP·SJ2 标注 batch.line 归并+冻干/APS 归入；冻干放大测试/APS 按 batch.line 归产线；新需求固定@生产计划手机号，触发时间按北京时区显示；各生产类型上限批次数+产能分析新增；批次变动合并窗不变·cloud.js?v=2201·mail.js?v=2202·scheduling.js?v=2208）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.20.20（新增可视化分析：产能负载总览含月度负载柱状图与上限线、产线利用率热力图；交期风险清单含平均交期余量与超期最严项目；项目组合视图；需求漏斗含四阶段转化率）。v2.20.19（修复已删需求复活：新增云端删除墓碑 del_tomb，首次同步命中墓碑的本地旧缓存不再补传回云端并自动清理，删除失败改为明确提示，清空全部/导入覆盖时一并清空墓碑·cloud.js?v=2219）。v2.20.18（优化：权限管理弹窗暗色适配；排产计划页甘特图自动滚动到今日；使用手册同步 v2.20.18）。v2.20.17（顶栏标题移除 🧬 图标）。v2.20.16（优化：顶栏标题精简——主标题与 logo 缩小、内边距收紧；暗色模式——顶栏「🌙 暗色」一键切换、偏好本机记忆；需求表格「📋 复制」按钮——回填表单快速重复录入）。v2.20.15（视觉精化：卡片/按钮/甘特条悬停浮起；弹窗动画；徽章圆点；统计数字加大）。v2.20.14（优化：需求表单草稿防丢失；人工调整弹窗可设项目优先级；使用手册更新至 v2.20.14）。v2.20.13（增强：项目优先级集中管理卡片；上限区复制上年/清空本年；数据管理页云端体积估算面板）。v2.20.12（体验优化：APS 隐藏期望完成日期；切年份未保存上限先确认；设备维护行交期列显维护区间）。v2.20.11（修复产能上限各年份串值：上限输入区改为跟随生效年份下拉分年显示与保存，下拉默认当年；设备维护保养需求不再显示期望完成日期，交期自动=维护结束日期）·v2.20.10（修复规则参数云同步失败：CloudBase update 对嵌套对象按点号路径合并写入，云端 rules 为 null 时再保存规则报 Cannot create field 导致整次写入失败，upsert 的 data 字段改用 db.command.set 整体替换，不再展开子路径·cloud.js?v=2202）·v2.20.9（修复产能上限 typeCaps 上云：规则参数上限全员共享；同步失败提示透传错误码；自动排产不再自动生成快照、历史快照保留展示；项目优先级智能排产：生产计划按项目设 P1–P5，自动排产按优先级→交期→提交时间排序；产能情况表备注补全：ADC DP/CM DP·C7/CM DP·SJ2 标注 batch.line 归并+冻干/APS 归入；冻干放大测试/APS 按 batch.line 归产线；新需求固定@生产计划手机号，触发时间按北京时区显示；各生产类型上限批次数+产能分析新增；批次变动合并窗不变·cloud.js?v=2201·mail.js?v=2202·scheduling.js?v=2208）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -2519,6 +2560,8 @@
       card('快照记录', snaps.length+' 条', '#06b6d4');
     // v2.20.5：产能分析
     renderCapAnalysis();
+    // v2.20.20：可视化分析（产能负载总览 / 交期风险 / 项目组合 / 需求漏斗）
+    renderVizAll();
     // 日期漂移：可任选两次快照对比（默认最近两次；auto=自动排产 / periodic=每2周定期，含人工调整结果）
     renderDrift();
     // 月度批次趋势
@@ -2690,6 +2733,215 @@
     return '<div class="card" style="padding:14px 16px;text-align:center">'+
       '<div style="font-size:22px;font-weight:700;color:'+(color||'#3b82f6')+'">'+value+'</div>'+
       '<div style="font-size:11px;color:var(--sub);margin-top:2px">'+title+'</div></div>';
+  }
+
+  // ============ v2.20.20：可视化分析（产能负载总览 / 交期风险 / 项目组合 / 需求漏斗）============
+  var VIZ_MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  function vizMonthOf(d){ var m = parseInt((''+(d||'')).slice(5,7),10); return (m>=1&&m<=12)?m:0; }
+  function vizYearOf(d){ return parseInt((''+(d||'')).slice(0,4),10) || 0; }
+  // 热力色阶：有上限时按 已用/上限 分档，超上限标红；无上限时按绝对值分档
+  function vizHeatColor(v, cap){
+    if(!v) return 'var(--panel)';
+    if(cap == null || cap <= 0){ return v<=1 ? '#B5D4F4' : (v<=3 ? '#85B7EB' : '#378ADD'); }
+    if(v > cap) return '#dc2626';
+    var r = v/cap;
+    if(r >= 0.85) return '#185FA5';
+    if(r >= 0.5) return '#378ADD';
+    if(r >= 0.2) return '#85B7EB';
+    return '#B5D4F4';
+  }
+  function renderVizCapBlock(){
+    var ySel = $('vizCapYear'), kSel = $('vizCapKey');
+    var chartEl = $('vizLoadChart'), heatEl = $('vizHeat'), sumEl = $('vizCapSum');
+    if(!ySel || !kSel || !chartEl || !heatEl) return;
+    if(!ySel._inited){
+      var nowY = new Date().getFullYear(), ys = [nowY-1, nowY, nowY+1];
+      (state.batches||[]).forEach(function(b){ var y = vizYearOf(b.start); if(y && ys.indexOf(y) < 0) ys.push(y); });
+      ys.sort(function(a,b){ return a-b; });
+      ySel.innerHTML = ys.map(function(y){ return '<option value="'+y+'">'+y+'</option>'; }).join('');
+      ySel.value = '' + nowY;
+      ySel._inited = true;
+    }
+    if(!kSel._inited){
+      kSel.innerHTML = '<option value="">全部类型</option>' + CAP_KEYS.map(function(c){ return '<option value="'+esc(c.key)+'">'+esc(c.label)+'</option>'; }).join('');
+      kSel._inited = true;
+    }
+    var yr = parseInt(ySel.value,10) || new Date().getFullYear();
+    var selKey = kSel.value || '';
+    var capsMap = (state.typeCaps||{})[''+yr] || {};
+    var used = [0,0,0,0,0,0,0,0,0,0,0,0];
+    var grid = {};
+    CAP_KEYS.forEach(function(c){ grid[c.key] = [0,0,0,0,0,0,0,0,0,0,0,0]; });
+    (state.batches||[]).forEach(function(b){
+      var k = mapBatchType(b); if(!k) return;
+      if(vizYearOf(b.start) !== yr) return;
+      var m = vizMonthOf(b.start); if(!m) return;
+      if(!selKey || k === selKey) used[m-1]++;
+      if(grid[k]) grid[k][m-1]++;
+    });
+    var cap = 0;
+    if(selKey){ cap = (capsMap[selKey] != null) ? capsMap[selKey] : 0; }
+    else { CAP_KEYS.forEach(function(c){ if(capsMap[c.key] != null) cap += capsMap[c.key]; }); }
+    var total = used.reduce(function(a,b){ return a+b; }, 0);
+    var maxV = Math.max.apply(null, used.concat([cap||0, 1]));
+    var overN = 0;
+    var bars = used.map(function(v, i){
+      var over = (cap > 0 && v > cap);
+      if(over) overN++;
+      var col = over ? '#dc2626' : (v === 0 ? 'var(--panel)' : (cap > 0 && v/cap >= 0.85 ? '#185FA5' : '#378ADD'));
+      var h = v === 0 ? 2 : Math.max(Math.round(v / maxV * 100), 4);
+      var tip = yr+'年'+(i+1)+'月：'+v+' 批'+(cap > 0 ? ('（上限 '+cap+'）') : '');
+      return '<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%">'+
+        '<div title="'+tip+'" style="height:'+h+'%;background:'+col+';border-radius:3px 3px 0 0"></div></div>';
+    }).join('');
+    var capBottom = Math.round(cap / maxV * 100);
+    chartEl.innerHTML =
+      '<div style="position:relative;height:150px">'+
+        (cap > 0 ?
+          '<div style="position:absolute;left:0;right:0;bottom:'+capBottom+'%;border-top:1px dashed var(--sub)"></div>'+
+          '<div style="position:absolute;right:0;bottom:calc('+capBottom+'% + 2px);font-size:11px;color:var(--sub)">上限 '+cap+'</div>' : '')+
+        '<div style="display:flex;align-items:flex-end;gap:4px;height:100%">'+bars+'</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:4px;margin-top:6px;font-size:11px;color:var(--sub)">'+
+        VIZ_MONTHS.map(function(l){ return '<div style="flex:1;text-align:center">'+l+'</div>'; }).join('')+
+      '</div>';
+    var hh = '<div style="display:grid;grid-template-columns:92px repeat(12,minmax(0,1fr));gap:3px;align-items:center;font-size:11px">';
+    hh += '<div></div>' + VIZ_MONTHS.map(function(l){ return '<div style="text-align:center;color:var(--sub)">'+l+'</div>'; }).join('');
+    CAP_KEYS.forEach(function(c){
+      var cv = capsMap[c.key];
+      hh += '<div style="color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(c.label)+'">'+esc(c.label)+'</div>';
+      grid[c.key].forEach(function(v){
+        var cd = (cv != null && cv > 0) ? (v > cv ? '（超上限 '+cv+'，超出 '+(v-cv)+' 批）' : '（上限 '+cv+'）') : '';
+        hh += '<div title="'+esc(c.label)+' · '+v+' 批'+cd+'" style="height:17px;border-radius:3px;background:'+vizHeatColor(v, cv)+'"></div>';
+      });
+    });
+    hh += '</div>';
+    hh += '<div style="display:flex;align-items:center;gap:5px;margin-top:10px;font-size:11px;color:var(--sub)"><span>空闲</span>'+
+      ['#B5D4F4','#85B7EB','#378ADD','#185FA5'].map(function(c){ return '<span style="width:16px;height:11px;border-radius:2px;background:'+c+'"></span>'; }).join('')+
+      '<span style="width:16px;height:11px;border-radius:2px;background:#dc2626"></span><span>超上限</span></div>';
+    heatEl.innerHTML = hh;
+    if(sumEl){
+      var capText = cap > 0
+        ? ('，月均 '+(total/12).toFixed(1)+' 批，上限合计 '+cap+' 批/月'+(overN ? '，<span style="color:#dc2626;font-weight:700">'+overN+' 个月超上限</span>' : '，各月均未超上限'))
+        : '（未配置上限，不显示上限线）';
+      sumEl.innerHTML = yr+' 年共 <b>'+total+'</b> 批'+capText;
+    }
+    // 年份 / 类型切换即重绘本卡（onchange 覆盖式赋值，幂等）
+    ySel.onchange = renderVizCapBlock;
+    kSel.onchange = renderVizCapBlock;
+  }
+  function renderVizRisk(){
+    var tb = $('vizRiskTable'); if(!tb) return;
+    var body = tb.querySelector('tbody'), sumEl = $('vizRiskSummary'), emptyEl = $('vizRiskEmpty');
+    var rows = [], margins = [];
+    (state.batches||[]).forEach(function(b){
+      if(!b.reqId || !b.end) return;
+      var req = (state.requirements||[]).filter(function(r){ return r.id === b.reqId; })[0];
+      if(!req || !req.dueDate) return;
+      var due = U.p(req.dueDate), end = U.p(b.end);
+      if(isNaN(due) || isNaN(end)) return;
+      var days = (due - end) / 86400000;
+      margins.push(days);
+      if(days < 0) rows.push({ b:b, req:req, over: Math.round(-days) });
+    });
+    rows.sort(function(a,b){ return b.over - a.over; });
+    var avg = margins.length ? (margins.reduce(function(a,b){ return a+b; },0) / margins.length) : 0;
+    var byProj = {};
+    rows.forEach(function(x){ var p = x.req.atProject || x.b.project || '（无项目号）'; byProj[p] = (byProj[p]||0) + x.over; });
+    var worstProj = Object.keys(byProj).sort(function(a,b){ return byProj[b]-byProj[a]; })[0] || '';
+    if(sumEl){
+      sumEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">'+
+        card('交期风险批次', rows.length+' 批', rows.length ? '#dc2626' : '#16a34a')+
+        card('平均交期余量', (avg>=0?'+':'')+avg.toFixed(1)+' 天', avg>=0?'#16a34a':'#dc2626')+
+        card('超期最严项目', worstProj || '—', worstProj?'#f59e0b':'#16a34a')+
+      '</div>';
+    }
+    if(!rows.length){ body.innerHTML = ''; if(emptyEl) emptyEl.style.display = ''; return; }
+    if(emptyEl) emptyEl.style.display = 'none';
+    body.innerHTML = rows.slice(0, 30).map(function(x){
+      return '<tr>'+
+        '<td>'+esc(x.req.atProject || x.b.project || '—')+'</td>'+
+        '<td>'+esc(x.b.type || '—')+'</td>'+
+        '<td>'+esc(x.b.line || '—')+'</td>'+
+        '<td>'+esc(x.b.end || '—')+'</td>'+
+        '<td>'+esc(x.req.dueDate || '—')+'</td>'+
+        '<td style="color:#dc2626;font-weight:700">'+x.over+'</td>'+
+        '<td>'+esc(x.b.status || '—')+(x.b.locked?' · 已锁':'')+'</td>'+
+      '</tr>';
+    }).join('') + (rows.length > 30 ? '<tr><td colspan="7" style="color:var(--sub)">仅显示超期最严重的前 30 条，共 '+rows.length+' 条</td></tr>' : '');
+  }
+  function renderVizProject(){
+    var el = $('vizProject'); if(!el) return;
+    var map = {};
+    (state.batches||[]).forEach(function(b){
+      var p = b.project || '（无项目号）';
+      var o = map[p] || (map[p] = { n:0, locked:0, min:'', max:'', types:{} });
+      o.n++;
+      if(b.locked) o.locked++;
+      if(b.start && (!o.min || b.start < o.min)) o.min = b.start;
+      if(b.end && (!o.max || b.end > o.max)) o.max = b.end;
+      if(b.type) o.types[b.type] = (o.types[b.type]||0) + 1;
+    });
+    var arr = Object.keys(map).map(function(p){ return { proj:p, o:map[p] }; });
+    if(!arr.length){ el.innerHTML = '<div class="empty">暂无批次数据（自动排产后生成）</div>'; return; }
+    arr.sort(function(a,b){ return b.o.n - a.o.n; });
+    var maxN = arr[0].o.n;
+    var html = '<div style="display:grid;gap:9px">';
+    arr.slice(0, 12).forEach(function(x){
+      var pri = effProjPri(x.proj, '');
+      var topType = Object.keys(x.o.types).sort(function(a,b){ return x.o.types[b]-x.o.types[a]; })[0] || '—';
+      var span = (x.o.min && x.o.max) ? (x.o.min + ' ~ ' + x.o.max) : '—';
+      html += '<div style="display:grid;grid-template-columns:minmax(120px,170px) 1fr minmax(0,auto);gap:10px;align-items:center;font-size:12px">'+
+        '<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(x.proj)+'">'+esc(x.proj)+' <span class="tag">'+esc(pri)+'</span></div>'+
+        '<div style="height:16px;background:var(--panel);border-radius:4px;overflow:hidden"><div style="width:'+Math.max(Math.round(x.o.n/maxN*100),4)+'%;height:100%;background:#378ADD;border-radius:4px" title="'+x.o.n+' 批"></div></div>'+
+        '<div style="color:var(--sub);white-space:nowrap">'+x.o.n+' 批 · 锁定 '+x.o.locked+' · '+esc(span)+' · '+esc(topType)+'</div>'+
+      '</div>';
+    });
+    html += '</div>';
+    if(arr.length > 12) html += '<div class="hint" style="margin-top:8px">仅显示批次数最多的 12 个项目，共 '+arr.length+' 个项目。</div>';
+    el.innerHTML = html;
+  }
+  function renderVizFunnel(){
+    var el = $('vizFunnel'), hintEl = $('vizFunnelHint'); if(!el) return;
+    var reqs = state.requirements || [];
+    var total = reqs.length, planned = 0, locked = 0, done = 0;
+    reqs.forEach(function(r){
+      var bs = (state.batches||[]).filter(function(b){ return b.reqId === r.id; });
+      if(bs.length) planned++;
+      if(bs.some(function(b){ return b.locked; })) locked++;
+      if(bs.length && bs.every(function(b){ return isFinal(b); })) done++;
+    });
+    if(!total){ el.innerHTML = '<div class="empty">暂无需求</div>'; if(hintEl) hintEl.innerHTML = ''; return; }
+    var stages = [
+      { label:'需求提交', n: total,   color:'#378ADD' },
+      { label:'已排产',   n: planned, color:'#85B7EB' },
+      { label:'已锁定',   n: locked,  color:'#185FA5' },
+      { label:'已完成',   n: done,    color:'#16a34a' }
+    ];
+    var html = '<div style="display:grid;gap:10px">';
+    stages.forEach(function(s, i){
+      var pct = Math.round(s.n / total * 100);
+      var rate = i === 0 ? '' : '<span style="color:var(--sub)">（较上一阶段 '+(stages[i-1].n ? Math.round(s.n/stages[i-1].n*100) : 0)+'%）</span>';
+      html += '<div style="display:grid;grid-template-columns:76px 1fr minmax(0,150px);gap:10px;align-items:center;font-size:12px">'+
+        '<div style="color:var(--sub)">'+s.label+'</div>'+
+        '<div style="height:20px;background:var(--panel);border-radius:4px;overflow:hidden"><div style="width:'+Math.max(pct,2)+'%;height:100%;background:'+s.color+';border-radius:4px"></div></div>'+
+        '<div style="white-space:nowrap">'+s.n+' 条 '+rate+'</div>'+
+      '</div>';
+    });
+    html += '</div>';
+    el.innerHTML = html;
+    if(hintEl){
+      var parts = [];
+      if(total - planned > 0) parts.push('未排产 '+(total-planned)+' 条');
+      if(planned - locked > 0) parts.push('已排产未锁定 '+(planned-locked)+' 条');
+      if(locked - done > 0) parts.push('锁定未完成 '+(locked-done)+' 条');
+      hintEl.innerHTML = parts.length
+        ? ('漏斗留存：'+parts.join(' · ')+'。<b>未排产</b> = 需求已提交但没有对应批次（尚未排产或批次已被删除）；<b>已完成</b> = 该需求下所有批次均为终态（中止/失败/取消）。')
+        : '所有需求均已走完流程。';
+    }
+  }
+  function renderVizAll(){
+    renderVizCapBlock(); renderVizRisk(); renderVizProject(); renderVizFunnel();
   }
 
   // v2.20.5：产能情况（按 capKey 聚合：上限 / 时段内已用 / 剩余 / 利用率 / 超额警告）
@@ -3579,7 +3831,7 @@
     // v2.18.3：导出信息工作表（版本/时间/角色/当前筛选条件），便于追溯导出版本与时间范围
     var ui = currentUiFilters();
     var info = [['项','值'],
-      ['系统版本','v2.20.19'],
+      ['系统版本','v2.20.20'],
       ['导出时间', new Date().toISOString()],
       ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
       ['需求列表-时间列', ui.reqFiltField==='createdAt'?'提交时间':'交期'],
@@ -3664,7 +3916,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.20.19'],
+          ['系统版本','v2.20.20'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['筛选条件摘要', formatFiltInfo(ui)]];
@@ -3768,7 +4020,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.20.19'],
+          ['系统版本','v2.20.20'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['批次明细-时间列', ui.filtTField],
@@ -3807,7 +4059,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.20.19'],
+          ['系统版本','v2.20.20'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['需求列表-时间列', ui.reqFiltField==='createdAt'?'提交时间':'交期'],
