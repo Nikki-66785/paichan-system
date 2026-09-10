@@ -18,9 +18,10 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;background:linear-gradient(180deg,#f3f6fb 0,#eef2f8 320px,#eef2f8 100%);color:var(--text);font-size:13.5px;-webkit-font-smoothing:antialiased}
-  header{background:linear-gradient(120deg,#16309c 0,#1d4ed8 45%,#3f7df9 100%);color:#fff;padding:12px 22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:0 2px 14px rgba(22,48,156,.25)}
-  header h1{font-size:18px;font-weight:700;letter-spacing:.5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .logo{height:38px;width:auto;display:block;flex:none}
+  header{background:linear-gradient(120deg,#16309c 0,#1d4ed8 45%,#3f7df9 100%);color:#fff;padding:9px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;box-shadow:0 2px 14px rgba(22,48,156,.25)}
+  header h1{font-size:15.5px;font-weight:700;letter-spacing:.4px;display:flex;align-items:center;gap:9px;flex-wrap:wrap} /* v2.20.16：标题精简 18→15.5px */
+  .logo{height:30px;width:auto;display:block;flex:none} /* v2.20.16：logo 38→30px */
+  header h1 .tag{font-size:11.5px;font-weight:600;opacity:.9;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);padding:1px 8px;border-radius:10px} /* v2.20.16：版本号小徽章化 */
   .role-switch{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.22);border-radius:20px;padding:3px 8px;backdrop-filter:blur(4px)}
   .role-switch .rs-label{font-size:11px;opacity:.85;margin-right:4px}
   .role-switch button{background:none;border:none;color:#fff;opacity:.7;padding:4px 12px;border-radius:14px;font-size:12.5px;font-weight:600;cursor:pointer;transition:.15s}
@@ -51,7 +52,7 @@
   /* v2.10.0 移动端基础适配（≤640px）：紧凑间距、可换行工具栏、缩小字号与触控目标 */
   @media(max-width:640px){
     header{padding:10px 12px;gap:8px}
-    header h1{font-size:16px;flex-wrap:wrap}
+    header h1{font-size:14px;flex-wrap:wrap} /* v2.20.16：移动端同步缩小 */
     nav{padding:0 6px}
     nav button{padding:10px 10px;font-size:13px}
     main{padding:12px 10px}
@@ -208,18 +209,51 @@
   .filter-bar select{width:auto}
   .scroll-tbl{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:11px}
   .req-tbl{max-height:560px;overflow:auto}
+  /* v2.20.16：暗色模式——html.dark 类 + localStorage 记忆偏好；覆盖变量与硬编码浅色表面 */
+  html.dark{--bg:#0d1320;--card:#16203a;--line:#2b3a5c;--text:#e6edf9;--sub:#96a7c7;--pri-soft:rgba(47,107,255,.16);--shadow:0 1px 2px rgba(0,0,0,.35),0 4px 14px rgba(0,0,0,.35);--shadow-lg:0 10px 32px rgba(0,0,0,.5)}
+  html.dark body{background:linear-gradient(180deg,#0e1526 0,#0d1320 320px,#0d1320 100%);color:var(--text)}
+  html.dark header{background:linear-gradient(120deg,#101f5e 0,#1636a0 45%,#2456c4 100%);box-shadow:0 2px 14px rgba(0,0,0,.45)}
+  html.dark nav{background:rgba(15,22,40,.95);border-bottom-color:#243352}
+  html.dark nav button:hover:not(.on){color:#8ab0ff;background:rgba(47,107,255,.14)}
+  html.dark input,html.dark select,html.dark textarea{background:#101a31;color:var(--text);border-color:#31426a}
+  html.dark .btn{background:#1a2647;color:var(--text);border-color:#31426a}
+  html.dark .btn.primary,html.dark .btn.primary:hover{color:#fff}
+  html.dark th{background:#182342;color:var(--sub)}
+  html.dark tbody tr:nth-child(even){background:#141d36}
+  html.dark .card h2 .tag{background:#1a2647;color:var(--sub)}
+  html.dark .flow .fs{background:#182342}
+  html.dark .modal{background:#16203a}
+  html.dark .gantt-wrap{background:#101a31}
+  html.dark .g-label{background:#182342;color:#c6d4ef}
+  html.dark .g-head .g-label{background:#1a2647}
+  html.dark .g-line:nth-child(even){background:#121b33}
+  html.dark .g-month{border-left-color:#243352}
+  html.dark .g-week{border-left-color:#1d2b49}
+  html.dark .g-day{border-left-color:#1a2740}
+  html.dark .empty{border-color:#31426a}
+  html.dark .ref-editing input{background:#332b17}
+  html.dark .warn-banner{background:linear-gradient(180deg,#2c2410,#241d0c);border-color:#7a5a10;color:#fbd38d}
+  html.dark .info-banner{background:linear-gradient(180deg,#12234a,#101f40);border-color:#2c4a9a;color:#a9c4fb}
+  html.dark .newreq-banner{background:#12234a;border-color:#2c4a9a;color:#a9c4fb}
+  html.dark #cfmMsg{color:var(--text)!important}
+  html.dark #manualSnapNote{background:rgba(16,26,49,.9)!important;color:var(--text)!important}
+  html.dark select[data-prip]{border-color:#4b5b80}
+  html.dark ::-webkit-scrollbar-thumb{background:#33456e;border-radius:8px;border:2px solid transparent;background-clip:content-box}
+  html.dark ::-webkit-scrollbar-thumb:hover{background:#41568a;border-radius:8px;border:2px solid transparent;background-clip:content-box}
   footer{color:var(--sub);font-size:12px;text-align:center;padding:16px 0 30px}
 </style>
+<script>try{if(localStorage.getItem('pc_theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}</script> <!-- v2.20.16：暗色偏好提前应用，避免刷新闪白 -->
 </head>
 <body class="role-requester">
 
 <header>
-  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.20.15（2026-09-10：视觉精化——①卡片悬停浮起+阴影加深 ②弹窗遮罩淡入+毛玻璃、弹窗缩放弹入 ③顶栏统计数字加大加重 ④主按钮悬停浮起 ⑤甘特图批次条渐变高光+悬停浮起 ⑥状态徽章加圆点与微描边 ⑦表格行悬停过渡。纯 CSS 改动，不涉及任何业务逻辑与数据结构。）。页面版本：v2.20.14（2026-09-09：三项优化——①需求表单防丢失：填写过程自动暂存草稿到本机，误关/误刷新先弹确认，重新打开自动恢复，提交成功自动清除；②人工调整批次弹窗新增「项目优先级」下拉（项目级生效，保存后提示重新自动排产）；③使用手册更新到 v2.20.14：补齐 v2.20.9–13 功能说明（上限云共享与分年设置、优先级集中管理、体积预警面板、快照来源变化、APS/EQP 隐藏交期）并新增错误码透传、草稿恢复两条 FAQ。）。页面版本：v2.20.13（2026-09-09：三处增强——①规则参数新增「🎯 项目优先级」集中管理卡片，自动汇总需求与批次中的全部项目号，统一设 P1–P5，无需求行的项目也有入口；②产能上限区新增「复制上年/清空本年」按钮，减少分年设置重复录入；③数据管理页新增云端体积估算面板，进度条直观看批次/快照/规则占用，超 800KB 红色预警并引导删旧快照。）。页面版本：v2.20.12（2026-09-08：三处体验优化——①APS 培养基模拟灌装同设备维护一样隐藏期望完成日期字段，APS 按计划月份排产、dueDate 恒为空；②切换产能上限生效年份时若当前年份有未保存修改，先弹确认再重绘，防止误丢；③需求表格设备维护行交期列改显维护区间开始~结束日期，不再显示语义混淆的单一日期。）。页面版本：v2.20.11（2026-09-08：①修复产能上限各年份串值——上限输入区此前固定读当前年份桶且年份下拉默认选中 y-1，不跟随生效年份下拉，切换年份看到的都是同一份值、保存时还会把显示值写进所选年份桶；现下拉默认当年、切换即重绘对应年份桶再保存。②设备维护保养需求不再显示期望完成日期（交期自动=维护结束日期，仅用于排序/显示）。v2.20.10（2026-09-08：修复规则参数云同步失败——CloudBase update 对嵌套对象按点号路径合并写入，云端 rules=null（此前点过「恢复默认规则」推过 null）时再点「保存规则」会报 Cannot create field 'adcDp' in element (rules: null)，整次写入失败；现 upsert 的 update 阶段把 data 字段用 db.command.set 包裹，整字段替换不展开子路径，SDK 无该指令时退回原行为；该 bug 由 v2.20.9 错误码透传首次暴露）。v2.20.9（2026-09-07：修复产能上限 typeCaps 不上云——规则参数里填写的各生产类型上限批次数此前只存本机浏览器（getPlan 未携带 typeCaps），现纳入 plan_state 云端同步（getPlan 返回带 typeCaps、applyPlan 读取），生产计划填写的上限全员可见可共享；同步失败提示升级为透传具体错误码（onPushFail 收到 reason 并拼接展示），便于定位「计划写入失败」根因；取消每次自动排产后自动生成快照——快照来源仅剩定期（每 2 周）与人工两种，历史 auto 快照保留展示）。v2.20.8（2026-09-07：项目优先级智能排产——生产计划可在需求表格优先级列按项目设定 P1–P5 五档优先级（行内下拉，同项目全部需求联动，云端 plan_state 同步全员可见，需求方仍不可自填）；自动排产排序键升级为「优先级→交期→提交时间」（交期早先排，无交期排最后）；旧值兼容映射 高→P2/中→P3/低→P4；导出优先级列输出生效值。v2.20.7（2026-09-07：产能情况表备注列补全——ADC DP / CM DP·C7 / CM DP·SJ2 三行均标注 batch.line 归并规则，并注明冻干放大测试/APS 按此线归入；上限配置与产能分析收敛为 10 行口径）。v2.20.6（2026-09-07：产能分析/上限口径调整——冻干放大测试与 APS 不再作为独立 capKey，改为按 batch.line 归入对应产线（SJ2 ADC DP→ADC DP、C7CM DP→CM DP·C7、SJ2CM DP→CM DP·SJ2），规则参数上限配置收敛为 10 行）。v2.20.5（2026-09-07：新增「各生产类型上限批次数」+「产能情况」分析——规则参数面板可按 capKey（CB/Mab/Mab DS：SJ1/Mab DS：SJ2/ADC DS/ADC DP/CM DP·C7/CM DP·SJ2/参比品/EQP）填写上限批次数，留空=无上限；排产分析面板新增按年份或自定义起止的产能情况表，显示已用/剩余/利用率，超额行整行变红，CB 行=MCB+WCB 之和，EQP 行=设备维护+设备验证+贴签包装+包装 之和）。v2.20.4（2026-09-07：需求录入表单两日期字段与筛选框改为上下堆叠布局，不再并排一行；结构拆为独立 .form-row / .toolbar 纵向排列，元素 ID 全部保留）。v2.20.2（2026-09-07：钉钉新需求固定@生产计划手机号 18918901089，不再动态查需求方；触发时间/窗口改为北京时区显示（此前显示成 UTC）。v2.20.0（2026-09-04：钉钉通知@需求方——不再@全员，通知按 CloudBase 账号手机号精确提醒需求方本人；需求记录新增 reqEmail 字段，查不到手机号时不@（消息照发）。v2.19.2（2026-09-04：新需求提交改为立即推送钉钉——不再走 1h 合并窗，生产计划可第一时间看到新需求；锁定/调整/删除/终态仍走合并窗）。v2.19.1（2026-09-04：钉钉群通知新增 1h 合并窗——同批次 1h 内多次变动合并成一封汇总消息推群；前端 setTimeout 调度 + localStorage 持久化兜底；需 Cloudflare Pages Functions KV bindings 绑定 MAIL_KV，未绑定时退回 v2.19.0 立即发）。v2.19.0：钉钉群机器人通知——生产计划锁定/人工调整/删除/终态四种批次变动，以及新需求提交与历史计划导入摘要，均自动推送到钉钉「排产通知群」；按埋点立即发送。v2.18.8：修复 watch 路径下需求删除不传播给其他在线用户的问题——云端权威裁剪后 A 删的某条 B 也能立即看到；明确生产计划可删任意需求/批次、需求方仅可删自己录入的需求，两者均不互相影响账号登录态与角色分配。v2.18.7：顶栏新增「📖 使用手册」按钮，所有角色可见，点击新窗口打开 help.html；v2.18.6：APS 排产提醒移至需求录入页末尾——避免顶部 banner 与交期/新需求提醒互相挤压；v2.18.5：权限管理可删除账号——移除角色分配后该账号恢复为「读者」仅预览，白名单管理员与当前登录账号不可删除。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.20.15</span></h1>
+  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>🧬 临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.20.16（2026-09-10：三项优化——①顶栏标题精简：主标题字号与 logo 缩小、顶栏内边距收紧、版本号改小徽章样式，标题不再喧宾夺主；②暗色模式：顶栏新增「🌙 暗色」切换按钮，全站深色配色，偏好保存在本机、刷新后保持；③需求表格新增「📋 复制」按钮：一键把已有需求全部信息回填到录入表单，微调后即可作为新需求提交，重复录入不再从头填写。）。页面版本：v2.20.15（2026-09-10：视觉精化——①卡片悬停浮起+阴影加深 ②弹窗遮罩淡入+毛玻璃、弹窗缩放弹入 ③顶栏统计数字加大加重 ④主按钮悬停浮起 ⑤甘特图批次条渐变高光+悬停浮起 ⑥状态徽章加圆点与微描边 ⑦表格行悬停过渡。纯 CSS 改动，不涉及任何业务逻辑与数据结构。）。页面版本：v2.20.14（2026-09-09：三项优化——①需求表单防丢失：填写过程自动暂存草稿到本机，误关/误刷新先弹确认，重新打开自动恢复，提交成功自动清除；②人工调整批次弹窗新增「项目优先级」下拉（项目级生效，保存后提示重新自动排产）；③使用手册更新到 v2.20.14：补齐 v2.20.9–13 功能说明（上限云共享与分年设置、优先级集中管理、体积预警面板、快照来源变化、APS/EQP 隐藏交期）并新增错误码透传、草稿恢复两条 FAQ。）。页面版本：v2.20.13（2026-09-09：三处增强——①规则参数新增「🎯 项目优先级」集中管理卡片，自动汇总需求与批次中的全部项目号，统一设 P1–P5，无需求行的项目也有入口；②产能上限区新增「复制上年/清空本年」按钮，减少分年设置重复录入；③数据管理页新增云端体积估算面板，进度条直观看批次/快照/规则占用，超 800KB 红色预警并引导删旧快照。）。页面版本：v2.20.12（2026-09-08：三处体验优化——①APS 培养基模拟灌装同设备维护一样隐藏期望完成日期字段，APS 按计划月份排产、dueDate 恒为空；②切换产能上限生效年份时若当前年份有未保存修改，先弹确认再重绘，防止误丢；③需求表格设备维护行交期列改显维护区间开始~结束日期，不再显示语义混淆的单一日期。）。页面版本：v2.20.11（2026-09-08：①修复产能上限各年份串值——上限输入区此前固定读当前年份桶且年份下拉默认选中 y-1，不跟随生效年份下拉，切换年份看到的都是同一份值、保存时还会把显示值写进所选年份桶；现下拉默认当年、切换即重绘对应年份桶再保存。②设备维护保养需求不再显示期望完成日期（交期自动=维护结束日期，仅用于排序/显示）。v2.20.10（2026-09-08：修复规则参数云同步失败——CloudBase update 对嵌套对象按点号路径合并写入，云端 rules=null（此前点过「恢复默认规则」推过 null）时再点「保存规则」会报 Cannot create field 'adcDp' in element (rules: null)，整次写入失败；现 upsert 的 update 阶段把 data 字段用 db.command.set 包裹，整字段替换不展开子路径，SDK 无该指令时退回原行为；该 bug 由 v2.20.9 错误码透传首次暴露）。v2.20.9（2026-09-07：修复产能上限 typeCaps 不上云——规则参数里填写的各生产类型上限批次数此前只存本机浏览器（getPlan 未携带 typeCaps），现纳入 plan_state 云端同步（getPlan 返回带 typeCaps、applyPlan 读取），生产计划填写的上限全员可见可共享；同步失败提示升级为透传具体错误码（onPushFail 收到 reason 并拼接展示），便于定位「计划写入失败」根因；取消每次自动排产后自动生成快照——快照来源仅剩定期（每 2 周）与人工两种，历史 auto 快照保留展示）。v2.20.8（2026-09-07：项目优先级智能排产——生产计划可在需求表格优先级列按项目设定 P1–P5 五档优先级（行内下拉，同项目全部需求联动，云端 plan_state 同步全员可见，需求方仍不可自填）；自动排产排序键升级为「优先级→交期→提交时间」（交期早先排，无交期排最后）；旧值兼容映射 高→P2/中→P3/低→P4；导出优先级列输出生效值。v2.20.7（2026-09-07：产能情况表备注列补全——ADC DP / CM DP·C7 / CM DP·SJ2 三行均标注 batch.line 归并规则，并注明冻干放大测试/APS 按此线归入；上限配置与产能分析收敛为 10 行口径）。v2.20.6（2026-09-07：产能分析/上限口径调整——冻干放大测试与 APS 不再作为独立 capKey，改为按 batch.line 归入对应产线（SJ2 ADC DP→ADC DP、C7CM DP→CM DP·C7、SJ2CM DP→CM DP·SJ2），规则参数上限配置收敛为 10 行）。v2.20.5（2026-09-07：新增「各生产类型上限批次数」+「产能情况」分析——规则参数面板可按 capKey（CB/Mab/Mab DS：SJ1/Mab DS：SJ2/ADC DS/ADC DP/CM DP·C7/CM DP·SJ2/参比品/EQP）填写上限批次数，留空=无上限；排产分析面板新增按年份或自定义起止的产能情况表，显示已用/剩余/利用率，超额行整行变红，CB 行=MCB+WCB 之和，EQP 行=设备维护+设备验证+贴签包装+包装 之和）。v2.20.4（2026-09-07：需求录入表单两日期字段与筛选框改为上下堆叠布局，不再并排一行；结构拆为独立 .form-row / .toolbar 纵向排列，元素 ID 全部保留）。v2.20.2（2026-09-07：钉钉新需求固定@生产计划手机号 18918901089，不再动态查需求方；触发时间/窗口改为北京时区显示（此前显示成 UTC）。v2.20.0（2026-09-04：钉钉通知@需求方——不再@全员，通知按 CloudBase 账号手机号精确提醒需求方本人；需求记录新增 reqEmail 字段，查不到手机号时不@（消息照发）。v2.19.2（2026-09-04：新需求提交改为立即推送钉钉——不再走 1h 合并窗，生产计划可第一时间看到新需求；锁定/调整/删除/终态仍走合并窗）。v2.19.1（2026-09-04：钉钉群通知新增 1h 合并窗——同批次 1h 内多次变动合并成一封汇总消息推群；前端 setTimeout 调度 + localStorage 持久化兜底；需 Cloudflare Pages Functions KV bindings 绑定 MAIL_KV，未绑定时退回 v2.19.0 立即发）。v2.19.0：钉钉群机器人通知——生产计划锁定/人工调整/删除/终态四种批次变动，以及新需求提交与历史计划导入摘要，均自动推送到钉钉「排产通知群」；按埋点立即发送。v2.18.8：修复 watch 路径下需求删除不传播给其他在线用户的问题——云端权威裁剪后 A 删的某条 B 也能立即看到；明确生产计划可删任意需求/批次、需求方仅可删自己录入的需求，两者均不互相影响账号登录态与角色分配。v2.18.7：顶栏新增「📖 使用手册」按钮，所有角色可见，点击新窗口打开 help.html；v2.18.6：APS 排产提醒移至需求录入页末尾——避免顶部 banner 与交期/新需求提醒互相挤压；v2.18.5：权限管理可删除账号——移除角色分配后该账号恢复为「读者」仅预览，白名单管理员与当前登录账号不可删除。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.20.16</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
     <button data-role="planner">🏭 生产计划</button>
   </div>
+  <button class="help-btn" id="btnTheme" title="切换暗色/亮色模式（偏好保存在本机，刷新后保持）">🌙 暗色</button> <!-- v2.20.16：暗色模式开关 -->
   <button class="help-btn" id="btnHelp" title="使用手册：在新窗口打开系统操作说明（所有角色均可查看）">📖 使用手册</button>
   <button class="perm-btn" id="btnPermMgmt" title="权限管理：给各账号分配「读者 / 需求方 / 生产计划」角色（仅生产计划角色可见）" style="display:none">🛡️ 权限管理</button>
   <div class="stats">
@@ -788,7 +822,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.20.15（视觉精化：卡片/按钮/甘特条悬停浮起；弹窗动画；徽章圆点；统计数字加大）。v2.20.14（优化：需求表单草稿防丢失；人工调整弹窗可设项目优先级；使用手册更新至 v2.20.14）。v2.20.13（增强：项目优先级集中管理卡片；上限区复制上年/清空本年；数据管理页云端体积估算面板）。v2.20.12（体验优化：APS 隐藏期望完成日期；切年份未保存上限先确认；设备维护行交期列显维护区间）。v2.20.11（修复产能上限各年份串值：上限输入区改为跟随生效年份下拉分年显示与保存，下拉默认当年；设备维护保养需求不再显示期望完成日期，交期自动=维护结束日期）·v2.20.10（修复规则参数云同步失败：CloudBase update 对嵌套对象按点号路径合并写入，云端 rules 为 null 时再保存规则报 Cannot create field 导致整次写入失败，upsert 的 data 字段改用 db.command.set 整体替换，不再展开子路径·cloud.js?v=2202）·v2.20.9（修复产能上限 typeCaps 上云：规则参数上限全员共享；同步失败提示透传错误码；自动排产不再自动生成快照、历史快照保留展示；项目优先级智能排产：生产计划按项目设 P1–P5，自动排产按优先级→交期→提交时间排序；产能情况表备注补全：ADC DP/CM DP·C7/CM DP·SJ2 标注 batch.line 归并+冻干/APS 归入；冻干放大测试/APS 按 batch.line 归产线；新需求固定@生产计划手机号，触发时间按北京时区显示；各生产类型上限批次数+产能分析新增；批次变动合并窗不变·cloud.js?v=2201·mail.js?v=2202·scheduling.js?v=2208）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.20.16（优化：顶栏标题精简——主标题与 logo 缩小、内边距收紧；暗色模式——顶栏「🌙 暗色」一键切换、偏好本机记忆；需求表格「📋 复制」按钮——回填表单快速重复录入）。v2.20.15（视觉精化：卡片/按钮/甘特条悬停浮起；弹窗动画；徽章圆点；统计数字加大）。v2.20.14（优化：需求表单草稿防丢失；人工调整弹窗可设项目优先级；使用手册更新至 v2.20.14）。v2.20.13（增强：项目优先级集中管理卡片；上限区复制上年/清空本年；数据管理页云端体积估算面板）。v2.20.12（体验优化：APS 隐藏期望完成日期；切年份未保存上限先确认；设备维护行交期列显维护区间）。v2.20.11（修复产能上限各年份串值：上限输入区改为跟随生效年份下拉分年显示与保存，下拉默认当年；设备维护保养需求不再显示期望完成日期，交期自动=维护结束日期）·v2.20.10（修复规则参数云同步失败：CloudBase update 对嵌套对象按点号路径合并写入，云端 rules 为 null 时再保存规则报 Cannot create field 导致整次写入失败，upsert 的 data 字段改用 db.command.set 整体替换，不再展开子路径·cloud.js?v=2202）·v2.20.9（修复产能上限 typeCaps 上云：规则参数上限全员共享；同步失败提示透传错误码；自动排产不再自动生成快照、历史快照保留展示；项目优先级智能排产：生产计划按项目设 P1–P5，自动排产按优先级→交期→提交时间排序；产能情况表备注补全：ADC DP/CM DP·C7/CM DP·SJ2 标注 batch.line 归并+冻干/APS 归入；冻干放大测试/APS 按 batch.line 归产线；新需求固定@生产计划手机号，触发时间按北京时区显示；各生产类型上限批次数+产能分析新增；批次变动合并窗不变·cloud.js?v=2201·mail.js?v=2202·scheduling.js?v=2208）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -1679,6 +1713,17 @@
     window.scrollTo({top:0,behavior:'smooth'});
     toast('正在编辑需求 '+r.atProject+'，修改后点「保存修改」');
   }
+  // v2.20.16：复制需求——复用 editReq 回填表单，但退出编辑态，提交即为新增
+  function copyReq(id){
+    if(isReader()){ toast('📖 读者权限仅可预览，无法复制需求'); return; }
+    var r = state.requirements.find(function(x){return x.id===id;});
+    if(!r) return;
+    if($('btnAddReq').dataset.editId){ toast('当前正在编辑其他需求，请先「保存修改」或「清空表单」再复制'); return; }
+    editReq(id);
+    $('btnAddReq').dataset.editId='';
+    $('btnAddReq').textContent='➕ 添加需求';
+    toast('📋 已复制需求「'+(r.henliusProject||r.atProject||r.type)+'」到表单，可修改后点「➕ 添加需求」提交为新需求', 5000);
+  }
   function submitForm(){
     var editId = $('btnAddReq').dataset.editId;
     if(editId){
@@ -2143,8 +2188,10 @@
         '<td><span class="badge '+stBadge+'">'+st+'</span></td>'+
         // v2.18.3：读者与需求方（非生产计划）渲染一致的编辑/删除按钮——点击写操作由对应函数入口 isReader() toast 拦截，无「👀 只读」占位
         '<td>'+(isPlanner()
-          ? '<button class="btn sm danger" data-act="del" data-id="'+r.id+'" title="生产计划角色可删除任意需求">删除</button>'+doneBtn
+          ? '<button class="btn sm" data-act="copy" data-id="'+r.id+'" title="复制该需求全部信息到上方表单，确认或修改后点「➕ 添加需求」即提交为新需求">📋 复制</button> '+
+            '<button class="btn sm danger" data-act="del" data-id="'+r.id+'" title="生产计划角色可删除任意需求">删除</button>'+doneBtn
           : '<button class="btn sm" data-act="edit" data-id="'+r.id+'">编辑</button> '+
+            '<button class="btn sm" data-act="copy" data-id="'+r.id+'" title="复制该需求全部信息到上方表单，确认或修改后点「➕ 添加需求」即提交为新需求">📋 复制</button> '+
             (canDelReq(r)?'<button class="btn sm danger" data-act="del" data-id="'+r.id+'" title="仅需求人本人可删除">删除</button>'
               :'<span class="hint" style="font-size:11px;cursor:help;border-bottom:1px dotted" data-act="delhint" data-id="'+r.id+'" title="删除方法：① 用该需求人的账号登录（需求人自动绑定登录账号）；② 或切换到「🏭 生产计划」角色后可删除任意需求">🔒 仅'+esc(r.requester)+'可删</span>')+doneBtn)+'</td>';
       tb.appendChild(tr);
@@ -3522,7 +3569,7 @@
     // v2.18.3：导出信息工作表（版本/时间/角色/当前筛选条件），便于追溯导出版本与时间范围
     var ui = currentUiFilters();
     var info = [['项','值'],
-      ['系统版本','v2.20.15'],
+      ['系统版本','v2.20.16'],
       ['导出时间', new Date().toISOString()],
       ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
       ['需求列表-时间列', ui.reqFiltField==='createdAt'?'提交时间':'交期'],
@@ -3607,7 +3654,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.20.15'],
+          ['系统版本','v2.20.16'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['筛选条件摘要', formatFiltInfo(ui)]];
@@ -3711,7 +3758,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.20.15'],
+          ['系统版本','v2.20.16'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['批次明细-时间列', ui.filtTField],
@@ -3750,7 +3797,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.20.15'],
+          ['系统版本','v2.20.16'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['需求列表-时间列', ui.reqFiltField==='createdAt'?'提交时间':'交期'],
@@ -3855,10 +3902,18 @@
       $('f_requester').value = state.user || ''; // v2.14.0：需求人绑定登录账号——取消编辑后恢复为当前账号（本地模式为空）
       $('btnAddReq').dataset.editId=''; $('btnAddReq').textContent='➕ 添加需求';
     });
+    // v2.20.16：暗色模式切换（html.dark + localStorage 记忆）
+    if(document.documentElement.classList.contains('dark')) $('btnTheme').textContent='☀️ 亮色';
+    $('btnTheme').addEventListener('click', function(){
+      var dark = document.documentElement.classList.toggle('dark');
+      try{ localStorage.setItem('pc_theme', dark ? 'dark' : 'light'); }catch(e){}
+      this.textContent = dark ? '☀️ 亮色' : '🌙 暗色';
+    });
     $('reqTable').addEventListener('click', function(ev){
       var btn = ev.target.closest('[data-act]');
       if(!btn) return;
       if(btn.dataset.act==='edit') editReq(btn.dataset.id);
+      else if(btn.dataset.act==='copy') copyReq(btn.dataset.id); // v2.20.16：复制需求到表单
       else if(btn.dataset.act==='deldone') delDoneReq(btn.dataset.id); // v2.18.0：仅删需求记录，批次保留
       else if(btn.dataset.act==='delhint'){
         var rr = state.requirements.find(function(x){return x.id===btn.dataset.id;});
