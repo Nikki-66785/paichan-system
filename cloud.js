@@ -6,6 +6,9 @@
  *   v2.20.9 upsert 失败返回 {fail:msg} + doPushPlan 判定 ok===true + onPushFail(reason) 透传错误码
  *   v2.20.10 upsert update 阶段 data 字段改用 db.command.set 整体替换——修复云端 rules=null 时
  *           再保存规则报 Cannot create field 'adcDp' in element (rules: null) 的深合并写入失败
+ *   v2.20.19 需求删除墓碑（del_tomb 集合）：首次同步时「本地有、云端无」不再一律补传——
+ *           命中墓碑的本地残留直接清理，修复"删过的需求被离线设备的旧缓存重新推上云端"的复活问题；
+ *           删除云端失败改为明确提示；清空全部/导入覆盖时一并清空墓碑
  *
  * 作用：让「需求填报」与「排产计划」在多人浏览器之间实时共享。
  *   · requests    集合：需求（每条需求一个文档，多人提交互不覆盖）
@@ -28,6 +31,7 @@
   var REQ_COLL = 'requests';   // 需求集合
   var PLAN_COLL = 'plan_state'; // 排产计划集合
   var PERM_COLL = 'permissions'; // v2.15.0 账号角色集合（_id=邮箱小写，role=reader/requester/planner）
+  var TOMB_COLL = 'del_tomb';  // v2.20.19 需求删除墓碑集合（_id=需求 id，data={id,deletedAt,by}）——防已删需求被旧缓存复活
   var PLAN_ID = 'main';
   // v2.13.0/v2.15.0 生产计划白名单：列表内邮箱恒为「生产计划」角色（可调整/锁定/删除/清空/导入/权限管理）；
   // 其他邮箱按 permissions 集合分配（v2.15.1 起未登记/匿名默认「读者」，新账号须管理员在权限管理页分配角色），可用 CLOUD_CONFIG.planAdmins 追加。
@@ -40,6 +44,9 @@
   var saveTimer = null;
   var hook = null;      // 主逻辑注入的读写回调
   var statusEl = null;
+  // v2.20.19 墓碑缓存：需求 id → 删除时间（首次同步时拉取，本地删除时即时登记）
+  var tombstones = {};
+  var tombWarned = false; // 墓碑写入失败只提示一次（避免每次删除都弹）
 
   function enabled() {
     return !!(CFG.envId && typeof window.cloudbase !== 'undefined' && window.cloudbase.init);
@@ -393,8 +400,11 @@
     var cloudById = {}, localById = {};
     cloudReqs.forEach(function (d) { if (d && d.data && d.data.id) cloudById[d.data.id] = d.data; });
     localReqs.forEach(function (r) { localById[r.id] = r; });
+    // v2.20.19 墓碑：只在首次同步生效——命中墓碑＝该需求云端已删，本地这条属旧缓存残留，必须丢弃且不得补传
+    var isDead = function (id) { return !!(initial && tombstones[id]); };
+    var deadLocal = initial ? localReqs.filter(function (r) { return isDead(r.id); }) : [];
     var merged = initial
-      ? localReqs.map(function (r) { return cloudById[r.id] || r; })
+      ? localReqs.filter(function (r) { return !isDead(r.id); }).map(function (r) { return cloudById[r.id] || r; })
       : localReqs.filter(function (r) { return cloudById[r.id]; })
                   .map(function (r) { return cloudById[r.id]; });
     var newIds = [];
@@ -402,7 +412,8 @@
       if (!localById[id]) { merged.push(cloudById[id]); newIds.push(id); }
     });
     // v2.18.8：watch 路径下"本地有云端无"=云端已删，不再补传；只在 initial 时识别为待补传的新增
-    var localOnly = initial ? localReqs.filter(function (r) { return !cloudById[r.id]; }) : [];
+    // v2.20.19：localOnly 再排掉墓碑命中项——已删需求不得因本机旧缓存重新上云（复活根因）
+    var localOnly = initial ? localReqs.filter(function (r) { return !cloudById[r.id] && !isDead(r.id); }) : [];
 
     if (hook.applyReqs) hook.applyReqs(merged);
     // 共享收尾：保存本地 + 刷新界面 + 首次同步补传（dirty 分支异步确认后也要执行，故提取为函数）
@@ -416,6 +427,10 @@
         localOnly.forEach(function (r) { pushReq(r); });                  // 补传本地独有（幂等）
         if ((!cloudPlan || !cloudPlan.data) && hook.getPlan) pushPlan();  // 云端无计划 → 初始化
         if (localOnly.length) toast('已同步云端需求 ' + cloudReqs.length + ' 条，并补传本地新增 ' + localOnly.length + ' 条');
+        if (deadLocal.length) {                                            // v2.20.19：清理墓碑命中的旧缓存残留
+          console.log('[cloud] 已清理云端已删除的本地残留需求 ' + deadLocal.length + ' 条');
+          toast('🧹 已清理 ' + deadLocal.length + ' 条云端已删除的本地残留需求');
+        }
       } else if (newIds.length) {
         toast('📥 收到其他用户新需求 ' + newIds.length + ' 条');
         // 主逻辑弹「一键排产」提示条（不自动重排，由人确认后触发）
@@ -449,8 +464,15 @@
       getAll(REQ_COLL),
       db.collection(PLAN_COLL).doc(PLAN_ID).get()
         .then(function (r) { return (r && r.data) || null; })
-        .catch(function () { return null; })
+        .catch(function () { return null; }),
+      // v2.20.19：删除墓碑（集合未建/读取失败 → 视为空，降级为旧行为，不阻断主同步）
+      getAll(TOMB_COLL).catch(function () { return []; })
     ]).then(function (res) {
+      tombstones = {};
+      (res[2] || []).forEach(function (d) {
+        var id = (d && d.data && d.data.id) || (d && d._id);
+        if (id) tombstones[id] = (d.data && d.data.deletedAt) || 0;
+      });
       applyCloudReqs(res[0] || [], res[1] || null, true);
       // 登记云端计划版本：初次 watch 快照会立即推送当前文档，据此跳过（避免打开页面误报「计划已更新」）
       if (res[1] && res[1].updatedAt) rememberPlanVersion(res[1].updatedAt);
@@ -595,20 +617,56 @@
     if (!ready || !r || !r.id) return;
     upsert(REQ_COLL, r.id, { data: r, updatedAt: Date.now() }, '需求');
   }
+  // v2.20.19：墓碑写入——集合未建时自动补建重试一次；仍失败则明确提示（每会话一次），不再静默
+  function writeTomb(id) {
+    var payload = { data: { id: id, deletedAt: Date.now(), by: curEmail || '' }, updatedAt: Date.now() };
+    return upsert(TOMB_COLL, id, payload, '需求墓碑').then(function (r) {
+      if (r && r.fail && /COLLECTION_NOT_EXIST|not\s*exist|不存在/i.test(r.fail)) {
+        return Promise.resolve()
+          .then(function () { return db.createCollection(TOMB_COLL); })
+          .catch(function () { /* 创建被拒不影响后续重试 */ })
+          .then(function () { return upsert(TOMB_COLL, id, payload, '需求墓碑'); });
+      }
+      return r;
+    }).then(function (r) {
+      if (r && r.fail) {
+        console.warn('[cloud] 墓碑写入失败：', r.fail);
+        if (!tombWarned) { tombWarned = true; toast('⚠️ 删除记录同步失败（' + r.fail + '）：其他设备可能仍看到该需求，请检查 CloudBase 的 del_tomb 集合'); }
+      }
+      return r;
+    }).catch(function (e) {
+      console.warn('[cloud] 墓碑写入异常：', e);
+      if (!tombWarned) { tombWarned = true; toast('⚠️ 删除记录同步失败：' + shortErr(e)); }
+    });
+  }
   function delReqCloud(id) {
     if (!ready || !id) return;
-    db.collection(REQ_COLL).doc(id).remove()
-      .catch(function (e) { console.warn('[cloud] 需求删除失败：', e); });
+    tombstones[id] = Date.now(); // 本会话立即生效：防止紧随其后的同步把刚删的又拉回来
+    return db.collection(REQ_COLL).doc(id).remove()
+      .then(function () { return writeTomb(id); })
+      .catch(function (e) {
+        delete tombstones[id];
+        console.warn('[cloud] 需求删除失败：', e);
+        toast('⚠️ 云端删除失败：' + shortErr(e) + '（该需求可能仍存在于其他设备）');
+      });
   }
   // v2.11.0 ⑲：清空云端全部需求文档（「清空全部数据」/「导入覆盖」时调用，防止旧需求下次打开时「复活」）
+  // v2.20.19：墓碑一并清空——重置类操作不应让旧墓碑阻止随后重新导入相同 id 的需求
   function delAllReqs() {
     if (!ready) return;
+    tombstones = {};
     getAll(REQ_COLL).then(function (rows) {
       (rows || []).forEach(function (d) {
         if (d && d._id) db.collection(REQ_COLL).doc(d._id).remove()
           .catch(function (e) { console.warn('[cloud] 云端需求删除失败：', d._id, e); });
       });
     }).catch(function (e) { console.warn('[cloud] 云端需求集合读取失败（清空未完成）：', e); });
+    getAll(TOMB_COLL).then(function (rows) {
+      (rows || []).forEach(function (d) {
+        if (d && d._id) db.collection(TOMB_COLL).doc(d._id).remove()
+          .catch(function (e) { console.warn('[cloud] 云端墓碑删除失败：', d._id, e); });
+      });
+    }).catch(function () { /* 墓碑集合未建/读取失败 → 视为无墓碑，忽略 */ });
   }
   // v2.11.0 ㉑：操作审计日志上云（op_logs 集合，每条一文档；失败静默降级为仅本机记录）
   // v2.12.0 方案A：邮箱登录后自动附带 by（操作者邮箱），审计可追溯到人；匿名登录时无 by
