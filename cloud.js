@@ -9,6 +9,10 @@
  *   v2.20.19 需求删除墓碑（del_tomb 集合）：首次同步时「本地有、云端无」不再一律补传——
  *           命中墓碑的本地残留直接清理，修复"删过的需求被离线设备的旧缓存重新推上云端"的复活问题；
  *           删除云端失败改为明确提示；清空全部/导入覆盖时一并清空墓碑
+ *   v2.20.26 需求改为「软删除」（主应用负责把 r.del 标记随 pushReq 上云，条目不再物理移除）——
+ *           本地条目始终存在 → 首次同步的 localOnly 补传判定永远不会把已删需求误判成「新增」，从根上断掉复活；
+ *           墓碑降级为「历史残留清理」的兼容层：云端补入分支也过墓碑过滤（修复此前只过滤本地分支的漏网）；
+ *           delReqCloud 在云端未就绪时不再静默返回；墓碑读取失败提示一次（此前完全静默）
  *
  * 作用：让「需求填报」与「排产计划」在多人浏览器之间实时共享。
  *   · requests    集合：需求（每条需求一个文档，多人提交互不覆盖）
@@ -47,6 +51,7 @@
   // v2.20.19 墓碑缓存：需求 id → 删除时间（首次同步时拉取，本地删除时即时登记）
   var tombstones = {};
   var tombWarned = false; // 墓碑写入失败只提示一次（避免每次删除都弹）
+  var notReadyWarned = false; // v2.20.26：云端未就绪时的删除提示，每会话一次
 
   function enabled() {
     return !!(CFG.envId && typeof window.cloudbase !== 'undefined' && window.cloudbase.init);
@@ -409,7 +414,10 @@
                   .map(function (r) { return cloudById[r.id]; });
     var newIds = [];
     Object.keys(cloudById).forEach(function (id) {
-      if (!localById[id]) { merged.push(cloudById[id]); newIds.push(id); }
+      if (localById[id]) return;
+      // v2.20.26：云端仍有文档但命中墓碑（历史删除残留 / 被旧缓存补传回来的）→ 不补入列表，避免已删需求复活
+      if (isDead(id)) { console.log('[cloud] 跳过已删除需求的云端残留：' + id); return; }
+      merged.push(cloudById[id]); newIds.push(id);
     });
     // v2.18.8：watch 路径下"本地有云端无"=云端已删，不再补传；只在 initial 时识别为待补传的新增
     // v2.20.19：localOnly 再排掉墓碑命中项——已删需求不得因本机旧缓存重新上云（复活根因）
@@ -466,7 +474,12 @@
         .then(function (r) { return (r && r.data) || null; })
         .catch(function () { return null; }),
       // v2.20.19：删除墓碑（集合未建/读取失败 → 视为空，降级为旧行为，不阻断主同步）
-      getAll(TOMB_COLL).catch(function () { return []; })
+      // v2.20.26：降级不再完全静默——提示一次，便于发现「集合未建」导致的删除记录缺失
+      getAll(TOMB_COLL).catch(function (e) {
+        console.warn('[cloud] 删除墓碑读取失败（按空处理）：', e);
+        if (!tombWarned) { tombWarned = true; toast('ℹ️ 未启用删除记录集合（del_tomb）：不影响使用，仅云端历史遗留的已删需求无法被自动过滤'); }
+        return [];
+      })
     ]).then(function (res) {
       tombstones = {};
       (res[2] || []).forEach(function (d) {
@@ -640,7 +653,12 @@
     });
   }
   function delReqCloud(id) {
-    if (!ready || !id) return;
+    if (!id) return;
+    // v2.20.26：云端未就绪时不再静默返回——否则这次删除只在本机生效，其他设备仍会看到
+    if (!ready) {
+      if (!notReadyWarned) { notReadyWarned = true; toast('⚠️ 云端未就绪：本次删除未同步到云端，其他设备可能仍看到该需求'); }
+      return;
+    }
     tombstones[id] = Date.now(); // 本会话立即生效：防止紧随其后的同步把刚删的又拉回来
     return db.collection(REQ_COLL).doc(id).remove()
       .then(function () { return writeTomb(id); })
