@@ -13,6 +13,13 @@
  *           本地条目始终存在 → 首次同步的 localOnly 补传判定永远不会把已删需求误判成「新增」，从根上断掉复活；
  *           墓碑降级为「历史残留清理」的兼容层：云端补入分支也过墓碑过滤（修复此前只过滤本地分支的漏网）；
  *           delReqCloud 在云端未就绪时不再静默返回；墓碑读取失败提示一次（此前完全静默）
+ *   v2.20.27 强制登录（权限收紧）：
+ *           · 新增界面锁定 lockUI/unlockUI——未登录时不渲染主界面（body.pc-locked，登录层是唯一可见内容），
+ *             加锁只发生在「确定需要登录」与「已登录但角色未判定」两个瞬间，其余出口一律不加锁（fail-open 不锁死）；
+ *           · 移除匿名通道（控制台侧「匿名登录」本就未开启，原按钮点了必然报错）；
+ *           · 角色判定改用 where({_id}) 查询 permissions，区分「未登记 → pending（须管理员分配，主界面保持锁定）」
+ *             与「集合缺失/无权限/网络错误 → 降级读者」，失败模式永远是降级而非拦截；
+ *           · 角色确定前不解锁、判定超时（10s）按最低权限解锁，避免网络挂起把用户永久锁在门外
  *
  * 作用：让「需求填报」与「排产计划」在多人浏览器之间实时共享。
  *   · requests    集合：需求（每条需求一个文档，多人提交互不覆盖）
@@ -20,12 +27,13 @@
  *   · op_logs     集合：操作审计日志（v2.11.0 起上云，v2.12.0 起附带操作者邮箱）
  *   · permissions 集合：账号角色分配（v2.15.0，_id=邮箱小写，role=reader/requester/planner）
  * 各集合均有实时监听（watch）：他人提交需求、调整/锁定排产、管理员改角色，几秒内自动同步，无需刷新。
- * 未配置 envId / SDK 未加载 / 网络不可用 → 自动降级为纯本地模式（localStorage）。
+ * 未配置 envId / SDK 未加载 / 网络不可用 → 自动降级为纯本地模式（localStorage），此时不强制登录。
  *
  * 接入步骤（详见「数据安全加固指南.md」方案A）：
  *   1. 腾讯云控制台开通 CloudBase 环境（免费额度即可）
- *   2. 环境 → 身份验证 → 开启「邮箱登录」+ 创建团队成员用户（保留匿名登录作过渡）
+ *   2. 环境 → 身份验证 → 开启「邮箱登录」+ 创建团队成员用户（v2.20.27 起匿名登录不再使用，保持关闭即可）
  *   3. 数据库 → 创建集合 requests、plan_state、op_logs、permissions → 权限规则「auth != null 可读写」
+ *      （permissions 需可读：角色判定依赖它；查不到记录会被判为「未开通」，须在权限管理页分配角色）
  *   4. 把环境 ID 填到 排产系统.html 顶部 window.CLOUD_CONFIG.envId
  * ===================================================== */
 (function () {
@@ -40,7 +48,7 @@
   // v2.13.0/v2.15.0 生产计划白名单：列表内邮箱恒为「生产计划」角色（可调整/锁定/删除/清空/导入/权限管理）；
   // 其他邮箱按 permissions 集合分配（v2.15.1 起未登记/匿名默认「读者」，新账号须管理员在权限管理页分配角色），可用 CLOUD_CONFIG.planAdmins 追加。
   var PLAN_ADMINS = ['shunchao_zhang@henlius.com'].concat(CFG.planAdmins || []).map(function (s) { return String(s || '').trim().toLowerCase(); });
-  var ROLE_LABEL = { reader: '读者', requester: '需求方', planner: '生产计划' };
+  var ROLE_LABEL = { reader: '读者', requester: '需求方', planner: '生产计划', pending: '待开通' }; // v2.20.27：pending=已登录但 permissions 里查无记录
   var DEFAULT_ROLE = 'reader'; // v2.15.1：未登记新账号/匿名/角色值异常时的默认角色（仅预览，最简权限）
 
   var db = null, ready = false;
@@ -129,35 +137,91 @@
       else localStorage.removeItem(EMAIL_KEY);
     } catch (e) { /* 隐私模式等场景忽略 */ }
   }
-  // 角色下发：更新状态栏文案 + 通知主文件（hook.setRole 传三档角色字符串，兼容旧版布尔）
+  // ---------- v2.20.27：强制登录——未登录/未授权时整体隐藏主界面 ----------
+  // 加锁只发生在「确定需要登录」或「已登录但角色未判定」两个瞬间；其余出口一律不加锁（fail-open，不会锁死）
+  var uiUnlocked = true, unlockTimer = null;
+  function lockUI() {
+    uiUnlocked = false;
+    try { document.body.classList.add('pc-locked'); } catch (e) { /* 忽略 */ }
+  }
+  function unlockUI() {
+    uiUnlocked = true;
+    if (unlockTimer) { clearTimeout(unlockTimer); unlockTimer = null; }
+    try { document.body.classList.remove('pc-locked'); } catch (e) { /* 忽略 */ }
+  }
+  // 兜底：角色判定长时间无响应（网络挂起）时按最低权限解锁，绝不把用户永久锁在门外；
+  // 已判定为 pending（未分配角色）的账号不适用——那是确定结论，保持锁定由拦截页接管。
+  function armUnlockTimeout() {
+    if (unlockTimer) clearTimeout(unlockTimer);
+    unlockTimer = setTimeout(function () {
+      if (uiUnlocked || myRole === 'pending') return;
+      console.warn('[cloud] 权限判定超时，按最低权限解锁，请刷新页面重试');
+      myRole = 'reader'; adminFlag = false;
+      unlockUI();
+      if (hook && typeof hook.setRole === 'function') { try { hook.setRole('reader'); } catch (e2) { /* 忽略 */ } }
+      toast('⚠️ 权限判定超时，已按「读者」最低权限进入，请刷新页面重试', 6000);
+    }, 10000);
+  }
+
+  // 角色下发：更新状态栏文案 + 通知主文件（hook.setRole 传角色字符串，兼容旧版布尔）
   function applyMyRole(role) {
     if (ROLE_LABEL[role] == null) role = DEFAULT_ROLE;
     myRole = role;
     adminFlag = (role === 'planner');
-    if (curEmail) setStatus('☁️ 已连接·' + curEmail + '（' + ROLE_LABEL[role] + '）', 'cloud-on');
+    if (curEmail) setStatus('☁️ 已连接·' + curEmail + '（' + ROLE_LABEL[role] + '）', role === 'pending' ? 'cloud-off' : 'cloud-on');
     else setStatus('☁️ 已连接·匿名（' + ROLE_LABEL[DEFAULT_ROLE] + '）', 'cloud-on'); // v2.12.1：匿名状态显式标出，提示用户可切换
     if (statusEl) statusEl.title = (curEmail ? '当前登录：' + curEmail + '（' + ROLE_LABEL[role] + '）' : '当前为匿名登录（' + ROLE_LABEL[DEFAULT_ROLE] + '权限），建议用邮箱账号') + '。点击此处可修改密码或退出并切换账号';
+    // v2.20.27：角色已判定且非「待开通」→ 解除界面锁定；pending 保持锁定，由主文件显示拦截页
+    if (role !== 'pending') unlockUI();
     if (hook && typeof hook.setRole === 'function') {
       try { hook.setRole(role); } catch (e) { console.warn('[cloud] setRole 回调异常：', e); }
     }
   }
-  // v2.15.0/v2.15.1：解析当前账号角色——白名单=planner（免查库）；匿名=读者；
-  // 其他邮箱查 permissions 集合（未登记/集合未建/读失败 → 默认读者，须管理员分配后才可填报需求）
+  // 读取某账号在 permissions 里的角色记录。
+  // 先用 where 查询：集合可读但无该记录时返回空数组而不报错，可据此区分「未登记」与「集合读不到」。
+  // 未命中时再用 doc 复核一次——避免个别环境下 _id 条件查询不生效，把已登记账号误判成「未开通」（那会误拦一片人）。
+  // 返回 {found, role}；集合缺失 / 无权限 / 网络错误 → reject，由调用方降级为读者。
+  function readPerm(em) {
+    return db.collection(PERM_COLL).where({ _id: em }).limit(1).get()
+      .then(function (res) {
+        var rows = (res && res.data) || [];
+        if (rows.length) return { found: true, role: (rows[0] || {}).role };
+        return db.collection(PERM_COLL).doc(em).get()
+          .then(function (r) {
+            var d = (r && r.data) || null;
+            return (d && d.role) ? { found: true, role: d.role } : { found: false, role: null };
+          })
+          .catch(function () { return { found: false, role: null }; });
+      });
+  }
+  // v2.15.0/v2.15.1：解析当前账号角色——白名单=planner（免查库）；匿名=读者；其他邮箱查 permissions 集合。
+  // v2.20.27：区分两种「查不到」，失败模式始终是「降级为读者」而非「拦截」：
+  //   · 集合可读、但确实无该账号记录（或角色值非法）→ pending：未登记，须管理员在「权限管理」页分配，主界面保持锁定
+  //   · 集合不存在 / 无读权限 / 网络错误 → 无法判定，降级为读者（避免运维漏建集合导致全员被挡在门外）
+  // 返回 Promise<角色字符串>。
   function refreshMyRole() {
     var em = (curEmail || '').toLowerCase();
-    if (!curEmail) { applyMyRole(DEFAULT_ROLE); return; }
-    if (PLAN_ADMINS.indexOf(em) >= 0) { applyMyRole('planner'); return; }
-    db.collection(PERM_COLL).doc(em).get()
-      .then(function (r) {
-        var d = (r && r.data) || {};
-        applyMyRole(ROLE_LABEL[d.role] != null ? d.role : DEFAULT_ROLE);
+    if (!curEmail) { applyMyRole(DEFAULT_ROLE); return Promise.resolve(DEFAULT_ROLE); }
+    if (PLAN_ADMINS.indexOf(em) >= 0) { applyMyRole('planner'); return Promise.resolve('planner'); }
+    return readPerm(em)
+      .then(function (p) {
+        if (!p.found || ROLE_LABEL[p.role] == null) { applyMyRole('pending'); return 'pending'; } // 未登记 / 角色值非法
+        applyMyRole(p.role);
+        return p.role;
       })
-      .catch(function () { applyMyRole(DEFAULT_ROLE); }); // 集合未建/无权限/网络问题 → 默认读者
+      .catch(function (e) {
+        console.warn('[cloud] 角色查询失败（集合未建/无权限/网络），按读者降级：', e);
+        applyMyRole(DEFAULT_ROLE);
+        return DEFAULT_ROLE;
+      });
   }
   // 登录成功/会话恢复后的统一入口
   function onAuthed() {
     db = appRef.database();
     ready = true;
+    // v2.20.27：已登录但角色尚未判定的窗口期内先锁住界面，避免「待开通」账号闪一眼主界面
+    lockUI();
+    armUnlockTimeout();
     // v2.15.0：角色按登录账号解析（白名单→生产计划；permissions 集合→读者/需求方/生产计划）
     refreshMyRole();
     // v2.14.0：登录用户名下发（邮箱前缀，小写归一与角色判定一致）——主文件据此把「需求人」自动绑定为当前账号，无需人工填写
@@ -175,8 +239,10 @@
     if (!ready) return true;
     return adminFlag;
   }
-  // 登录框（v2.12.0 方案A）：邮箱+密码；匿名登录保留为过渡降级路径
+  // 登录页（v2.12.0 方案A 邮箱+密码；v2.20.27 起强制登录——移除匿名通道，未登录时主界面整体隐藏）
   function showLogin(tip) {
+    lockUI(); // v2.20.27：先隐藏主界面，登录层是唯一可见内容
+    var gateEl = document.getElementById('pcGate'); if (gateEl) gateEl.remove(); // v2.20.27：清掉可能残留的「等待开通」拦截页
     if (document.getElementById('loginOverlay')) { // 已在登录页
       var tipEl2 = document.getElementById('loginTip');
       if (tipEl2 && tip) tipEl2.textContent = tip;
@@ -184,16 +250,16 @@
     }
     var ov = document.createElement('div');
     ov.id = 'loginOverlay';
-    ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:300;display:flex;align-items:center;justify-content:center;font-family:inherit';
+    ov.style.cssText = 'position:fixed;inset:0;background:var(--bg,#eef2f8);z-index:300;display:flex;align-items:center;justify-content:center;font-family:inherit;padding:20px;box-sizing:border-box';
     ov.innerHTML =
-      '<div style="background:#fff;border-radius:12px;padding:22px;width:min(360px,92vw);box-shadow:0 12px 40px rgba(0,0,0,.18)">' +
-        '<div style="font-size:16px;font-weight:600;color:#0f172a;margin-bottom:4px">☁️ 云端同步登录</div>' +
-        '<div id="loginTip" style="font-size:12px;color:#64748b;margin-bottom:14px">' + (tip || '请使用管理员分配的邮箱账号登录') + '</div>' +
-        '<input id="loginEmail" type="email" placeholder="邮箱" autocomplete="username" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;margin-bottom:10px;outline:none">' +
-        '<input id="loginPwd" type="password" placeholder="密码" autocomplete="current-password" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;margin-bottom:6px;outline:none">' +
-        '<div id="loginErr" style="font-size:12px;color:#dc2626;min-height:16px;margin-bottom:8px"></div>' +
-        '<button id="loginOk" style="width:100%;padding:10px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:14px;cursor:pointer">登 录</button>' +
-        '<button id="loginAnon" style="width:100%;margin-top:8px;padding:8px;border:none;border-radius:8px;background:#f1f5f9;color:#475569;font-size:13px;cursor:pointer">暂不登录，匿名继续（过渡期）</button>' +
+      '<div style="background:var(--card,#fff);border:1px solid var(--line,#e5e9f2);border-radius:14px;padding:24px;width:min(360px,92vw);box-shadow:var(--shadow-lg,0 12px 40px rgba(2,6,23,.12))">' +
+        '<div style="font-size:16px;font-weight:600;color:var(--text,#0f172a);margin-bottom:4px">☁️ 临床生产智能排产系统</div>' +
+        '<div id="loginTip" style="font-size:12px;color:var(--sub,#64748b);margin-bottom:14px">' + (tip || '请使用管理员分配的邮箱账号登录') + '</div>' +
+        '<input id="loginEmail" type="email" placeholder="邮箱" autocomplete="username" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--line,#cbd5e1);border-radius:8px;font-size:14px;margin-bottom:10px;outline:none;background:var(--card,#fff);color:var(--text,#0f172a)">' +
+        '<input id="loginPwd" type="password" placeholder="密码" autocomplete="current-password" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--line,#cbd5e1);border-radius:8px;font-size:14px;margin-bottom:6px;outline:none;background:var(--card,#fff);color:var(--text,#0f172a)">' +
+        '<div id="loginErr" style="font-size:12px;color:var(--err,#dc2626);min-height:16px;margin-bottom:8px"></div>' +
+        '<button id="loginOk" style="width:100%;padding:10px;border:none;border-radius:8px;background:var(--pri,#2563eb);color:#fff;font-size:14px;cursor:pointer">登 录</button>' +
+        '<div style="font-size:11.5px;color:var(--sub,#94a3b8);margin-top:12px;line-height:1.6;text-align:center">账号由生产计划管理员开通 · 忘记密码可在登录后点顶栏「☁️」自助修改</div>' +
       '</div>';
     document.body.appendChild(ov);
     var emailEl = document.getElementById('loginEmail'),
@@ -228,20 +294,8 @@
     [emailEl, pwdEl].forEach(function (el) {
       el.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') doLogin(); });
     });
-    document.getElementById('loginAnon').addEventListener('click', function () {
-      okBtn.disabled = true; errEl.textContent = '';
-      authRef.anonymousAuthProvider().signIn()
-        .then(function () {
-          rememberEmail('');
-          ov.remove();
-          onAuthed(); // 匿名也是 auth != null，过渡期可继续读写
-        })
-        .catch(function (e) {
-          console.warn('[cloud] 匿名登录失败：请确认控制台未关闭「匿名登录」', e);
-          err('匿名登录失败：' + shortErr(e) + '（控制台可能已关闭匿名登录）');
-          okBtn.disabled = false;
-        });
-    });
+    // v2.20.27：匿名通道已移除（强制登录）。控制台侧「匿名登录」本就是关闭状态，原按钮点了必然报错。
+    // 注意：请勿在标准登录失败后自动回退匿名——两者安全语义不同（见 CloudBase SDK 提示）。
   }
   // v2.14.0：账号面板——点击状态栏弹出：已登录账号可「修改密码」或「退出切换」；匿名仅退出
   function showAccountPanel() {
