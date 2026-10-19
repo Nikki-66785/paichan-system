@@ -260,7 +260,7 @@
 <body class="role-requester">
 
 <header>
-  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.20.29（2026-10-19：修复设备维护需求无法直接自动排产——「🚀 自动排产」按钮原先仅对需求方/读者可见，而设备维护只有生产计划能提交，导致提交后在本页找不到排产入口；现对生产计划同样可见。同时设备维护不再显示「项目阶段」「需要条件放行」两项，原先填写后会被精简对象丢弃。本版只改界面入口与表单可见性，不涉及数据结构。）。页面版本：v2.20.28（2026-10-16：新增全局错误兜底——页面出现未捕获错误或云同步组件加载失败时，底部弹出可见提示条并提供「复制诊断信息」按钮，一键回传版本/运行环境/错误栈，不再只留一片空白；云同步组件加载失败时明确告知数据仅存本机不会与他人同步。本版只改界面层，不涉及业务逻辑与数据结构。）。页面版本：v2.20.27（2026-10-13：强制登录——未登录时不再显示系统任何内容，登录层改为不透明全屏页面并移除「匿名继续」入口；已登录但未被分配角色的账号只看到「等待开通」提示页；角色完全由登录账号决定，云端模式下顶栏「当前角色」切换器整体隐藏。）。页面版本：v2.20.26（2026-09-14：修复已删除需求被旧缓存补传复活——需求删除改为软删除：条目不再从本机移除，改为打删除标记并随云端同步，删除信息走正常同步通道即可传播，从根上断掉「本机有、云端无 → 判为新增补传」的复活路径；列表、计数、状态栏、筛选下拉、自动排产、需求漏斗、导出全部只统计未删除需求；云端合并逻辑补强，把命中的已删残留一并过滤，云端未就绪时删除会明确提示。）。页面版本：v2.20.25（2026-09-14：排产分析新增「排产调整统计」——严格口径统计「人工调整」弹窗保存成功的次数，计数记录在批次上并随云端计划同步；含调整次数 / 涉及批次 / 平均每批次 / 零调整批次占比四张指标卡，以及反复调整批次排行、按项目聚合、按操作人累计、近 14 天频次趋势；时段可选近 7 / 30 / 90 天或全部；升级时按审计日志一次性回填历史。）。页面版本：v2.20.24（2026-09-11：排产分析「项目组合视图」新增时间筛选——时段下拉可选全部年份或指定年份，另有「自定义…」填起止日期、留空一端表示不限；批次按开始日期 b.start 归属，口径同「产能情况」表与甘特图窗口；切换即刷新项目汇总、每行批数与右上角计数。）。页面版本：v2.20.23（2026-09-11：修复需求漏斗「已完成」口径——此前统计的是「所有批次均为中止/失败/取消」的需求，正常做完锁定的需求永不计入；现与需求页一致，按「全部批次锁定/终态且结束日期已过」判定，漏斗留存提示文案同步更正。）。页面版本：v2.20.22（2026-09-11：修复可视化分析「产能负载总览」上限口径错配——各类型上限批次数是「年度」值，此前图表按「月度」画线（「全部类型」还取 10 类之和），导致上限线虚高（如 169 批/月）、柱子被压扁、超上限永不触发；现统一折算月均上限（年度÷12）画线，热力图分档与超标判定同步改月均口径，摘要区与悬停提示保留年度原值。）。页面版本：v2.20.21（2026-09-10：批次新增「实际完成日期」——人工调整弹窗可选填，不早于开始日期，附与计划完成的偏差实时提示；终态批次同样记录实际完成日期；批次表新增「实际完成」列，导出台账同步新增该列；交期风险清单升级双口径——已填实际完成日期的批次额外显示实际超期与实际偏差，新增实际准时率与平均实际偏差两张汇总卡。）。页面版本：v2.20.20（2026-09-10：排产分析页新增可视化分析——产能负载总览含月度负载柱状图与上限线、10 类产线利用率热力图；交期风险清单含平均交期余量与超期最严项目；项目组合视图按项目汇总批次量、时间跨度与优先级；需求漏斗呈现提交→已排产→已锁定→已完成四阶段及转化率。数据全部来自现有批次、需求与上限配置，不新增字段）。页面版本：v2.20.19（2026-09-10：修复已删除需求复活——新增云端删除墓碑，首次同步时命中墓碑的本地旧缓存不再补传回云端并自动清理，删除云端失败改为明确提示，清空全部/导入覆盖时一并清空墓碑；cloud.js 缓存版本同步升级）。页面版本：v2.20.18（2026-09-10：三项优化——①权限管理弹窗暗色适配：弹窗内联配色改用 CSS 变量，暗色模式下不再是刺眼白底；②打开排产计划页甘特图自动横向滚动到今日附近，不用手动拖动查找；③使用手册配套版本同步到 v2.20.18，新增暗色模式与复制需求两条 FAQ。）。页面版本：v2.20.17（2026-09-10：顶栏标题移除 🧬 图标，标题更简洁）。页面版本：v2.20.16（2026-09-10：三项优化——①顶栏标题精简：主标题字号与 logo 缩小、顶栏内边距收紧、版本号改小徽章样式，标题不再喧宾夺主；②暗色模式：顶栏新增「🌙 暗色」切换按钮，全站深色配色，偏好保存在本机、刷新后保持；③需求表格新增「📋 复制」按钮：一键把已有需求全部信息回填到录入表单，微调后即可作为新需求提交，重复录入不再从头填写。）。页面版本：v2.20.15（2026-09-10：视觉精化——①卡片悬停浮起+阴影加深 ②弹窗遮罩淡入+毛玻璃、弹窗缩放弹入 ③顶栏统计数字加大加重 ④主按钮悬停浮起 ⑤甘特图批次条渐变高光+悬停浮起 ⑥状态徽章加圆点与微描边 ⑦表格行悬停过渡。纯 CSS 改动，不涉及任何业务逻辑与数据结构。）。页面版本：v2.20.14（2026-09-09：三项优化——①需求表单防丢失：填写过程自动暂存草稿到本机，误关/误刷新先弹确认，重新打开自动恢复，提交成功自动清除；②人工调整批次弹窗新增「项目优先级」下拉（项目级生效，保存后提示重新自动排产）；③使用手册更新到 v2.20.14：补齐 v2.20.9–13 功能说明（上限云共享与分年设置、优先级集中管理、体积预警面板、快照来源变化、APS/EQP 隐藏交期）并新增错误码透传、草稿恢复两条 FAQ。）。页面版本：v2.20.13（2026-09-09：三处增强——①规则参数新增「🎯 项目优先级」集中管理卡片，自动汇总需求与批次中的全部项目号，统一设 P1–P5，无需求行的项目也有入口；②产能上限区新增「复制上年/清空本年」按钮，减少分年设置重复录入；③数据管理页新增云端体积估算面板，进度条直观看批次/快照/规则占用，超 800KB 红色预警并引导删旧快照。）。页面版本：v2.20.12（2026-09-08：三处体验优化——①APS 培养基模拟灌装同设备维护一样隐藏期望完成日期字段，APS 按计划月份排产、dueDate 恒为空；②切换产能上限生效年份时若当前年份有未保存修改，先弹确认再重绘，防止误丢；③需求表格设备维护行交期列改显维护区间开始~结束日期，不再显示语义混淆的单一日期。）。页面版本：v2.20.11（2026-09-08：①修复产能上限各年份串值——上限输入区此前固定读当前年份桶且年份下拉默认选中 y-1，不跟随生效年份下拉，切换年份看到的都是同一份值、保存时还会把显示值写进所选年份桶；现下拉默认当年、切换即重绘对应年份桶再保存。②设备维护保养需求不再显示期望完成日期（交期自动=维护结束日期，仅用于排序/显示）。v2.20.10（2026-09-08：修复规则参数云同步失败——CloudBase update 对嵌套对象按点号路径合并写入，云端 rules=null（此前点过「恢复默认规则」推过 null）时再点「保存规则」会报 Cannot create field 'adcDp' in element (rules: null)，整次写入失败；现 upsert 的 update 阶段把 data 字段用 db.command.set 包裹，整字段替换不展开子路径，SDK 无该指令时退回原行为；该 bug 由 v2.20.9 错误码透传首次暴露）。v2.20.9（2026-09-07：修复产能上限 typeCaps 不上云——规则参数里填写的各生产类型上限批次数此前只存本机浏览器（getPlan 未携带 typeCaps），现纳入 plan_state 云端同步（getPlan 返回带 typeCaps、applyPlan 读取），生产计划填写的上限全员可见可共享；同步失败提示升级为透传具体错误码（onPushFail 收到 reason 并拼接展示），便于定位「计划写入失败」根因；取消每次自动排产后自动生成快照——快照来源仅剩定期（每 2 周）与人工两种，历史 auto 快照保留展示）。v2.20.8（2026-09-07：项目优先级智能排产——生产计划可在需求表格优先级列按项目设定 P1–P5 五档优先级（行内下拉，同项目全部需求联动，云端 plan_state 同步全员可见，需求方仍不可自填）；自动排产排序键升级为「优先级→交期→提交时间」（交期早先排，无交期排最后）；旧值兼容映射 高→P2/中→P3/低→P4；导出优先级列输出生效值。v2.20.7（2026-09-07：产能情况表备注列补全——ADC DP / CM DP·C7 / CM DP·SJ2 三行均标注 batch.line 归并规则，并注明冻干放大测试/APS 按此线归入；上限配置与产能分析收敛为 10 行口径）。v2.20.6（2026-09-07：产能分析/上限口径调整——冻干放大测试与 APS 不再作为独立 capKey，改为按 batch.line 归入对应产线（SJ2 ADC DP→ADC DP、C7CM DP→CM DP·C7、SJ2CM DP→CM DP·SJ2），规则参数上限配置收敛为 10 行）。v2.20.5（2026-09-07：新增「各生产类型上限批次数」+「产能情况」分析——规则参数面板可按 capKey（CB/Mab/Mab DS：SJ1/Mab DS：SJ2/ADC DS/ADC DP/CM DP·C7/CM DP·SJ2/参比品/EQP）填写上限批次数，留空=无上限；排产分析面板新增按年份或自定义起止的产能情况表，显示已用/剩余/利用率，超额行整行变红，CB 行=MCB+WCB 之和，EQP 行=设备维护+设备验证+贴签包装+包装 之和）。v2.20.4（2026-09-07：需求录入表单两日期字段与筛选框改为上下堆叠布局，不再并排一行；结构拆为独立 .form-row / .toolbar 纵向排列，元素 ID 全部保留）。v2.20.2（2026-09-07：钉钉新需求固定@生产计划手机号 18918901089，不再动态查需求方；触发时间/窗口改为北京时区显示（此前显示成 UTC）。v2.20.0（2026-09-04：钉钉通知@需求方——不再@全员，通知按 CloudBase 账号手机号精确提醒需求方本人；需求记录新增 reqEmail 字段，查不到手机号时不@（消息照发）。v2.19.2（2026-09-04：新需求提交改为立即推送钉钉——不再走 1h 合并窗，生产计划可第一时间看到新需求；锁定/调整/删除/终态仍走合并窗）。v2.19.1（2026-09-04：钉钉群通知新增 1h 合并窗——同批次 1h 内多次变动合并成一封汇总消息推群；前端 setTimeout 调度 + localStorage 持久化兜底；需 Cloudflare Pages Functions KV bindings 绑定 MAIL_KV，未绑定时退回 v2.19.0 立即发）。v2.19.0：钉钉群机器人通知——生产计划锁定/人工调整/删除/终态四种批次变动，以及新需求提交与历史计划导入摘要，均自动推送到钉钉「排产通知群」；按埋点立即发送。v2.18.8：修复 watch 路径下需求删除不传播给其他在线用户的问题——云端权威裁剪后 A 删的某条 B 也能立即看到；明确生产计划可删任意需求/批次、需求方仅可删自己录入的需求，两者均不互相影响账号登录态与角色分配。v2.18.7：顶栏新增「📖 使用手册」按钮，所有角色可见，点击新窗口打开 help.html；v2.18.6：APS 排产提醒移至需求录入页末尾——避免顶部 banner 与交期/新需求提醒互相挤压；v2.18.5：权限管理可删除账号——移除角色分配后该账号恢复为「读者」仅预览，白名单管理员与当前登录账号不可删除。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.20.29</span></h1>
+  <h1><img src="henlius-logo-white.png?v=2155" class="logo" alt="Henlius 复宏汉霖" title="复宏汉霖"><span>临床生产智能排产系统</span> <span class="tag" id="verTag" title="页面版本：v2.20.30（2026-10-19：修复六处缺陷——①APS 等无交期需求的批次不再被误标「交期无法满足」并置为预警；②自动排产/清空排产改为按角色限定范围，需求方只重排本人需求，他人草案与手工调整保留；③「已完成」不再把中止/失败/取消计入，全终态需求显示「已终止」；④产线饱和时冻干正式批不再中断整次排产；⑤导入数据与本地存储解析增加结构校验和原始数据备份；⑥锁定/解锁/批量锁定/改规则补齐函数内角色校验）。页面版本：v2.20.29（2026-10-19：修复设备维护需求无法直接自动排产——「🚀 自动排产」按钮原先仅对需求方/读者可见，而设备维护只有生产计划能提交，导致提交后在本页找不到排产入口；现对生产计划同样可见。同时设备维护不再显示「项目阶段」「需要条件放行」两项，原先填写后会被精简对象丢弃。本版只改界面入口与表单可见性，不涉及数据结构。）。页面版本：v2.20.28（2026-10-16：新增全局错误兜底——页面出现未捕获错误或云同步组件加载失败时，底部弹出可见提示条并提供「复制诊断信息」按钮，一键回传版本/运行环境/错误栈，不再只留一片空白；云同步组件加载失败时明确告知数据仅存本机不会与他人同步。本版只改界面层，不涉及业务逻辑与数据结构。）。页面版本：v2.20.27（2026-10-13：强制登录——未登录时不再显示系统任何内容，登录层改为不透明全屏页面并移除「匿名继续」入口；已登录但未被分配角色的账号只看到「等待开通」提示页；角色完全由登录账号决定，云端模式下顶栏「当前角色」切换器整体隐藏。）。页面版本：v2.20.26（2026-09-14：修复已删除需求被旧缓存补传复活——需求删除改为软删除：条目不再从本机移除，改为打删除标记并随云端同步，删除信息走正常同步通道即可传播，从根上断掉「本机有、云端无 → 判为新增补传」的复活路径；列表、计数、状态栏、筛选下拉、自动排产、需求漏斗、导出全部只统计未删除需求；云端合并逻辑补强，把命中的已删残留一并过滤，云端未就绪时删除会明确提示。）。页面版本：v2.20.25（2026-09-14：排产分析新增「排产调整统计」——严格口径统计「人工调整」弹窗保存成功的次数，计数记录在批次上并随云端计划同步；含调整次数 / 涉及批次 / 平均每批次 / 零调整批次占比四张指标卡，以及反复调整批次排行、按项目聚合、按操作人累计、近 14 天频次趋势；时段可选近 7 / 30 / 90 天或全部；升级时按审计日志一次性回填历史。）。页面版本：v2.20.24（2026-09-11：排产分析「项目组合视图」新增时间筛选——时段下拉可选全部年份或指定年份，另有「自定义…」填起止日期、留空一端表示不限；批次按开始日期 b.start 归属，口径同「产能情况」表与甘特图窗口；切换即刷新项目汇总、每行批数与右上角计数。）。页面版本：v2.20.23（2026-09-11：修复需求漏斗「已完成」口径——此前统计的是「所有批次均为中止/失败/取消」的需求，正常做完锁定的需求永不计入；现与需求页一致，按「全部批次锁定/终态且结束日期已过」判定，漏斗留存提示文案同步更正。）。页面版本：v2.20.22（2026-09-11：修复可视化分析「产能负载总览」上限口径错配——各类型上限批次数是「年度」值，此前图表按「月度」画线（「全部类型」还取 10 类之和），导致上限线虚高（如 169 批/月）、柱子被压扁、超上限永不触发；现统一折算月均上限（年度÷12）画线，热力图分档与超标判定同步改月均口径，摘要区与悬停提示保留年度原值。）。页面版本：v2.20.21（2026-09-10：批次新增「实际完成日期」——人工调整弹窗可选填，不早于开始日期，附与计划完成的偏差实时提示；终态批次同样记录实际完成日期；批次表新增「实际完成」列，导出台账同步新增该列；交期风险清单升级双口径——已填实际完成日期的批次额外显示实际超期与实际偏差，新增实际准时率与平均实际偏差两张汇总卡。）。页面版本：v2.20.20（2026-09-10：排产分析页新增可视化分析——产能负载总览含月度负载柱状图与上限线、10 类产线利用率热力图；交期风险清单含平均交期余量与超期最严项目；项目组合视图按项目汇总批次量、时间跨度与优先级；需求漏斗呈现提交→已排产→已锁定→已完成四阶段及转化率。数据全部来自现有批次、需求与上限配置，不新增字段）。页面版本：v2.20.19（2026-09-10：修复已删除需求复活——新增云端删除墓碑，首次同步时命中墓碑的本地旧缓存不再补传回云端并自动清理，删除云端失败改为明确提示，清空全部/导入覆盖时一并清空墓碑；cloud.js 缓存版本同步升级）。页面版本：v2.20.18（2026-09-10：三项优化——①权限管理弹窗暗色适配：弹窗内联配色改用 CSS 变量，暗色模式下不再是刺眼白底；②打开排产计划页甘特图自动横向滚动到今日附近，不用手动拖动查找；③使用手册配套版本同步到 v2.20.18，新增暗色模式与复制需求两条 FAQ。）。页面版本：v2.20.17（2026-09-10：顶栏标题移除 🧬 图标，标题更简洁）。页面版本：v2.20.16（2026-09-10：三项优化——①顶栏标题精简：主标题字号与 logo 缩小、顶栏内边距收紧、版本号改小徽章样式，标题不再喧宾夺主；②暗色模式：顶栏新增「🌙 暗色」切换按钮，全站深色配色，偏好保存在本机、刷新后保持；③需求表格新增「📋 复制」按钮：一键把已有需求全部信息回填到录入表单，微调后即可作为新需求提交，重复录入不再从头填写。）。页面版本：v2.20.15（2026-09-10：视觉精化——①卡片悬停浮起+阴影加深 ②弹窗遮罩淡入+毛玻璃、弹窗缩放弹入 ③顶栏统计数字加大加重 ④主按钮悬停浮起 ⑤甘特图批次条渐变高光+悬停浮起 ⑥状态徽章加圆点与微描边 ⑦表格行悬停过渡。纯 CSS 改动，不涉及任何业务逻辑与数据结构。）。页面版本：v2.20.14（2026-09-09：三项优化——①需求表单防丢失：填写过程自动暂存草稿到本机，误关/误刷新先弹确认，重新打开自动恢复，提交成功自动清除；②人工调整批次弹窗新增「项目优先级」下拉（项目级生效，保存后提示重新自动排产）；③使用手册更新到 v2.20.14：补齐 v2.20.9–13 功能说明（上限云共享与分年设置、优先级集中管理、体积预警面板、快照来源变化、APS/EQP 隐藏交期）并新增错误码透传、草稿恢复两条 FAQ。）。页面版本：v2.20.13（2026-09-09：三处增强——①规则参数新增「🎯 项目优先级」集中管理卡片，自动汇总需求与批次中的全部项目号，统一设 P1–P5，无需求行的项目也有入口；②产能上限区新增「复制上年/清空本年」按钮，减少分年设置重复录入；③数据管理页新增云端体积估算面板，进度条直观看批次/快照/规则占用，超 800KB 红色预警并引导删旧快照。）。页面版本：v2.20.12（2026-09-08：三处体验优化——①APS 培养基模拟灌装同设备维护一样隐藏期望完成日期字段，APS 按计划月份排产、dueDate 恒为空；②切换产能上限生效年份时若当前年份有未保存修改，先弹确认再重绘，防止误丢；③需求表格设备维护行交期列改显维护区间开始~结束日期，不再显示语义混淆的单一日期。）。页面版本：v2.20.11（2026-09-08：①修复产能上限各年份串值——上限输入区此前固定读当前年份桶且年份下拉默认选中 y-1，不跟随生效年份下拉，切换年份看到的都是同一份值、保存时还会把显示值写进所选年份桶；现下拉默认当年、切换即重绘对应年份桶再保存。②设备维护保养需求不再显示期望完成日期（交期自动=维护结束日期，仅用于排序/显示）。v2.20.10（2026-09-08：修复规则参数云同步失败——CloudBase update 对嵌套对象按点号路径合并写入，云端 rules=null（此前点过「恢复默认规则」推过 null）时再点「保存规则」会报 Cannot create field 'adcDp' in element (rules: null)，整次写入失败；现 upsert 的 update 阶段把 data 字段用 db.command.set 包裹，整字段替换不展开子路径，SDK 无该指令时退回原行为；该 bug 由 v2.20.9 错误码透传首次暴露）。v2.20.9（2026-09-07：修复产能上限 typeCaps 不上云——规则参数里填写的各生产类型上限批次数此前只存本机浏览器（getPlan 未携带 typeCaps），现纳入 plan_state 云端同步（getPlan 返回带 typeCaps、applyPlan 读取），生产计划填写的上限全员可见可共享；同步失败提示升级为透传具体错误码（onPushFail 收到 reason 并拼接展示），便于定位「计划写入失败」根因；取消每次自动排产后自动生成快照——快照来源仅剩定期（每 2 周）与人工两种，历史 auto 快照保留展示）。v2.20.8（2026-09-07：项目优先级智能排产——生产计划可在需求表格优先级列按项目设定 P1–P5 五档优先级（行内下拉，同项目全部需求联动，云端 plan_state 同步全员可见，需求方仍不可自填）；自动排产排序键升级为「优先级→交期→提交时间」（交期早先排，无交期排最后）；旧值兼容映射 高→P2/中→P3/低→P4；导出优先级列输出生效值。v2.20.7（2026-09-07：产能情况表备注列补全——ADC DP / CM DP·C7 / CM DP·SJ2 三行均标注 batch.line 归并规则，并注明冻干放大测试/APS 按此线归入；上限配置与产能分析收敛为 10 行口径）。v2.20.6（2026-09-07：产能分析/上限口径调整——冻干放大测试与 APS 不再作为独立 capKey，改为按 batch.line 归入对应产线（SJ2 ADC DP→ADC DP、C7CM DP→CM DP·C7、SJ2CM DP→CM DP·SJ2），规则参数上限配置收敛为 10 行）。v2.20.5（2026-09-07：新增「各生产类型上限批次数」+「产能情况」分析——规则参数面板可按 capKey（CB/Mab/Mab DS：SJ1/Mab DS：SJ2/ADC DS/ADC DP/CM DP·C7/CM DP·SJ2/参比品/EQP）填写上限批次数，留空=无上限；排产分析面板新增按年份或自定义起止的产能情况表，显示已用/剩余/利用率，超额行整行变红，CB 行=MCB+WCB 之和，EQP 行=设备维护+设备验证+贴签包装+包装 之和）。v2.20.4（2026-09-07：需求录入表单两日期字段与筛选框改为上下堆叠布局，不再并排一行；结构拆为独立 .form-row / .toolbar 纵向排列，元素 ID 全部保留）。v2.20.2（2026-09-07：钉钉新需求固定@生产计划手机号 18918901089，不再动态查需求方；触发时间/窗口改为北京时区显示（此前显示成 UTC）。v2.20.0（2026-09-04：钉钉通知@需求方——不再@全员，通知按 CloudBase 账号手机号精确提醒需求方本人；需求记录新增 reqEmail 字段，查不到手机号时不@（消息照发）。v2.19.2（2026-09-04：新需求提交改为立即推送钉钉——不再走 1h 合并窗，生产计划可第一时间看到新需求；锁定/调整/删除/终态仍走合并窗）。v2.19.1（2026-09-04：钉钉群通知新增 1h 合并窗——同批次 1h 内多次变动合并成一封汇总消息推群；前端 setTimeout 调度 + localStorage 持久化兜底；需 Cloudflare Pages Functions KV bindings 绑定 MAIL_KV，未绑定时退回 v2.19.0 立即发）。v2.19.0：钉钉群机器人通知——生产计划锁定/人工调整/删除/终态四种批次变动，以及新需求提交与历史计划导入摘要，均自动推送到钉钉「排产通知群」；按埋点立即发送。v2.18.8：修复 watch 路径下需求删除不传播给其他在线用户的问题——云端权威裁剪后 A 删的某条 B 也能立即看到；明确生产计划可删任意需求/批次、需求方仅可删自己录入的需求，两者均不互相影响账号登录态与角色分配。v2.18.7：顶栏新增「📖 使用手册」按钮，所有角色可见，点击新窗口打开 help.html；v2.18.6：APS 排产提醒移至需求录入页末尾——避免顶部 banner 与交期/新需求提醒互相挤压；v2.18.5：权限管理可删除账号——移除角色分配后该账号恢复为「读者」仅预览，白名单管理员与当前登录账号不可删除。若此处无版本号说明浏览器在运行旧缓存，请按 Ctrl+F5 强制刷新">v2.20.30</span></h1>
   <div class="role-switch" id="roleSwitch">
     <span class="rs-label">当前角色</span>
     <button data-role="requester" class="on">📋 需求方</button>
@@ -901,7 +901,7 @@
   </section>
 </main>
 
-<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.20.29（设备维护可直接排产：「🚀 自动排产」按钮原先仅对需求方与读者可见，而设备维护只能由生产计划提交，提交后在本页找不到排产入口；现对生产计划同样可见。设备维护表单不再显示「项目阶段」「需要条件放行」，原先填写后会被精简需求对象丢弃。本版只改界面入口与表单可见性，不涉及数据结构）。v2.20.28（全局错误兜底：页面出现未捕获错误或云同步组件加载失败时，底部弹出可见提示条并附「复制诊断信息」按钮，一键回传版本/运行环境/错误栈，不再只留一片空白；云同步组件加载失败时明确提示数据仅存本机、不会与他人同步。本版只改界面层，不涉及业务逻辑与数据结构）。v2.20.27（强制登录：未登录时不显示系统任何内容，登录层改不透明全屏页并移除匿名入口；已登录但未分配角色的账号只看到「等待开通」页；角色由登录账号决定，顶栏角色切换器在云端模式下整体隐藏·cloud.js?v=2221）。v2.20.26（修复已删需求被旧缓存补传复活：需求删除改为软删除，条目打删除标记后随云端同步传播，本机条目始终存在，不再被判定为「本地新增」补传回云端；列表/计数/筛选/自动排产/漏斗/导出只统计未删除需求；云端合并补强过滤已删残留，云端未就绪时删除会明确提示·cloud.js?v=2220）。v2.20.25（排产分析新增「排产调整统计」——严格口径统计「人工调整」弹窗保存成功的次数，计数记录在批次上并随云端计划同步；含调整次数 / 涉及批次 / 平均每批次 / 零调整批次占比四张指标卡，以及反复调整批次排行、按项目聚合、按操作人累计、近 14 天频次趋势；时段可选近 7 / 30 / 90 天或全部；升级时按审计日志一次性回填历史）。v2.20.24（排产分析「项目组合视图」新增时间筛选——时段下拉可选全部年份或指定年份，另有「自定义…」填起止日期、留空一端表示不限；批次按开始日期 b.start 归属，口径同「产能情况」表与甘特图窗口；切换即刷新项目汇总、每行批数与右上角计数）。v2.20.23（修复需求漏斗「已完成」口径——此前统计的是所有批次均为中止/失败/取消的需求，正常做完锁定的需求永不计入；现与需求页一致，按全部批次锁定/终态且结束日期已过判定，漏斗留存提示文案同步更正）。v2.20.22（修复可视化分析「产能负载总览」上限口径错配——各类型上限批次数是年度值，此前图表按月度画线、全部类型还取 10 类之和，导致上限线虚高、柱子被压扁且永不超标；现统一折算月均上限=年度÷12，热力图分档与超标判定同步改月均口径，摘要区保留年度原值）。v2.20.21（批次新增实际完成日期：人工调整弹窗选填、不早于开始日期、附与计划完成的偏差提示；批次表与导出台账新增实际完成列；交期风险清单升级双口径，新增实际准时率与平均实际偏差汇总卡）。v2.20.20（新增可视化分析：产能负载总览含月度负载柱状图与上限线、产线利用率热力图；交期风险清单含平均交期余量与超期最严项目；项目组合视图；需求漏斗含四阶段转化率）。v2.20.19（修复已删需求复活：新增云端删除墓碑 del_tomb，首次同步命中墓碑的本地旧缓存不再补传回云端并自动清理，删除失败改为明确提示，清空全部/导入覆盖时一并清空墓碑·cloud.js?v=2219）。v2.20.18（优化：权限管理弹窗暗色适配；排产计划页甘特图自动滚动到今日；使用手册同步 v2.20.18）。v2.20.17（顶栏标题移除 🧬 图标）。v2.20.16（优化：顶栏标题精简——主标题与 logo 缩小、内边距收紧；暗色模式——顶栏「🌙 暗色」一键切换、偏好本机记忆；需求表格「📋 复制」按钮——回填表单快速重复录入）。v2.20.15（视觉精化：卡片/按钮/甘特条悬停浮起；弹窗动画；徽章圆点；统计数字加大）。v2.20.14（优化：需求表单草稿防丢失；人工调整弹窗可设项目优先级；使用手册更新至 v2.20.14）。v2.20.13（增强：项目优先级集中管理卡片；上限区复制上年/清空本年；数据管理页云端体积估算面板）。v2.20.12（体验优化：APS 隐藏期望完成日期；切年份未保存上限先确认；设备维护行交期列显维护区间）。v2.20.11（修复产能上限各年份串值：上限输入区改为跟随生效年份下拉分年显示与保存，下拉默认当年；设备维护保养需求不再显示期望完成日期，交期自动=维护结束日期）·v2.20.10（修复规则参数云同步失败：CloudBase update 对嵌套对象按点号路径合并写入，云端 rules 为 null 时再保存规则报 Cannot create field 导致整次写入失败，upsert 的 data 字段改用 db.command.set 整体替换，不再展开子路径·cloud.js?v=2202）·v2.20.9（修复产能上限 typeCaps 上云：规则参数上限全员共享；同步失败提示透传错误码；自动排产不再自动生成快照、历史快照保留展示；项目优先级智能排产：生产计划按项目设 P1–P5，自动排产按优先级→交期→提交时间排序；产能情况表备注补全：ADC DP/CM DP·C7/CM DP·SJ2 标注 batch.line 归并+冻干/APS 归入；冻干放大测试/APS 按 batch.line 归产线；新需求固定@生产计划手机号，触发时间按北京时区显示；各生产类型上限批次数+产能分析新增；批次变动合并窗不变·cloud.js?v=2201·mail.js?v=2202·scheduling.js?v=2208）</footer>
+<footer>临床生产智能排产系统 · 依据排产逻辑.xlsx 规则 · 需求→排产→确认→锁定 流程 · v2.20.30（缺陷修复：①APS 等无交期需求的批次不再被误标「交期无法满足」——空交期曾使 Date>null 恒真，导致 APS 批次全部变「预警」；②自动排产与清空排产按角色限定作用域——生产计划重排全部，需求方只重排本人需求，他人未锁定批次与手工调整原样保留；③「已完成」只认锁定且结束日期已过，中止/失败/取消不再计入，全终态需求显示「已终止」；④产线饱和时冻干正式批改为强排预警，不再因空指针中断整次排产；⑤导入数据校验 requirements/batches 为数组并补齐默认字段，本地数据解析失败时先备份原始串再恢复历史计划；⑥批次锁定/解锁/批量锁定/保存规则补齐函数内角色校验，对比表日期字段转义。·scheduling.js?v=2230）。v2.20.29（设备维护可直接排产：「🚀 自动排产」按钮原先仅对需求方与读者可见，而设备维护只能由生产计划提交，提交后在本页找不到排产入口；现对生产计划同样可见。设备维护表单不再显示「项目阶段」「需要条件放行」，原先填写后会被精简需求对象丢弃。本版只改界面入口与表单可见性，不涉及数据结构）。v2.20.28（全局错误兜底：页面出现未捕获错误或云同步组件加载失败时，底部弹出可见提示条并附「复制诊断信息」按钮，一键回传版本/运行环境/错误栈，不再只留一片空白；云同步组件加载失败时明确提示数据仅存本机、不会与他人同步。本版只改界面层，不涉及业务逻辑与数据结构）。v2.20.27（强制登录：未登录时不显示系统任何内容，登录层改不透明全屏页并移除匿名入口；已登录但未分配角色的账号只看到「等待开通」页；角色由登录账号决定，顶栏角色切换器在云端模式下整体隐藏·cloud.js?v=2221）。v2.20.26（修复已删需求被旧缓存补传复活：需求删除改为软删除，条目打删除标记后随云端同步传播，本机条目始终存在，不再被判定为「本地新增」补传回云端；列表/计数/筛选/自动排产/漏斗/导出只统计未删除需求；云端合并补强过滤已删残留，云端未就绪时删除会明确提示·cloud.js?v=2220）。v2.20.25（排产分析新增「排产调整统计」——严格口径统计「人工调整」弹窗保存成功的次数，计数记录在批次上并随云端计划同步；含调整次数 / 涉及批次 / 平均每批次 / 零调整批次占比四张指标卡，以及反复调整批次排行、按项目聚合、按操作人累计、近 14 天频次趋势；时段可选近 7 / 30 / 90 天或全部；升级时按审计日志一次性回填历史）。v2.20.24（排产分析「项目组合视图」新增时间筛选——时段下拉可选全部年份或指定年份，另有「自定义…」填起止日期、留空一端表示不限；批次按开始日期 b.start 归属，口径同「产能情况」表与甘特图窗口；切换即刷新项目汇总、每行批数与右上角计数）。v2.20.23（修复需求漏斗「已完成」口径——此前统计的是所有批次均为中止/失败/取消的需求，正常做完锁定的需求永不计入；现与需求页一致，按全部批次锁定/终态且结束日期已过判定，漏斗留存提示文案同步更正）。v2.20.22（修复可视化分析「产能负载总览」上限口径错配——各类型上限批次数是年度值，此前图表按月度画线、全部类型还取 10 类之和，导致上限线虚高、柱子被压扁且永不超标；现统一折算月均上限=年度÷12，热力图分档与超标判定同步改月均口径，摘要区保留年度原值）。v2.20.21（批次新增实际完成日期：人工调整弹窗选填、不早于开始日期、附与计划完成的偏差提示；批次表与导出台账新增实际完成列；交期风险清单升级双口径，新增实际准时率与平均实际偏差汇总卡）。v2.20.20（新增可视化分析：产能负载总览含月度负载柱状图与上限线、产线利用率热力图；交期风险清单含平均交期余量与超期最严项目；项目组合视图；需求漏斗含四阶段转化率）。v2.20.19（修复已删需求复活：新增云端删除墓碑 del_tomb，首次同步命中墓碑的本地旧缓存不再补传回云端并自动清理，删除失败改为明确提示，清空全部/导入覆盖时一并清空墓碑·cloud.js?v=2219）。v2.20.18（优化：权限管理弹窗暗色适配；排产计划页甘特图自动滚动到今日；使用手册同步 v2.20.18）。v2.20.17（顶栏标题移除 🧬 图标）。v2.20.16（优化：顶栏标题精简——主标题与 logo 缩小、内边距收紧；暗色模式——顶栏「🌙 暗色」一键切换、偏好本机记忆；需求表格「📋 复制」按钮——回填表单快速重复录入）。v2.20.15（视觉精化：卡片/按钮/甘特条悬停浮起；弹窗动画；徽章圆点；统计数字加大）。v2.20.14（优化：需求表单草稿防丢失；人工调整弹窗可设项目优先级；使用手册更新至 v2.20.14）。v2.20.13（增强：项目优先级集中管理卡片；上限区复制上年/清空本年；数据管理页云端体积估算面板）。v2.20.12（体验优化：APS 隐藏期望完成日期；切年份未保存上限先确认；设备维护行交期列显维护区间）。v2.20.11（修复产能上限各年份串值：上限输入区改为跟随生效年份下拉分年显示与保存，下拉默认当年；设备维护保养需求不再显示期望完成日期，交期自动=维护结束日期）·v2.20.10（修复规则参数云同步失败：CloudBase update 对嵌套对象按点号路径合并写入，云端 rules 为 null 时再保存规则报 Cannot create field 导致整次写入失败，upsert 的 data 字段改用 db.command.set 整体替换，不再展开子路径·cloud.js?v=2202）·v2.20.9（修复产能上限 typeCaps 上云：规则参数上限全员共享；同步失败提示透传错误码；自动排产不再自动生成快照、历史快照保留展示；项目优先级智能排产：生产计划按项目设 P1–P5，自动排产按优先级→交期→提交时间排序；产能情况表备注补全：ADC DP/CM DP·C7/CM DP·SJ2 标注 batch.line 归并+冻干/APS 归入；冻干放大测试/APS 按 batch.line 归产线；新需求固定@生产计划手机号，触发时间按北京时区显示；各生产类型上限批次数+产能分析新增；批次变动合并窗不变·cloud.js?v=2201·mail.js?v=2202·scheduling.js?v=2208）</footer>
 
 <!-- 批次编辑弹窗 -->
 <div class="mask" id="editMask">
@@ -1116,7 +1116,7 @@
 <script src="cloudbase.full.js?v=2152"></script>
 <script src="cloud.js?v=2221"></script>
 <script src="mail.js?v=2202"></script><!-- 钉钉通知模块（前端埋点层 + 1h 合并窗调度器） -->
-<script src="scheduling.js?v=2208"></script>
+<script src="scheduling.js?v=2230"></script>
 <script src="history_data.js"></script>
 <script>
 /* =====================================================
@@ -1431,9 +1431,11 @@
     catch(e){ toast('保存失败：'+e.message); }
     if(window.CloudSync) window.CloudSync.onSaved(); // 云端计划同步（节流）
   }
+  var _loadCorrupt = false; // v2.20.30：本地数据解析失败标记（用于 init 提示，避免静默重置）
   function load(){
+    var raw = null;
     try{
-      var raw = localStorage.getItem(LS_KEY);
+      raw = localStorage.getItem(LS_KEY);
       if(raw){ state = JSON.parse(raw); if(!state.rules) state.rules=null; if(!state.role) state.role='requester'; if(state.user==null) state.user='';
         if(!state.ganttAxis) state.ganttAxis={ px:2.5, unit:'month' };
         if(state.ganttLines==null) state.ganttLines=null;
@@ -1443,7 +1445,14 @@
         if(!state.refData) state.refData=null;
         if(!state.snapshots) state.snapshots=[];
         return true; }
-    }catch(e){ console.warn(e); }
+    }catch(e){
+      // v2.20.30：解析失败不再静默——先备份原始字符串，否则 init 的 resetToHistory 会直接覆盖、无从恢复。
+      console.warn('[load] 本地数据解析失败：', e);
+      _loadCorrupt = true;
+      try{
+        if(raw){ localStorage.setItem(LS_KEY + '_corrupt', raw); localStorage.setItem(LS_KEY + '_corrupt_' + Date.now(), raw); }
+      }catch(e2){ console.warn('[load] 备份原始数据失败：', e2); }
+    }
     return false;
   }
   function resetToHistory(){
@@ -1613,6 +1622,26 @@
       if(!em || !requesterName) return '';
       return em.toLowerCase().split('@')[0] === String(requesterName).toLowerCase() ? em : '';
     }catch(e){ return ''; }
+  }
+  // v2.20.30：本人需求判定——自动排产 / 清空排产结果的作用域。
+  // 生产计划角色可操作全部需求；需求方只操作本人填报的需求；无账号体系（本地单机）时维持旧行为。
+  function myEmailStr(){
+    try{ return ((window.CloudSync && window.CloudSync.getCurEmail) ? (window.CloudSync.getCurEmail()||'') : '').toLowerCase(); }
+    catch(e){ return ''; }
+  }
+  function isMyReq(r){
+    if(!r) return false;
+    if(isPlanner()) return true;
+    var em = myEmailStr(), me = state.user || '';
+    if(!em && !me) return true;
+    if(em && String(r.reqEmail||'').toLowerCase() === em) return true;
+    if(me && String(r.requester||'') === me) return true;
+    return false;
+  }
+  function isMyBatch(b){
+    if(isPlanner()) return true;
+    var r = (state.requirements||[]).filter(function(x){ return x.id === b.reqId; })[0];
+    return r ? isMyReq(r) : false; // 历史/无主批次不归属任何人，一律保留
   }
   function readForm(){
     var t = $('f_type').value;
@@ -2016,14 +2045,17 @@
   function doSchedule(){
     if(isReader()){ toast('📖 读者权限仅可预览，无法执行排产'); return; }
     var nb = $('newReqBanner'); if(nb) nb.classList.remove('show'); // 已处理，隐藏提示条
-    if(!liveReqs().length){ toast('请先添加需求'); return; } // v2.20.26：软删除条目不计入
-    if(!liveReqs().some(function(r){return r.dueDate || r.apsMonth;})){
-      toast('部分需求缺少交期，请补充'); return;
-    }
+    // v2.20.30：作用域收窄——生产计划重排全部需求；需求方只重排本人需求，
+    // 他人未锁定批次原样保留（此前为全量重排，任一人点一下会丢掉别人的草案与手工调整）。
+    var mine = liveReqs().filter(isMyReq);
+    if(!mine.length){ toast(isPlanner() ? '请先添加需求' : '没有你填报的需求，无法排产'); return; }
+    var noDue = mine.filter(function(r){ return !r.dueDate && !r.apsMonth; });
+    if(noDue.length){ toast('有 '+noDue.length+' 条需求缺少交期或计划月份，请补充后再排产'); return; }
     var locked = state.batches.filter(function(b){return b.locked || isFinal(b);}); // 锁定批次作为已占用产能；终态批次保留记录（引擎自动跳过其产能占用）
+    var keepOthers = state.batches.filter(function(b){ return !b.locked && !isFinal(b) && !isMyBatch(b); }); // 他人/历史未锁定批次：本次不重排，原样保留
     // 已锁定的正式批不再重复生成：按需求扣除已锁数量
     var reqs2 = [];
-    liveReqs().forEach(function(r){
+    mine.forEach(function(r){
       var lockedFormal = state.batches.filter(function(b){
         return b.reqId===r.id && b.locked && b.type!=='冻干放大测试';
       }).length;
@@ -2034,13 +2066,13 @@
       nr.batchCount = remain;
       reqs2.push(nr);
     });
-    if(!reqs2.length){ toast('所有需求的批次均已锁定，无需重新排产'); return; }
+    if(!reqs2.length){ toast(isPlanner() ? '所有需求的批次均已锁定，无需重新排产' : '你填报的需求批次均已锁定，无需重新排产'); return; }
     var sched = new Sched(state.rules);
     // 批次 id 全局唯一：从当前最大 NB 编号后继续（引擎每次排产默认从 NB1 起，跨次排产会与已锁定批次 id 冲突）
     var maxN = 0;
     state.batches.forEach(function(b){ var m = /^NB(\d+)$/.exec(b.id||''); if(m) maxN = Math.max(maxN, parseInt(m[1],10)); });
     var res = sched.schedule(reqs2, locked, maxN + 1);
-    state.batches = locked.concat(res.batches);
+    state.batches = locked.concat(keepOthers, res.batches);
     // v2.20.9：不再在每次自动排产后自动生成快照（快照来源仅剩定期/人工；历史 auto 快照保留展示）
     save(); renderAll();
     // 告警横幅
@@ -2183,12 +2215,21 @@
   }
   function clearPlan(){
     if(isReader()){ toast('📖 读者权限仅可预览，无法清空排产结果'); return; }
-    state.batches = state.batches.filter(function(b){return b.locked || isFinal(b);});
-    save(); renderAll(); toast('已清空自动排产草案（保留锁定批次、终态批次与需求）');
+    // v2.20.30：作用域与「自动排产」一致——生产计划清全部；需求方只清本人未锁定草案（他人批次不动）。
+    var removed = 0;
+    state.batches = state.batches.filter(function(b){
+      if(b.locked || isFinal(b)) return true;
+      if(isMyBatch(b)){ removed++; return false; }
+      return true;
+    });
+    if(!removed){ toast(isPlanner() ? '没有可清空的待确认批次' : '没有可清空的本人草案批次'); return; }
+    save(); renderAll();
+    toast('已清空 ' + removed + ' 个' + (isPlanner() ? '自动排产草案' : '本人草案批次') + '（保留锁定批次、终态批次与需求）');
   }
 
   // ---------- 确认与锁定（生产计划） ----------
   function lockPlan(){
+    if(!isPlanner()){ toast('仅生产计划角色可锁定排产'); return; } // v2.20.30：函数内兜底，防绕过按钮直调
     var pend = state.batches.filter(function(b){ return !b.locked && !isFinal(b); });
     if(!pend.length){ toast('没有待确认的批次'); return; }
     uiConfirm('确认锁定 '+pend.length+' 个待确认批次？\n锁定后作为已占用产能，不再参与下次自动重排。', function(ok){
@@ -2201,6 +2242,7 @@
     });
   }
   function confirmBatch(id){
+    if(!isPlanner()){ toast('仅生产计划角色可确认锁定批次'); return; } // v2.20.30
     var b = state.batches.find(function(x){return x.id===id;});
     if(!b || b.locked || isFinal(b)) return;
     b.locked=true; b.status='锁定';
@@ -2210,6 +2252,7 @@
     toast('批次已确认锁定');
   }
   function unlockBatch(id){
+    if(!isPlanner()){ toast('仅生产计划角色可解锁批次'); return; } // v2.20.30
     var b = state.batches.find(function(x){return x.id===id;});
     if(!b || !b.locked || b.source==='历史') return;
     uiConfirm('解锁后该批次将恢复为待确认状态，确定继续？', function(ok){
@@ -2245,14 +2288,17 @@
   function reqStatus(r){
     var bs = state.batches.filter(function(b){ return b.reqId===r.id; });
     if(!bs.length) return '待排产';
+    if(bs.every(isFinal)) return '已终止'; // v2.20.30：全中止/失败/取消的需求不再显示为「已锁定」
     return bs.every(function(b){ return b.locked || isFinal(b); }) ? '已锁定' : '待确认';
   }
-  // v2.18.0：需求的所有批次均已完成（锁定/终态且完成日期已过）→ 需求记录可单独清理（批次保留）
+  // v2.18.0：需求的所有批次均已完成（锁定且完成日期已过）→ 需求记录可单独清理（批次保留）
+  // v2.20.30：排除「全部批次中止/失败/取消」——此前 isFinal 被当作完成，导致漏斗「已完成」虚增。
   function reqAllDone(r){
     var bs = state.batches.filter(function(b){ return b.reqId===r.id; });
     if(!bs.length) return false;
+    if(bs.every(isFinal)) return false;
     var t0 = U.p(today());
-    return bs.every(function(b){ return (b.locked || isFinal(b)) && b.end && U.p(b.end) <= t0; });
+    return bs.every(function(b){ return b.locked && b.end && U.p(b.end) <= t0; });
   }
   // v2.20.26 需求软删除：删除不再把条目从 state.requirements 里摘掉，而是打 del 标记（含 delAt/delBy）。
   // 这样删除信息能随正常的 pushReq 通道传播到云端（latest 语义天然生效），且本地条目始终存在——
@@ -2717,8 +2763,8 @@
         '<td><span class="badge '+(TYPE_BADGE[x.nb.type]||'b-gray')+'">'+esc(x.nb.type)+'</span></td>'+
         '<td>'+esc(x.nb.project||'-')+'</td>'+
         '<td>'+esc(x.nb.line)+'</td>'+
-        '<td style="color:var(--sub)">'+x.match.start+' ~ '+x.match.end+'</td>'+
-        '<td>'+x.nb.start+' ~ '+x.nb.end+'</td>'+
+        '<td style="color:var(--sub)">'+esc(x.match.start)+' ~ '+esc(x.match.end)+'</td>'+
+        '<td>'+esc(x.nb.start)+' ~ '+esc(x.nb.end)+'</td>'+
         '<td style="color:'+driftColor+';font-weight:600">'+(x.dStart>0?'+':'')+x.dStart+' / '+(x.dEnd>0?'+':'')+x.dEnd+'</td>'+
         srcChainTd()+
         stTd(x.nb);
@@ -2963,6 +3009,26 @@
   var VIZ_MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
   function vizMonthOf(d){ var m = parseInt((''+(d||'')).slice(5,7),10); return (m>=1&&m<=12)?m:0; }
   function vizYearOf(d){ return parseInt((''+(d||'')).slice(0,4),10) || 0; }
+  // v2.20.30：跨月批次按覆盖月数均摊（每批在每个月计 1/k 批，总和仍为 1），
+  // 修正此前「只计入开始月」导致结束月产能被系统性低估的问题。仅用于产能负载/热力图（占用口径）；
+  // 月度批次趋势图仍按开始月统计（趋势 = 开工批次数，语义正确）。
+  function vizMonthShares(b){
+    var s = U.p(b.start), e = U.p(b.end || b.start);
+    if(!s || !e || e < s) { var m0 = vizMonthOf(b.start); return m0 ? [{ y: vizYearOf(b.start), m: m0 }] : []; }
+    var list = [], y = s.getFullYear(), m = s.getMonth(), guard = 0;
+    while(guard++ < 240){
+      var first = new Date(y, m, 1), last = new Date(y, m+1, 0);
+      var a = s > first ? s : first, z = e < last ? e : last;
+      if(z >= a) list.push({ y: y, m: m+1 });
+      if(y === e.getFullYear() && m === e.getMonth()) break;
+      m++; if(m > 11){ m = 0; y++; }
+    }
+    if(!list.length){ var m1 = vizMonthOf(b.start); return m1 ? [{ y: vizYearOf(b.start), m: m1 }] : []; }
+    var share = 1 / list.length;
+    return list.map(function(x){ return { y: x.y, m: x.m, share: share }; });
+  }
+  // 负载数值展示：整数照常，均摊后的小数保留 1 位（0.5 批）
+  function vizNum(v){ return (Math.round(v*10)/10).toString(); }
   // 热力色阶：有上限时按 已用/上限 分档，超上限标红；无上限时按绝对值分档
   function vizHeatColor(v, cap){
     if(!v) return 'var(--panel)';
@@ -2998,10 +3064,13 @@
     CAP_KEYS.forEach(function(c){ grid[c.key] = [0,0,0,0,0,0,0,0,0,0,0,0]; });
     (state.batches||[]).forEach(function(b){
       var k = mapBatchType(b); if(!k) return;
-      if(vizYearOf(b.start) !== yr) return;
-      var m = vizMonthOf(b.start); if(!m) return;
-      if(!selKey || k === selKey) used[m-1]++;
-      if(grid[k]) grid[k][m-1]++;
+      // v2.20.30：跨月批次按覆盖月数均摊到各月（原来只按 b.start 计入开始月，结束月被漏算）
+      vizMonthShares(b).forEach(function(x){
+        if(x.y !== yr) return;
+        var sh = x.share == null ? 1 : x.share;
+        if(!selKey || k === selKey) used[x.m-1] += sh;
+        if(grid[k]) grid[k][x.m-1] += sh;
+      });
     });
     // v2.20.22：口径对齐——state.typeCaps[年][capKey] 是「年度」上限（见规则参数卡与手册），
     // 本卡为月度图，须折算月均上限（年度÷12）后再画线/判超标/分档，否则上限虚高、柱子被压扁且永不超标
@@ -3019,7 +3088,7 @@
       if(over) overN++;
       var col = over ? '#dc2626' : (v === 0 ? 'var(--panel)' : (cap > 0 && v/cap >= 0.85 ? '#185FA5' : '#378ADD'));
       var h = v === 0 ? 2 : Math.max(Math.round(v / maxV * 100), 4);
-      var tip = yr+'年'+(i+1)+'月：'+v+' 批'+(cap > 0 ? ('（月均上限 '+capTxt+'，'+capUnit+'）') : '');
+      var tip = yr+'年'+(i+1)+'月：'+vizNum(v)+' 批'+(cap > 0 ? ('（月均上限 '+capTxt+'，'+capUnit+'）') : '');
       return '<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%">'+
         '<div title="'+tip+'" style="height:'+h+'%;background:'+col+';border-radius:3px 3px 0 0"></div></div>';
     }).join('');
@@ -3043,7 +3112,7 @@
       hh += '<div style="color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(c.label)+'">'+esc(c.label)+'</div>';
       grid[c.key].forEach(function(v){
         var cd = (cv != null) ? (v > cv ? '（超月均上限 '+cvTxt+'，多 '+(Math.round((v-cv)*10)/10)+' 批，年度上限 '+cvA+' 批）' : '（月均上限 '+cvTxt+'，年度上限 '+cvA+' 批）') : '';
-        hh += '<div title="'+esc(c.label)+' · '+v+' 批'+cd+'" style="height:17px;border-radius:3px;background:'+vizHeatColor(v, cv)+'"></div>';
+        hh += '<div title="'+esc(c.label)+' · '+vizNum(v)+' 批'+cd+'" style="height:17px;border-radius:3px;background:'+vizHeatColor(v, cv)+'"></div>';
       });
     });
     hh += '</div>';
@@ -3055,7 +3124,7 @@
       var capText = cap > 0
         ? ('，月均 '+(total/12).toFixed(1)+' 批，月均上限 '+capTxt+' 批/月（'+capUnit+'）'+(overN ? '，<span style="color:#dc2626;font-weight:700">'+overN+' 个月超月均上限</span>' : '，各月均未超月均上限'))
         : '（未配置上限，不显示上限线）';
-      sumEl.innerHTML = yr+' 年共 <b>'+total+'</b> 批'+capText;
+      sumEl.innerHTML = yr+' 年共 <b>'+vizNum(total)+'</b> 批'+capText;
     }
     // 年份 / 类型切换即重绘本卡（onchange 覆盖式赋值，幂等）
     ySel.onchange = renderVizCapBlock;
@@ -3394,7 +3463,7 @@
       var bs = (state.batches||[]).filter(function(b){ return b.reqId === r.id; });
       if(bs.length) planned++;
       if(bs.some(function(b){ return b.locked; })) locked++;
-      if(reqAllDone(r)) done++; // v2.20.23：口径修正——此前用 bs.every(isFinal)（全部批次中止/失败/取消）才计「已完成」，正常做完锁定的需求永不计入；现与需求页 reqAllDone 一致（全部批次锁定/终态且结束日期已过）
+      if(reqAllDone(r)) done++; // v2.20.30：与需求页 reqAllDone 同口径——锁定且结束日期已过；全部中止/失败/取消不计入
     });
     if(!total){ el.innerHTML = '<div class="empty">暂无需求</div>'; if(hintEl) hintEl.innerHTML = ''; return; }
     var stages = [
@@ -3421,7 +3490,7 @@
       if(planned - locked > 0) parts.push('已排产未锁定 '+(planned-locked)+' 条');
       if(locked - done > 0) parts.push('锁定未完成 '+(locked-done)+' 条');
       hintEl.innerHTML = parts.length
-        ? ('漏斗留存：'+parts.join(' · ')+'。<b>未排产</b> = 需求已提交但没有对应批次（尚未排产或批次已被删除）；<b>已完成</b> = 该需求下所有批次均已完成（锁定/终态且结束日期已过，与需求页「已完成」一致；v2.20.23 修正）。')
+        ? ('漏斗留存：'+parts.join(' · ')+'。<b>未排产</b> = 需求已提交但没有对应批次（尚未排产或批次已被删除）；<b>已完成</b> = 该需求下所有批次均已锁定且结束日期已过（全部中止/失败/取消的需求计为「已终止」，不计入完成；与需求页口径一致）。')
         : '所有需求均已走完流程。';
     }
   }
@@ -4116,6 +4185,7 @@
     return R;
   }
   function saveRules(){
+    if(!isPlanner()){ toast('仅生产计划角色可修改排产规则'); return; } // v2.20.30：防绕过隐藏按钮直调覆盖共享规则
     state.rules = readRules();
     // v2.20.5：额外保存产能上限（按年份分桶，独立于 Sched.DEFAULTS）
     var capsAll = state.typeCaps || (state.typeCaps = {});
@@ -4337,7 +4407,7 @@
     // v2.18.3：导出信息工作表（版本/时间/角色/当前筛选条件），便于追溯导出版本与时间范围
     var ui = currentUiFilters();
     var info = [['项','值'],
-      ['系统版本','v2.20.29'],
+      ['系统版本','v2.20.30'],
       ['导出时间', new Date().toISOString()],
       ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
       ['需求列表-时间列', ui.reqFiltField==='createdAt'?'提交时间':'交期'],
@@ -4422,7 +4492,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.20.29'],
+          ['系统版本','v2.20.30'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['筛选条件摘要', formatFiltInfo(ui)]];
@@ -4484,7 +4554,17 @@
             d.snapshots = Object.keys(snapMap).map(function(k){ return snapMap[k]; });
           }
         }
-        if(!d.requirements || !d.batches) throw new Error('格式不正确');
+        // v2.20.30：导入前做结构校验并补齐默认字段——此前只判真值就 state=d 并 save()，
+        // 残缺文件会让 opLog 等字段缺失、后续 addOp 抛错，而 localStorage 已被污染。
+        if(!d || typeof d !== 'object') throw new Error('格式不正确');
+        if(!Array.isArray(d.requirements) || !Array.isArray(d.batches)) throw new Error('格式不正确：requirements / batches 必须为数组');
+        d.opLog = Array.isArray(d.opLog) ? d.opLog : [];
+        d.snapshots = Array.isArray(d.snapshots) ? d.snapshots : [];
+        if(d.rules === undefined) d.rules = null;
+        if(d.typeCaps === undefined) d.typeCaps = {};
+        if(d.projectPriority === undefined) d.projectPriority = {};
+        d.requirements = d.requirements.filter(function(x){ return x && typeof x === 'object' && x.id; });
+        d.batches = d.batches.filter(function(x){ return x && typeof x === 'object' && x.id; });
         state = d;
         if(!state.role) state.role='requester';
         if(state.user==null) state.user='';
@@ -4526,7 +4606,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.20.29'],
+          ['系统版本','v2.20.30'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['批次明细-时间列', ui.filtTField],
@@ -4566,7 +4646,7 @@
         var wb = XLSX.utils.book_new();
         var ui = currentUiFilters();
         var info = [['项','值'],
-          ['系统版本','v2.20.29'],
+          ['系统版本','v2.20.30'],
           ['导出时间', new Date().toISOString()],
           ['当前角色', ui.role==='planner'?'生产计划':(ui.role==='reader'?'读者':'需求方')],
           ['需求列表-时间列', ui.reqFiltField==='createdAt'?'提交时间':'交期'],
@@ -4705,7 +4785,7 @@
     $('btnBatchUnlock').addEventListener('click', batchUnlockSelected);
     $('btnDelBatches').addEventListener('click', delBatchesSelected); // v2.18.3：批次批量删除
     $('btnRefreshSched').addEventListener('click', function(){
-      if(!liveReqs().length){ toast('请先添加需求'); return; } // v2.20.26：软删除条目不计入
+      if(!liveReqs().filter(isMyReq).length){ toast(isPlanner() ? '请先添加需求' : '没有你填报的需求，无法排产'); return; } // v2.20.30：与 doSchedule 作用域一致
       doSchedule(); // 刷新自动排产：按当前需求重新排产所有未锁定批次（锁定/终态批次保持不变）
     });
     $('btnExportReq').addEventListener('click', exportReqCSV);
@@ -5014,6 +5094,10 @@
   function init(){
     if(!load()){
       resetToHistory();
+      // v2.20.30：数据损坏时明确告知并指向备份键，避免用户误以为数据凭空消失
+      if(_loadCorrupt){
+        toast('⚠️ 本地数据解析失败，已恢复为历史计划；原始内容已备份到浏览器存储（键名 '+LS_KEY+'_corrupt）');
+      }
     }
     dedupeBatchIds(); save(); // 修复旧数据重复批次 id 并持久化
     if(!state.role) state.role='requester';
