@@ -288,7 +288,9 @@
       return { start: pl.start, end: pl.end, warning: '产线长期饱和，已按最早日期强排，请人工调整' };
     }
     // 正排取最早可行槽位；若其完成日已晚于交期，则不存在满足交期的槽位，标预警
-    var warning = p(pl.end) > p(due) ? '交期无法满足（最早可排完成日已晚于交期）' : null;
+    // v2.20.30：APS 等无交期需求（dueDate 为空）不参与交期判定——p('') 返回 null，而 Date>null 恒为 true，
+    // 曾导致每个 APS 批次都被误标「交期无法满足」并置为预警状态。
+    var warning = (due && p(pl.end) > p(due)) ? '交期无法满足（最早可排完成日已晚于交期）' : null;
     return { start: pl.start, end: pl.end, warning: warning };
   };
 
@@ -429,8 +431,19 @@
           var need = add(testAfter, R.freezeDry.testGapDays);
           if (need > pl.start) {
             var f2 = this.placeForward(line, maxD(need, pl.start), cyc(line, dosage, req, R), ctx);
-            pl.start = f2.start; pl.end = f2.end;
-            if (add(pl.start, cyc(line, dosage, req, R) - 1) > p(due)) pl.warning = '交期可能无法满足（受冻干放大测试间隔2个月限制）';
+            if (f2) {
+              pl.start = f2.start; pl.end = f2.end;
+            } else {
+              // v2.20.30：产线饱和时 placeForward 返回 null，原代码直接取 f2.start 会抛 TypeError
+              // 并中断整次排产（doSchedule 无 try/catch）。改为按需求时间强排并预警。
+              pl.start = maxD(need, pl.start);
+              pl.end = add(pl.start, cyc(line, dosage, req, R) - 1);
+              pl.warning = '产线长期饱和，冻干正式批已按测试批后移间隔强排，请人工调整';
+            }
+            if (due && add(pl.start, cyc(line, dosage, req, R) - 1) > p(due)) {
+              var dw = '交期可能无法满足（受冻干放大测试间隔2个月限制）';
+              pl.warning = pl.warning ? (pl.warning + '；' + dw) : dw;
+            }
           }
         }
 
