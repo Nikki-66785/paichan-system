@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-page-node-id="ShD56FzrmeavEReor2VAKU">
-<head data-page-node-id="Hxb5YDmaQKUblOxttTvcQZ">
-<meta charset="UTF-8" data-page-node-id="FGp1gz1PFyt8vODaGyDrBt">
-<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="Gn3GAGHQZt9B9hNeHaAfu7">
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>排产系统 · 使用者操作手册</title>
 <style>
   :root{
@@ -108,471 +108,473 @@
   }
 </style>
 </head>
-<body data-page-node-id="CoLeEtydYw5NR5LjvJAZdz">
+<body>
 
-<header class="hero" data-page-node-id="B4I1T20g5AHOHEI7MG8ijN">
-  <div class="hero-in" data-page-node-id="py3rmdhpH4MXjy3XmUU8Md">
-    <h1 data-page-node-id="NoGLCkXPmwc01P6R7RBmJ5">📦 临床生产智能排产系统 · 使用者操作手册</h1>
-    <p data-page-node-id="YWuCTDDMg8F5nGXcpRhA3W">这份手册用大白话讲清楚「系统是干什么的、你该点哪里、点错了会怎样」。请先对照下面的流程总览了解全局，再按你的身份跳到自己对应的章节。</p>
-    <span class="ver" data-page-node-id="cEw9H8oWdtrFWMT1GwAQ0M">配套版本：v2.20.29（对应页面右上角版本标签）</span>
+<header class="hero">
+  <div class="hero-in">
+    <h1>📦 临床生产智能排产系统 · 使用者操作手册</h1>
+    <p>这份手册用大白话讲清楚「系统是干什么的、你该点哪里、点错了会怎样」。请先对照下面的流程总览了解全局，再按你的身份跳到自己对应的章节。</p>
+    <span class="ver">配套版本：v2.20.30（对应页面右上角版本标签）</span>
   </div>
 </header>
 
-<div class="wrap" data-page-node-id="SMPdohjHjtRcGtyAdBRiDT">
+<div class="wrap">
 
   <!-- 流程总览 -->
-  <div class="flow" data-page-node-id="aC5sYZ2g1CSAwm3ztns3uJ">
-    <div class="st" data-page-node-id="KuRGsqsbmnrplPhUXQsUED"><span class="num" data-page-node-id="BneHjOyukbcPXGOZQojmhh">①</span><b data-page-node-id="gza7I7DO8fnP7yFd73LJUM">📋 提需求</b><small data-page-node-id="p2v5xw2S0IzxXxZqA5GAle">需求方按实际生产需要填写并提交（选类型 CB / DP / Mab / ADC / APS / EQP）</small></div>
-    <div class="st" data-page-node-id="2KHFxotZY6NkkEUFuI1TVC"><span class="num" data-page-node-id="swsh3kHv1fp0k1pQPA4Nsj">②</span><b data-page-node-id="MRqFBwc4bFgGFXjsDfLsfm">⚙️ 自动排产</b><small data-page-node-id="4bN60ie2O0H929sTxqOEBv">生产计划点「🚀 自动排产」，系统按「优先级→交期→提交时间」排序、依产线产能与规则生成<b data-page-node-id="BPfEcTtuEt7ldfDvmoI1Fm">草案</b>（还没定死）</small></div>
-    <div class="st" data-page-node-id="4UnQ4lNo9g671vKp73KcXD"><span class="num" data-page-node-id="gVZcPZmUM41lC9Y5xD8EPs">③</span><b data-page-node-id="ZnE72h28N7qh9PzshH9EXe">✅ 确认调整</b><small data-page-node-id="6i94BQmNexade50lOCzxOd">生产计划核对甘特图/批次表，可拖拽调整、可逐条「确认」；交期有风险会出横幅提醒</small></div>
-    <div class="st" data-page-node-id="yYpaFB6H9hoepccFqWsBWy"><span class="num" data-page-node-id="vTN4gIPSr3ezCmHCOvFCDN">④</span><b data-page-node-id="CCoctgbuflxebmiwyzsErS">🔒 排产锁定</b><small data-page-node-id="7HYPM6BWXaAD2wvhVJO5fL">确认无误后「排产锁定」——锁定的批次成为<b data-page-node-id="bgdDdGPgQqZnZ6MYQY7Z1k">已占用产能</b>，之后自动重排不会动它们</small></div>
+  <div class="flow">
+    <div class="st"><span class="num">①</span><b>📋 提需求</b><small>需求方按实际生产需要填写并提交（选类型 CB / DP / Mab / ADC / APS / EQP）</small></div>
+    <div class="st"><span class="num">②</span><b>⚙️ 自动排产</b><small>点「🚀 自动排产」，系统按「优先级→交期→提交时间」排序、依产线产能与规则生成<b>草案</b>（还没定死）。<b>v2.20.30 起按角色限定范围</b>：生产计划重排全部需求，需求方只重排<b>本人</b>需求，他人未锁定批次与手工调整不受影响</small></div>
+    <div class="st"><span class="num">③</span><b>✅ 确认调整</b><small>生产计划核对甘特图/批次表，可拖拽调整、可逐条「确认」；交期有风险会出横幅提醒</small></div>
+    <div class="st"><span class="num">④</span><b>🔒 排产锁定</b><small>确认无误后「排产锁定」——锁定的批次成为<b>已占用产能</b>，之后自动重排不会动它们</small></div>
   </div>
 
-  <nav class="toc" data-page-node-id="CPqA3cs3kmHSeY71Z5Bvn4"><div class="in" data-page-node-id="LJum6wpAaLJb3xM3C62FwO">
-    <a href="#s0" data-page-node-id="wy7Piaz40MvrcJybxWxnDU">🧭 我该看哪章</a>
-    <a href="#s1" data-page-node-id="6BFB5Ub1FBtG0OFtiJ6ht0">👥 角色与权限</a>
-    <a href="#s2" data-page-node-id="YT7qv1vIQMrjahi2oO7ryS">🗂️ 页面总览</a>
-    <a href="#s3" data-page-node-id="OUmKC28ADZKIQkialCPem9">📋 我是需求方</a>
-    <a href="#s4" data-page-node-id="lcjeSDCs8ZSNsjxT14utlJ">🛠️ 我是生产计划</a>
-    <a href="#s5" data-page-node-id="4Xyc8pe71XGcc37HGtFzkP">👀 我是读者</a>
-    <a href="#s6" data-page-node-id="51SXV9sOueHDIM8OKxoecR">🛡️ 权限管理（管理员）</a>
-    <a href="#s7" data-page-node-id="ZF8vXGrdAjR8eZHLdxpZ2B">📤 导出与备份</a>
-    <a href="#s7n" data-page-node-id="d0IBEhum8WdkFMz8qIhkef">🔔 钉钉通知</a>
-    <a href="#s8" data-page-node-id="nVnjNMuIWS9qgUAOZeLxO6">❓ 常见问题</a>
-    <a href="#s9" data-page-node-id="3h7Y9C8F2nGTarXthFKavE">📖 小词典</a>
+  <nav class="toc"><div class="in">
+    <a href="#s0">🧭 我该看哪章</a>
+    <a href="#s1">👥 角色与权限</a>
+    <a href="#s2">🗂️ 页面总览</a>
+    <a href="#s3">📋 我是需求方</a>
+    <a href="#s4">🛠️ 我是生产计划</a>
+    <a href="#s5">👀 我是读者</a>
+    <a href="#s6">🛡️ 权限管理（管理员）</a>
+    <a href="#s7">📤 导出与备份</a>
+    <a href="#s7n">🔔 钉钉通知</a>
+    <a href="#s8">❓ 常见问题</a>
+    <a href="#s9">📖 小词典</a>
   </div></nav>
 
   <!-- 0 我该看哪章 -->
-  <section class="ch" id="s0" data-page-node-id="D1sSBH0B6D043Hbfb0uHjt">
-    <h2 class="sec" data-page-node-id="72E0ZAUBAVxOoV5QjZvWDw">🧭 我该看哪一章？</h2>
-    <p class="sub" data-page-node-id="ogYeEClQUZHj9edeYFBgFo">30 秒定位：先想清楚你在系统里的身份（登录后页面顶部会显示你的名字与角色提示）。顶栏常驻 <b data-page-node-id="6dzzeu9X9azimNbwTn6ScN">📖 使用手册</b> 按钮（所有角色可见），点开的就是本手册。</p>
-    <div class="roles" data-page-node-id="3eC35nr25ACEy05BRX2aTZ">
-      <div class="role role-r" data-page-node-id="AZKztc7HfGw18jLsNGj7yB">
-        <h4 data-page-node-id="ZA6DWGjcbOVTtCilkqifvy">👀 读者</h4>
-        <div class="who" data-page-node-id="c5oOzKUUnl8qMUGDm7Lpap">审计、领导、临时查看</div>
-        <ul data-page-node-id="aPJOQjResLDRqrzbXN9uWr"><li data-page-node-id="d7kk8Ca3wcgcmACGrDLeEZ">只能看，不能改</li><li data-page-node-id="VURpPG9dlxq64AhwA6lkMu">按钮看得到但点了会被拦</li><li data-page-node-id="aGFAGqezMDwTifRxQD96aK">👉 看 <a href="#s5" data-page-node-id="iEwWpRi4XdVFI67A7ltz5L">第 5 章</a></li></ul>
+  <section class="ch" id="s0">
+    <h2 class="sec">🧭 我该看哪一章？</h2>
+    <p class="sub">30 秒定位：先想清楚你在系统里的身份（登录后页面顶部会显示你的名字与角色提示）。顶栏常驻 <b>📖 使用手册</b> 按钮（所有角色可见），点开的就是本手册。</p>
+    <div class="roles">
+      <div class="role role-r">
+        <h4>👀 读者</h4>
+        <div class="who">审计、领导、临时查看</div>
+        <ul><li>只能看，不能改</li><li>按钮看得到但点了会被拦</li><li>👉 看 <a href="#s5">第 5 章</a></li></ul>
       </div>
-      <div class="role role-q" data-page-node-id="NmcImZUDSE0GWS1H7q4D6w">
-        <h4 data-page-node-id="tdeH7SUKQtORZ9t8KJVUZM">📋 需求方</h4>
-        <div class="who" data-page-node-id="SpHcC5NHI4yPNNnBanxHyS">项目经理、上游提交方</div>
-        <ul data-page-node-id="AEfzBAm5ELxjunrNsb3Y9J"><li data-page-node-id="usZ23zgY4fzym2zBn3Hsyz">提交自己的需求、改自己的、删自己的</li><li data-page-node-id="ocnYu6qeGcFgJCM3vhuRrW">查看排产计划（只读）</li><li data-page-node-id="sulPuKFo6JAlJvpXeOzAUr">👉 看 <a href="#s3" data-page-node-id="UuMA6rGzwb07qMFH5XlY2t">第 3 章</a></li></ul>
+      <div class="role role-q">
+        <h4>📋 需求方</h4>
+        <div class="who">项目经理、上游提交方</div>
+        <ul><li>提交自己的需求、改自己的、删自己的</li><li>查看排产计划（只读）</li><li>👉 看 <a href="#s3">第 3 章</a></li></ul>
       </div>
-      <div class="role role-p" data-page-node-id="lNWFMFF5h8S2hYv6wkMEuS">
-        <h4 data-page-node-id="fQUMzcDmXbcq9vhDRx5EHo">🛠️ 生产计划</h4>
-        <div class="who" data-page-node-id="FoQG4N76Vg1UGf6VCAoXPX">计划员、管理员</div>
-        <ul data-page-node-id="ltS2czl0IqHf7OYuWCla5g"><li data-page-node-id="MiycCyceiZAqpCgTnN5Qwl">全部功能：排产/锁定/删除/导出</li><li data-page-node-id="QxGmQuK9MFn0ECCmzBnSn4">还能进数据管理、权限管理</li><li data-page-node-id="M86BBV6GwA4PvS4nfA6iCS">👉 看 <a href="#s4" data-page-node-id="mPh6OK5AaiaXPY7XcAFc7A">第 4 章</a>（管理员另看 <a href="#s6" data-page-node-id="iS2yHcCRyurSHlstda3MUe">第 6 章</a>）</li></ul>
+      <div class="role role-p">
+        <h4>🛠️ 生产计划</h4>
+        <div class="who">计划员、管理员</div>
+        <ul><li>全部功能：排产/锁定/删除/导出</li><li>还能进数据管理、权限管理</li><li>👉 看 <a href="#s4">第 4 章</a>（管理员另看 <a href="#s6">第 6 章</a>）</li></ul>
       </div>
     </div>
-    <div class="tip tip-w" data-page-node-id="BABXjvxKC2UEtaq0KM1nZt">
-      <b data-page-node-id="WTAhACgICKqpVIcx8dUlCa">⚠️ 不知道自己是什么角色？</b>
+    <div class="tip tip-w">
+      <b>⚠️ 不知道自己是什么角色？</b>
       登录后页面顶部横幅或提示区会说明当前权限。如果你看到「👀 当前账号为「读者」权限…」的蓝色横幅，说明你目前只是读者；需要提交需求时，请联系生产计划管理员在「🛡️ 权限管理」里把你的账号提升为「需求方」。
     </div>
   </section>
 
   <!-- 1 角色与权限 -->
-  <section class="ch" id="s1" data-page-node-id="6OnTG4W5qgMExwFqM5mOys">
-    <h2 class="sec" data-page-node-id="rn34dyqzWQo6F6rgmO7pHs">👥 角色与权限：谁能做什么</h2>
-    <p class="sub" data-page-node-id="KmE119H3jx0kfgmP7KRvyr">系统按「读者 → 需求方 → 生产计划」三档授权。越往右权限越大，生产计划拥有全部权限。另有一个 <b data-page-node-id="ThF9nUMPP9wQ0pTHpgJMB0">「待开通」</b>状态（v2.20.27 起）：账号能登录但还没被分配角色，此时只显示「🔒 账号尚未开通权限」页，看不到系统内容——详见 <a href="#s8" data-page-node-id="A7UX9k3F5njbkCpIihxbie">Q24</a>。</p>
+  <section class="ch" id="s1">
+    <h2 class="sec">👥 角色与权限：谁能做什么</h2>
+    <p class="sub">系统按「读者 → 需求方 → 生产计划」三档授权。越往右权限越大，生产计划拥有全部权限。另有一个 <b>「待开通」</b>状态（v2.20.27 起）：账号能登录但还没被分配角色，此时只显示「🔒 账号尚未开通权限」页，看不到系统内容——详见 <a href="#s8">Q24</a>。</p>
 
-    <table class="tbl" data-page-node-id="h12aiiWi2MG0JEd1MqmX3V">
-      <tr data-page-node-id="3PPM7wJEY4r8HabswuYmqn"><th style="min-width:190px" data-page-node-id="6Jgqn7blvpY7DhgsutchcP">能做什么</th><th data-page-node-id="k1MFQUMVkudAizIjSn4Dku">👀 读者</th><th data-page-node-id="PHPCy2TANlcaxlZrRoXhoC">📋 需求方</th><th data-page-node-id="lFSO7rMMynOVYQocfqgXGk">🛠️ 生产计划</th></tr>
-      <tr data-page-node-id="QJ9qiALNJHRIlFh47Fm8b5"><td data-page-node-id="xQaEGaSCSr26CdURZd9FPh">查看需求录入页（表单 + 列表）</td><td class="yes" data-page-node-id="cr83Ab7aBCLG9Mp8h9073m">✅</td><td class="yes" data-page-node-id="aKo8an2quhM90Td0qMeqNZ">✅</td><td class="yes" data-page-node-id="vE5bLmR0REcLoVoeboCbjU">✅</td></tr>
-      <tr data-page-node-id="NADsiWFJyVRJLZsAALas7j"><td data-page-node-id="Bj87s83CaHGIOYR3keuHhn">提交需求</td><td class="no" data-page-node-id="mCRhWfCea4cYZFngAwujj1">❌（被拦截）</td><td class="yes" data-page-node-id="xW9kuTECABoEbayRoG0Xsh">✅（自动记为本人）</td><td class="yes" data-page-node-id="XVUje5vm5z1TZHLP72y16c">✅</td></tr>
-      <tr data-page-node-id="RZee0BBwSeIIqbUYR6ykA4"><td data-page-node-id="QDBHJsdS00aUIWGkOt4nmC">编辑 / 删除<b data-page-node-id="KJchIOeFPxIBRlFgfE6ypd">本人</b>的需求</td><td class="no" data-page-node-id="kKiFXAtcXFOPcsqc6Gv0BQ">❌</td><td class="yes" data-page-node-id="O8xzJYz3hpydEQa9jG3EEX">✅</td><td class="yes" data-page-node-id="yrMrt9AAYvwPZ1fgSAN2vL">✅</td></tr>
-      <tr data-page-node-id="5mDuAv5YrS7sV0xwPUWP2d"><td data-page-node-id="PU5EfG96eWVd7lw7OhIfFF">删除任意需求 / 批量删除</td><td class="no" data-page-node-id="OZNthVOKHDRmvmHJma4Dgw">❌</td><td class="no" data-page-node-id="iaEx7rcNvzb4Z3sntiYy9s">❌</td><td class="yes" data-page-node-id="7aTxHKR3tf1x2ssXLBiBYY">✅</td></tr>
-      <tr data-page-node-id="LrIeNyCtrN23UH6fRKPga2"><td data-page-node-id="PJ3qwXGPY9WF8eTjHybyzq">查看排产计划（甘特图 / 批次表）</td><td class="yes" data-page-node-id="BEnbCFjFGEnGxg9OourIMY">✅（只读）</td><td class="yes" data-page-node-id="MmvFNduCFrhYy5flBVWIDd">✅（只读）</td><td class="yes" data-page-node-id="XmLtWxzlQUZ1ucUVhwIZ5Q">✅</td></tr>
-      <tr data-page-node-id="b1bkCAFM11JApS2VP84E3I"><td data-page-node-id="LVkzRNF4obJwS4KCO0lG04">🚀 自动排产（生成草案批次）</td><td class="no" data-page-node-id="mzIOSgiLxUchtHc9MNMEJa">❌（被拦截）</td><td class="yes" data-page-node-id="SAL52z9TmXA4IzPgt4sbo7">✅</td><td class="yes" data-page-node-id="M9fIXomL9JICp9AcKAQkZc">✅</td></tr>
-      <tr data-page-node-id="itAo5YFR64kk5sfWBy1za2"><td data-page-node-id="2i4Jor1ohEIfHcH8MiNzHK">清空排产结果 / 人工调整批次</td><td class="no" data-page-node-id="CWDzwFm1MWHsg3rSAFac6K">❌</td><td class="no" data-page-node-id="Dn6h3qewWNlPiv9LzqF7Zz">❌</td><td class="yes" data-page-node-id="MyoiLkrMb3nGEDXd5D8h7p">✅</td></tr>
-      <tr data-page-node-id="zor3MGk3k03UCJ0SXHh7kl"><td data-page-node-id="n3Hfxz64vejvNfHwujYH25">确认批次 / 排产锁定 / 解锁</td><td class="no" data-page-node-id="4yAGXAvMB0aBn3RL3Hwqby">❌</td><td class="no" data-page-node-id="op1X8BLztY66kmo07d6Hwg">❌</td><td class="yes" data-page-node-id="mBos5JT95NmmQPKRkU3HZe">✅</td></tr>
-      <tr data-page-node-id="aADRoaRxgivDpcY7RqrsmG"><td data-page-node-id="qge0nHRmdc899celFb5yVt">📊 参考数据 / ⚙️ 规则参数 / 💾 数据管理</td><td class="no" data-page-node-id="LdQpnpP0rRRAm9WaOXAKlt">❌</td><td class="no" data-page-node-id="a9fjgog3mFWkLXWELIU9wu">❌</td><td class="yes" data-page-node-id="YycBKMoOCAA6oJdr1sFeDu">✅</td></tr>
-      <tr data-page-node-id="Auby37tN3s38mJpsG6xuNE"><td data-page-node-id="szjwruuf57fAdhSbH4OWkW">🛡️ 权限管理（分配账号角色）</td><td class="no" data-page-node-id="7esfRHztLey48aYfJVwJt6">❌</td><td class="no" data-page-node-id="ezxk8xy4FraPDchcHKcvur">❌</td><td class="yes" data-page-node-id="mZXyHoqITZvEPye852CXlv">✅</td></tr>
-      <tr data-page-node-id="JDO4WYk9fgG1GneqiDLDK9"><td data-page-node-id="Q3UIGYhRa3jGcluoTDtlNq">设备维护（EQP）类需求</td><td class="no" data-page-node-id="8Y9QjiTqVjm9HCR4rfqiKA">❌</td><td class="no" data-page-node-id="efPT7uNufwNzZnk0p5TK68">❌</td><td class="yes" data-page-node-id="Gnj1neRRWpOPLTqklinedx">✅</td></tr>
+    <table class="tbl">
+      <tr><th style="min-width:190px">能做什么</th><th>👀 读者</th><th>📋 需求方</th><th>🛠️ 生产计划</th></tr>
+      <tr><td>查看需求录入页（表单 + 列表）</td><td class="yes">✅</td><td class="yes">✅</td><td class="yes">✅</td></tr>
+      <tr><td>提交需求</td><td class="no">❌（被拦截）</td><td class="yes">✅（自动记为本人）</td><td class="yes">✅</td></tr>
+      <tr><td>编辑 / 删除<b>本人</b>的需求</td><td class="no">❌</td><td class="yes">✅</td><td class="yes">✅</td></tr>
+      <tr><td>删除任意需求 / 批量删除</td><td class="no">❌</td><td class="no">❌</td><td class="yes">✅</td></tr>
+      <tr><td>查看排产计划（甘特图 / 批次表）</td><td class="yes">✅（只读）</td><td class="yes">✅（只读）</td><td class="yes">✅</td></tr>
+      <tr><td>🚀 自动排产（生成草案批次）</td><td class="no">❌（被拦截）</td><td class="yes">✅（仅本人需求）</td><td class="yes">✅（全部需求）</td></tr>
+      <tr><td>清空排产结果（仅未锁定草案）</td><td class="no">❌</td><td class="yes">✅（仅本人草案）</td><td class="yes">✅</td></tr>
+      <tr><td>人工调整批次（改日期 / 产线 / 状态）</td><td class="no">❌</td><td class="no">❌</td><td class="yes">✅</td></tr>
+      <tr><td>确认批次 / 排产锁定 / 解锁</td><td class="no">❌</td><td class="no">❌</td><td class="yes">✅</td></tr>
+      <tr><td>📊 参考数据 / ⚙️ 规则参数 / 💾 数据管理</td><td class="no">❌</td><td class="no">❌</td><td class="yes">✅</td></tr>
+      <tr><td>🛡️ 权限管理（分配账号角色）</td><td class="no">❌</td><td class="no">❌</td><td class="yes">✅</td></tr>
+      <tr><td>设备维护（EQP）类需求</td><td class="no">❌</td><td class="no">❌</td><td class="yes">✅</td></tr>
     </table>
 
-    <div class="tip tip-i" data-page-node-id="7faji6tUfgPBwZb7J5CHnp">
-      <b data-page-node-id="wKg1q9GoBPA0owPC46WEsQ">💡 两条安全设计（遇到别慌）</b>
-      ① 没权限的按钮<b data-page-node-id="Dtks48khKJYjW8xh1bxKKM">不会显示</b>给你；② 就算有人用技术手段把按钮调出来，点了也会弹「角色权限不足」提示并被拦截——数据不会被动。所以读者在需求录入页<b data-page-node-id="IbfWlg0rhFIGnqjAXy8L33">看得到表单和按钮</b>、但一点就提示，这是故意为之：让你知道有哪些功能，需要就找管理员开权限。
+    <div class="tip tip-i">
+      <b>💡 两条安全设计（遇到别慌）</b>
+      ① 没权限的按钮<b>不会显示</b>给你；② 就算有人用技术手段把按钮调出来，点了也会弹「角色权限不足」提示并被拦截——数据不会被动。所以读者在需求录入页<b>看得到表单和按钮</b>、但一点就提示，这是故意为之：让你知道有哪些功能，需要就找管理员开权限。
     </div>
   </section>
 
   <!-- 2 页面总览 -->
-  <section class="ch" id="s2" data-page-node-id="9dxBpdLC48oGm2zAOgZDE0">
-    <h2 class="sec" data-page-node-id="Rt7fTnA1ryel42kDLjPmfV">🗂️ 页面总览：顶部 6 个标签页</h2>
-    <table class="tbl" data-page-node-id="WCN7GysmoEdEyhQb4jo9kt">
-      <tr data-page-node-id="V12QGf5rGFctpDodOvKmiD"><th data-page-node-id="GUYc8fCOcfl5fVPdhGp30c">标签</th><th data-page-node-id="mmvp8JZaSJAjkb9bC5O3fg">用途</th><th data-page-node-id="TC4YUpHm6y5ipo6bEjoVgt">谁能看到</th></tr>
-      <tr data-page-node-id="ODmUQg4NHJn0aM5wvXT6He"><td data-page-node-id="kAGmsN7z0CzsgHsE8GHLoM">📋 需求录入</td><td data-page-node-id="yyyUjrATLeFV2iG2lqrpND">填写 / 提交需求；看需求列表（含 APS 排产提醒，在页面<b data-page-node-id="WPL2QsSsPGlfHaVmivwxKW">最底部</b>）</td><td data-page-node-id="wUdecyoVFRRenWlOqB7KYn">全员</td></tr>
-      <tr data-page-node-id="X6s7GCuyDk7lXag2Q2a4z6"><td data-page-node-id="LjkPt3BAUObABq739pVU1a">📅 排产计划</td><td data-page-node-id="wNdhDq34v5nO5RJFGXE8zl">甘特图 + 批次明细表；排产、人工调整、确认、锁定都在这里</td><td data-page-node-id="ItoSZx6jsHCVzQw0q5wMX3">全员（非生产计划只读）</td></tr>
-      <tr data-page-node-id="4uEDeTKEteDgH3izYg2p3i"><td data-page-node-id="aHrGa61wll9vMDRaBIr7YW">📈 排产分析</td><td data-page-node-id="xwU5EKMdglOFd6niZFj2Jb">可视化看板：产能情况表、产能负载总览（月度负载柱状图 + 产线利用率热力图）、交期风险清单、项目组合视图、排产调整统计、需求漏斗；另有批次日期漂移分析、月度批次趋势与<b data-page-node-id="YBOOGQnDXlOMmM3fEpop7F">排产历史记录（快照管理）</b>——可保存 / 对比 / 下载 / 删除快照</td><td data-page-node-id="9BpHcxxjHvdmeV7WcFCr5F">全员</td></tr>
-      <tr data-page-node-id="GMyF2px5rKLAuICmh6gh9G"><td data-page-node-id="u7BtNBSisUhOvInuDAmGBG">📊 参考数据</td><td data-page-node-id="mF1JysTirXnBl4MgBkMp95">四张参考表：产线情况、制剂产能概况、人员配置、需求录入必要信息矩阵（另含「首次生产项目汇总」自动汇总表），生产计划可在页面上直接修订</td><td class="no" data-page-node-id="K5oyqONXVMyEvHIA7iMsPM">仅生产计划</td></tr>
-      <tr data-page-node-id="npjTzC0psPngNb19fh3ag5"><td data-page-node-id="37T67n5QOTvAeusnE4k7uM">⚙️ 规则参数</td><td data-page-node-id="zBH4oCycFi8U9ejHSzzyGe">调整 Mab / DP 周期天数、APS 提醒月份等排产规则</td><td class="no" data-page-node-id="NWUECGr9QJW7bLDOp4td9L">仅生产计划</td></tr>
-      <tr data-page-node-id="SM6qcsc6Mm9LHCFSqHBbNS"><td data-page-node-id="X3FrD7i0OPbaYKrrzSrvIv">💾 数据管理</td><td data-page-node-id="egGnwcdOnvmkmhBAgPRdBQ">导入 / 导出 Excel、清空数据、自动备份</td><td class="no" data-page-node-id="5r6RuG16bJVaZO3j9E2yuf">仅生产计划</td></tr>
+  <section class="ch" id="s2">
+    <h2 class="sec">🗂️ 页面总览：顶部 6 个标签页</h2>
+    <table class="tbl">
+      <tr><th>标签</th><th>用途</th><th>谁能看到</th></tr>
+      <tr><td>📋 需求录入</td><td>填写 / 提交需求；看需求列表（含 APS 排产提醒，在页面<b>最底部</b>）</td><td>全员</td></tr>
+      <tr><td>📅 排产计划</td><td>甘特图 + 批次明细表；排产、人工调整、确认、锁定都在这里</td><td>全员（非生产计划只读）</td></tr>
+      <tr><td>📈 排产分析</td><td>可视化看板：产能情况表、产能负载总览（月度负载柱状图 + 产线利用率热力图）、交期风险清单、项目组合视图、排产调整统计、需求漏斗；另有批次日期漂移分析、月度批次趋势与<b>排产历史记录（快照管理）</b>——可保存 / 对比 / 下载 / 删除快照</td><td>全员</td></tr>
+      <tr><td>📊 参考数据</td><td>四张参考表：产线情况、制剂产能概况、人员配置、需求录入必要信息矩阵（另含「首次生产项目汇总」自动汇总表），生产计划可在页面上直接修订</td><td class="no">仅生产计划</td></tr>
+      <tr><td>⚙️ 规则参数</td><td>调整 Mab / DP 周期天数、APS 提醒月份等排产规则</td><td class="no">仅生产计划</td></tr>
+      <tr><td>💾 数据管理</td><td>导入 / 导出 Excel、清空数据、自动备份</td><td class="no">仅生产计划</td></tr>
     </table>
-    <div class="tip tip-i" data-page-node-id="sYGFoSEkEj4yC1s4c0jSnY">
-      <b data-page-node-id="1nNH2x5xBbTENJrKCLFnzB">💡 顶部工具栏还有一行实时统计</b>：需求数 / 批次数 / 锁定数 / 待确认数 / 预警数。数字随操作实时变化，「预警」>0 说明有交期风险，点进「📅 排产计划」看橙色横幅详情。
+    <div class="tip tip-i">
+      <b>💡 顶部工具栏还有一行实时统计</b>：需求数 / 批次数 / 锁定数 / 待确认数 / 预警数。数字随操作实时变化，「预警」>0 说明有交期风险，点进「📅 排产计划」看橙色横幅详情。
     </div>
-    <div class="tip tip-i" data-page-node-id="n5uVDQY8jH4uRlGYk3kzP2">
-      <b data-page-node-id="1SE00qPsE30KBrdzKBZZl2">💡 顶栏常驻按钮</b>：<span class="ui" data-page-node-id="KxIT5pLLtjlyISKc8t3H2W">🌙 暗色</span> 切换明暗主题（偏好记在本机，刷新后保持）；<span class="ui" data-page-node-id="liCPiUMdrcDhxFHKHVCEFF">📖 使用手册</span> 打开本手册（所有角色可见）；<span class="ui" data-page-node-id="nthlZDeRHMkwAzCQsRcx8p">🛡️ 权限管理</span> 分配账号角色（仅生产计划可见）；右侧 <span class="ui" data-page-node-id="l56k6lvQxFd47F2xYjQiwv">☁️ 云端状态</span> 显示同步连接情况，<b data-page-node-id="BRklFYnNIsX7HRDWUvPMEL">点它可以修改密码、退出并切换账号</b>。
+    <div class="tip tip-i">
+      <b>💡 顶栏常驻按钮</b>：<span class="ui">🌙 暗色</span> 切换明暗主题（偏好记在本机，刷新后保持）；<span class="ui">📖 使用手册</span> 打开本手册（所有角色可见）；<span class="ui">🛡️ 权限管理</span> 分配账号角色（仅生产计划可见）；右侧 <span class="ui">☁️ 云端状态</span> 显示同步连接情况，<b>点它可以修改密码、退出并切换账号</b>。
     </div>
   </section>
 
   <!-- 3 需求方 -->
-  <section class="ch" id="s3" data-page-node-id="UunaA4IJlizLr5w1dp7MQj">
-    <h2 class="sec" data-page-node-id="ygsyRIg8hMLMCcLaiFrbgE">📋 我是需求方：怎么提交一条需求</h2>
-    <p class="sub" data-page-node-id="tkdDwWTqqGFwfwNjWM9N2g">需求方负责「把生产需求讲清楚」：选对类型、填对字段、交期准确，排产才靠谱。</p>
+  <section class="ch" id="s3">
+    <h2 class="sec">📋 我是需求方：怎么提交一条需求</h2>
+    <p class="sub">需求方负责「把生产需求讲清楚」：选对类型、填对字段、交期准确，排产才靠谱。</p>
 
-    <h3 data-page-node-id="opNaAoUQ1mMeE14uAyyBmM"><span class="ic" data-page-node-id="9fRLeVzrOekkBiK3UrNhzB">1️⃣</span> 提交新需求</h3>
-    <div class="card" data-page-node-id="EJllgQBFFAoY6uM2f1GaNJ">
-      <ol class="steps" data-page-node-id="XRDcv4wiUBi9QxdzKKeLt0">
-        <li data-page-node-id="dOp6dAAP04lQw5yDFETBKB">进入 <span class="ui" data-page-node-id="YJp3GwNTzXie8fOSzw4leb">📋 需求录入</span> 页，左侧是填表区，右侧是需求列表。</li>
-        <li data-page-node-id="bWfXbFtmUMiYMp06svCPm5">第一步选<b data-page-node-id="8ME2PssoZwuLA4I1OXCjTq">产品类型</b>——这一步决定后面出现哪些字段，请对照下表选：
-        <table class="tbl" style="margin-top:8px" data-page-node-id="6u8Q0jwaEmTgCv0rehq3wb">
-          <tr data-page-node-id="VkxDi0vtICoXgLcqjadRu8"><th data-page-node-id="feYQS4pKyYjlXSStdEBx1V">下拉里选</th><th data-page-node-id="jR5AweN8hjXMUXoWXb7Tge">是什么</th><th data-page-node-id="llgpbhxQQEqTtuuxRX8OGO">你要准备的关键信息</th></tr>
-          <tr data-page-node-id="CF2I9S7Ia47p586gnIJ1qv"><td data-page-node-id="MlfaOE5CVghDXuQPHiWn1w"><b data-page-node-id="o17hEla0FtuAlsqGBqacvr">CB 细胞库（MCB/WCB）</b></td><td data-page-node-id="t49Cx0VtO5REsztmAv0p1n">细胞库新建 / 扩增</td><td data-page-node-id="pPwso0U3YGKJ96Gt8r6eYF">CB 种类（MCB / WCB）、Henlius 项目号、批次数、规格；<b data-page-node-id="uDdKFe99shmP3r4boRbbH4">MCB 建库必填</b>「正式工艺转移完成日期」（之后 1 个月才可投产）</td></tr>
-          <tr data-page-node-id="ZqBW2ebk2zMvKuSXEhraOV"><td data-page-node-id="8zsXi0soqcawgVceHrvXX3"><b data-page-node-id="KKh9alokTCrJbsbApey9Q9">Mab DS 原液</b></td><td data-page-node-id="pMUHx7jm6oqBpS3hOvn9az">单抗原液生产</td><td data-page-node-id="RMfessNmzX55r5YeRFlvAT">产线（SJ1（松江一厂）/ SJ2（松江二厂））、规格、批次类型、项目阶段；<b data-page-node-id="z4c0n7zNDoZx1VziKZb54w">首次生产必填 Titer</b>，并要补 Molecule Type / Target / Novelty / mAb subtype / Host Cell Line</td></tr>
-          <tr data-page-node-id="UGSREsBGBWC1iSJ0bl73gV"><td data-page-node-id="ScFRZsfIxCdQDbwLR6VpsB"><b data-page-node-id="H1Ei1HYt6BHme0pQsS1264">ADC DS 原液</b></td><td data-page-node-id="9Mnm6ZQuYuqWkQmOk4Horn">ADC 原液生产</td><td data-page-node-id="yz9oC64SgQnRVzMFIz2Tpz">字段结构与 Mab DS 相同，另可填「LP 放行完成日期」</td></tr>
-          <tr data-page-node-id="TiXMezPI0Ne63jyHszPGZH"><td data-page-node-id="r82ChDBGXgMOXR1CFKeRNo"><b data-page-node-id="9AEzaWEk0jOrlGFD4tBEAb">DP 制剂</b></td><td data-page-node-id="eQcnQhxJK9gvhuiefQC9A3">水针 / 冻干制剂生产</td><td data-page-node-id="UvW900rK9NmAgF9FV0bXfx">DP 种类（<b data-page-node-id="3Z9rdReh4lT9gPMnySBc3P">CM 制剂（Mab 来源）</b> / <b data-page-node-id="Rpx6bg3XstZJ7UZ4rSssDi">ADC 制剂</b>）、剂型（水针 / 冻干）、产线（<b data-page-node-id="NZkd3EKSW4YmEVwPiR1jwN">C7CM DP（C7车间）</b> / <b data-page-node-id="eClpNGE8mYZ328Ol4XUnWo">SJ2CM DP（松江二厂）</b>）、制剂批量、注射瓶规格——制剂批量与瓶规必填，冻干剂型还要选是否安排冻干放大测试</td></tr>
-          <tr data-page-node-id="Djx8iupY21Mz2DtZWEyoNQ"><td data-page-node-id="wtptL2wBMBM1dEYkr7gHAP"><b data-page-node-id="Ccnx4qdQyLqSR9ZpO8FbmU">APS 培养基模拟灌装</b></td><td data-page-node-id="FOlMPtERkEDDkrRlxWehar">按<b data-page-node-id="uwTayAcrhLDYESLfLwY6pV">月份</b>提交的模拟灌装需求</td><td data-page-node-id="dm3LZLD6HFwyMllRaEOLGQ">APS 产线（SJ2 ADC DP / C7CM DP / SJ2CM DP 之一）+ 计划月份（yyyy-MM）+ 剂型；<b data-page-node-id="eOSPxYVBRiDZ0b8wvOfGvp">无需填交期</b>（v2.20.12 起交期字段隐藏，按计划月份排产，该月内自动择 8 天并避让已有批次）</td></tr>
-          <tr data-page-node-id="WUjtr7gI4Utwa43YJm5HSt"><td data-page-node-id="hnU8K31NeOfgpGTCwcjwYh"><b data-page-node-id="qsHQYyxCHXlPqgDtqQxmeD">🔧 设备维护保养</b></td><td data-page-node-id="wN903Oj9Z6cYeow4NQbw2D">产线维护窗口</td><td data-page-node-id="Vw7Iu1e4TN3U5N5wdD12tK"><b data-page-node-id="Ufsl7XB20ZvSzIcf1PuGM5">仅生产计划可见可选</b>：维护产线 + 维护类型（计划保养 / 临时维修 / 年度大修 / 校验验证）+ 开始日期 + 结束日期；<b data-page-node-id="0GN6ax2CZD0E1GcjkoKOT0">无需填交期</b>（v2.20.11 起自动按维护结束日期排序）。该类型<b data-page-node-id="X4MvRZQEBDqdNdONYxL5pc">不显示「项目阶段」「需要条件放行」</b>（v2.20.29 起，与 APS 一致——维护窗口不涉及临床阶段）。提交后可直接点本页 <span class="ui" data-page-node-id="c3MLt8tjK3oTfGg7JdJnx9">🚀 自动排产</span> 生成维护批次，也可到 <span class="ui" data-page-node-id="s9tzM2RYvPJncSEJOGxZA7">📅 排产计划</span> 页点 <span class="ui" data-page-node-id="YQxBIxiLyO5AGFE072SRtG">🔄 刷新自动排产</span></td></tr>
+    <h3><span class="ic">1️⃣</span> 提交新需求</h3>
+    <div class="card">
+      <ol class="steps">
+        <li>进入 <span class="ui">📋 需求录入</span> 页，左侧是填表区，右侧是需求列表。</li>
+        <li>第一步选<b>产品类型</b>——这一步决定后面出现哪些字段，请对照下表选：
+        <table class="tbl" style="margin-top:8px">
+          <tr><th>下拉里选</th><th>是什么</th><th>你要准备的关键信息</th></tr>
+          <tr><td><b>CB 细胞库（MCB/WCB）</b></td><td>细胞库新建 / 扩增</td><td>CB 种类（MCB / WCB）、Henlius 项目号、批次数、规格；<b>MCB 建库必填</b>「正式工艺转移完成日期」（之后 1 个月才可投产）</td></tr>
+          <tr><td><b>Mab DS 原液</b></td><td>单抗原液生产</td><td>产线（SJ1（松江一厂）/ SJ2（松江二厂））、规格、批次类型、项目阶段；<b>首次生产必填 Titer</b>，并要补 Molecule Type / Target / Novelty / mAb subtype / Host Cell Line</td></tr>
+          <tr><td><b>ADC DS 原液</b></td><td>ADC 原液生产</td><td>字段结构与 Mab DS 相同，另可填「LP 放行完成日期」</td></tr>
+          <tr><td><b>DP 制剂</b></td><td>水针 / 冻干制剂生产</td><td>DP 种类（<b>CM 制剂（Mab 来源）</b> / <b>ADC 制剂</b>）、剂型（水针 / 冻干）、产线（<b>C7CM DP（C7车间）</b> / <b>SJ2CM DP（松江二厂）</b>）、制剂批量、注射瓶规格——制剂批量与瓶规必填，冻干剂型还要选是否安排冻干放大测试</td></tr>
+          <tr><td><b>APS 培养基模拟灌装</b></td><td>按<b>月份</b>提交的模拟灌装需求</td><td>APS 产线（SJ2 ADC DP / C7CM DP / SJ2CM DP 之一）+ 计划月份（yyyy-MM）+ 剂型；<b>无需填交期</b>（v2.20.12 起交期字段隐藏，按计划月份排产，该月内自动择 8 天并避让已有批次）。<b>v2.20.30 起</b>无交期需求不再被误标「交期无法满足」——此前 APS 批次会全部显示为「预警」</td></tr>
+          <tr><td><b>🔧 设备维护保养</b></td><td>产线维护窗口</td><td><b>仅生产计划可见可选</b>：维护产线 + 维护类型（计划保养 / 临时维修 / 年度大修 / 校验验证）+ 开始日期 + 结束日期；<b>无需填交期</b>（v2.20.11 起自动按维护结束日期排序）。该类型<b>不显示「项目阶段」「需要条件放行」</b>（v2.20.29 起，与 APS 一致——维护窗口不涉及临床阶段）。提交后可直接点本页 <span class="ui">🚀 自动排产</span> 生成维护批次，也可到 <span class="ui">📅 排产计划</span> 页点 <span class="ui">🔄 刷新自动排产</span></td></tr>
         </table>
         </li>
-        <li data-page-node-id="aLxuqGKCB9PsLmRYpXKkwW">按提示填写其余字段。<b data-page-node-id="th9hIRRvG0WApUCTBWFAjx">交期请尽量真实</b>——系统会拿它和排产完成日期对比，交期太紧会出「交期差异」预警横幅。</li>
-        <li data-page-node-id="faVSPABWUjTKcnZWmUqVt6">点 <span class="ui" data-page-node-id="zmS5I2XAJHJTtffNifyic6">➕ 添加需求</span>。成功后列表顶部出现你这条需求，状态为「待排产」。填错了想重来，点旁边的 <span class="ui" data-page-node-id="26C3QVXMUfEdkA3KrmHcWy">清空表单</span>。</li>
-        <li data-page-node-id="Si3wNPGVruiVY6OR6Hty2z"><b data-page-node-id="rhX81OLSRxiwiLkH5NXIME">填一半不用担心丢</b>（v2.20.14 起）：填写过程中系统自动暂存草稿，误关页面 / 误刷新会先弹确认；下次打开自动恢复上次未提交的内容，提交成功后草稿自动清除。</li>
-        <li data-page-node-id="UTlzBr8SNR5Shu6jljJXUn">提交后你可以在列表行上点 <span class="ui" data-page-node-id="bcAgDtMwHotimxMrEnsoAp">编辑</span>、<span class="ui" data-page-node-id="vzYRs1zpb7DbVbhW54vc2x">📋 复制</span>（把这条需求全部信息回填到上方表单，改一改再添加就是一条新需求）或 <span class="ui" data-page-node-id="C4pGU7zAwFeCnUhg0wYhMu">删除</span>（<b data-page-node-id="a1HkMPCNJmm1SBANGMfF6B">仅限本人提交的需求</b>）。已提交且正在排产的需求改内容，可能影响已生成的排产，请谨慎。</li>
+        <li>按提示填写其余字段。<b>交期请尽量真实</b>——系统会拿它和排产完成日期对比，交期太紧会出「交期差异」预警横幅。</li>
+        <li>点 <span class="ui">➕ 添加需求</span>。成功后列表顶部出现你这条需求，状态为「待排产」。填错了想重来，点旁边的 <span class="ui">清空表单</span>。</li>
+        <li><b>填一半不用担心丢</b>（v2.20.14 起）：填写过程中系统自动暂存草稿，误关页面 / 误刷新会先弹确认；下次打开自动恢复上次未提交的内容，提交成功后草稿自动清除。</li>
+        <li>提交后你可以在列表行上点 <span class="ui">编辑</span>、<span class="ui">📋 复制</span>（把这条需求全部信息回填到上方表单，改一改再添加就是一条新需求）或 <span class="ui">删除</span>（<b>仅限本人提交的需求</b>）。已提交且正在排产的需求改内容，可能影响已生成的排产，请谨慎。</li>
       </ol>
-      <div class="tip tip-w" data-page-node-id="eHP42trt3d8C3ukNFT3kos"><b data-page-node-id="Zx72gTcsAK0Hdmuvro5LIT">⚠️ 小提醒</b>优先级不用你填——需求方统一按默认档处理；由生产计划按<b data-page-node-id="9mx487XZ4ED9pGCEsJOl43">项目</b>在需求列表优先级列设 P1–P5（v2.20.8 起，详见 <a href="#s4" data-page-node-id="lqArISFQAwaHbRgdDOOjHx">第 4 章</a>），自动排产会优先排高优先级项目。</div>
+      <div class="tip tip-w"><b>⚠️ 小提醒</b>优先级不用你填——需求方统一按默认档处理；由生产计划按<b>项目</b>在需求列表优先级列设 P1–P5（v2.20.8 起，详见 <a href="#s4">第 4 章</a>），自动排产会优先排高优先级项目。</div>
     </div>
 
-    <h3 data-page-node-id="r8moHih58aGgUDhsVAn8Jo"><span class="ic" data-page-node-id="hFJxxiGdMKqG7klea24fWV">2️⃣</span> 在列表里快速找需求</h3>
-    <div class="card" data-page-node-id="W571uy9wlp6WHnOWC5rGcb">
-      <p class="para" data-page-node-id="DZ0bBB8g46IZGIEIJQ8TGc">列表上方有两组筛选项，组合使用可以快速缩小范围：</p>
-      <ul class="list" data-page-node-id="ozP9hZ76tSFpzBodiF8cVU">
-        <li data-page-node-id="tzOsasoxf3p8Oyx0jZRGWG"><b data-page-node-id="rQxofaGfA3KD8JKicO34eY">需求人</b>下拉：只看某个人的需求。</li>
-        <li data-page-node-id="EhqfkA5sPKhreXIVX3g6es"><b data-page-node-id="NGFVwSAAL2BD52nOQNOHzk">时间字段</b>切换：按「提交时间」还是按「交期」来过滤。</li>
-        <li data-page-node-id="yuBfrsw3tLXS4XIeD0g7Ms"><b data-page-node-id="mYiWirBHEHkrEUeNoFQQPo">时间范围</b>：全部 / 近 1 周 / 近 1 月 / 近 3 月 / 自定义起止。</li>
+    <h3><span class="ic">2️⃣</span> 在列表里快速找需求</h3>
+    <div class="card">
+      <p class="para">列表上方有两组筛选项，组合使用可以快速缩小范围：</p>
+      <ul class="list">
+        <li><b>需求人</b>下拉：只看某个人的需求。</li>
+        <li><b>时间字段</b>切换：按「提交时间」还是按「交期」来过滤。</li>
+        <li><b>时间范围</b>：全部 / 近 1 周 / 近 1 月 / 近 3 月 / 自定义起止。</li>
       </ul>
-      <div class="tip tip-d" data-page-node-id="vgbUXfA1JrVsGGhSB0pB4Q"><b data-page-node-id="7GxDv9ZF9xOlqPlpcmJFo8">🔍 找不到自己以前的需求？</b>九成是时间范围挡住的——把范围切到「全部」再找。交期模式的「全部」与提交时间模式的「全部」看的字段不同，记得两边都试试。</div>
-      <p class="para" data-page-node-id="zEEbXtt4VSoQ4wCF9IO4A8">列表上方那排按钮依次是：<span class="ui" data-page-node-id="vdmMIBRmDjYIvBeacV8PyE">🚀 自动排产</span>（重新排未锁定的批次）、<span class="ui" data-page-node-id="pvJ7iGDrGR5pDDc8aHuF7D">↺ 清空排产结果（保留需求）</span>（把已生成的批次全清掉、只留需求）、<span class="ui" data-page-node-id="GYRXzS9vyPLSg55wEfl1l5">⬇️ 导出需求清单 (Excel)</span>；右侧还有 <span class="ui" data-page-node-id="3R1D5dspCk2GekNGRBxDy7">🧹 清理已完成需求记录</span>（删掉全部批次都已完成的需求记录，<b data-page-node-id="h47xKInfB9EDvgwt8OOUVe">排产批次保留</b>）与生产计划专用的 <span class="ui" data-page-node-id="YgHoJDiLUnQmt7bHhnH3oA">🗑️ 删除选中（N）</span>。</p>
+      <div class="tip tip-d"><b>🔍 找不到自己以前的需求？</b>九成是时间范围挡住的——把范围切到「全部」再找。交期模式的「全部」与提交时间模式的「全部」看的字段不同，记得两边都试试。</div>
+      <p class="para">列表上方那排按钮依次是：<span class="ui">🚀 自动排产</span>（重新排未锁定的批次；<b>v2.20.30 起</b>生产计划重排全部需求，需求方只重排本人需求）、<span class="ui">↺ 清空排产结果（保留需求）</span>（清掉未锁定的草案批次、只留需求；需求方仅清本人草案，他人批次不动）、<span class="ui">⬇️ 导出需求清单 (Excel)</span>；右侧还有 <span class="ui">🧹 清理已完成需求记录</span>（删掉全部批次都已完成的需求记录，<b>排产批次保留</b>）与生产计划专用的 <span class="ui">🗑️ 删除选中（N）</span>。</p>
     </div>
 
-    <h3 data-page-node-id="c4XLZ5wag119NTVJU4ibar"><span class="ic" data-page-node-id="hpJxXWN7pMZbTcQCK4COK8">3️⃣</span> 提交后做什么</h3>
-    <div class="card" data-page-node-id="RUaqHTjzOT1UjfyG48Ax9L">
-      <ol class="steps" data-page-node-id="dC4KHiVYqrG54jJPIuc1QA">
-        <li data-page-node-id="idsjoQkDGPodeyZpP9OcpM">提交成功后，系统会<b data-page-node-id="3WtOL1GGaglZYFRFhvDozc">立即推送钉钉群通知并@生产计划</b>（v2.19.2 起）——所以生产计划第一时间就知道你的新需求，不用你再去催；之后等排产即可。排产后切到 <span class="ui" data-page-node-id="ZHNIwxUfuUGA9jyCAKzvED">📅 排产计划</span>，看<b data-page-node-id="CS5xUAEAdJcrLeXzSQAAE4">甘特图</b>上你的批次排在哪条产线、什么时间（此页对你只读，改不了）。</li>
-        <li data-page-node-id="ExZyiXOO5rapd46tHFJH3Q">如果批次完成时间晚于你的交期，系统会在「📋 需求录入」顶部出橙色预警，或在「📅 排产计划」出横幅——<b data-page-node-id="JOWWmwj6EvEyDCJiaPzRMa">发现交期冲突请主动找生产计划沟通</b>，优先保交期还是保产线节奏，由计划员权衡。</li>
-        <li data-page-node-id="B2CFaC2AXcurcc64iP0cQA">页面底部有 <b data-page-node-id="FPB5jrjfu92L8oESiWgG1U">🔔 APS 排产提醒</b>：告诉你哪几个产线组合的哪几个月还没安排「培养基模拟灌装」。如果你负责提交 APS 需求，请按提醒在需求录入里选「APS」类型按月补齐提交。</li>
+    <h3><span class="ic">3️⃣</span> 提交后做什么</h3>
+    <div class="card">
+      <ol class="steps">
+        <li>提交成功后，系统会<b>立即推送钉钉群通知并@生产计划</b>（v2.19.2 起）——所以生产计划第一时间就知道你的新需求，不用你再去催；之后等排产即可。排产后切到 <span class="ui">📅 排产计划</span>，看<b>甘特图</b>上你的批次排在哪条产线、什么时间（此页对你只读，改不了）。</li>
+        <li>如果批次完成时间晚于你的交期，系统会在「📋 需求录入」顶部出橙色预警，或在「📅 排产计划」出横幅——<b>发现交期冲突请主动找生产计划沟通</b>，优先保交期还是保产线节奏，由计划员权衡。</li>
+        <li>页面底部有 <b>🔔 APS 排产提醒</b>：告诉你哪几个产线组合的哪几个月还没安排「培养基模拟灌装」。如果你负责提交 APS 需求，请按提醒在需求录入里选「APS」类型按月补齐提交。</li>
       </ol>
     </div>
   </section>
 
   <!-- 4 生产计划 -->
-  <section class="ch" id="s4" data-page-node-id="RMitNmJKMHR2m1hoD94lYT">
-    <h2 class="sec" data-page-node-id="AZe6mZsp8NBjTNEA3AXOiA">🛠️ 我是生产计划：从需求到锁定</h2>
-    <p class="sub" data-page-node-id="waWYPYsnontJVcMI1matkM">你的日常：看需求 → 排产（草案）→ 人工调整 → 确认/锁定。记住一条主线——<b data-page-node-id="fLnaAC54R7rGuazp7C9T4D">「自动排产只出草案，锁定才算数」</b>。</p>
+  <section class="ch" id="s4">
+    <h2 class="sec">🛠️ 我是生产计划：从需求到锁定</h2>
+    <p class="sub">你的日常：看需求 → 排产（草案）→ 人工调整 → 确认/锁定。记住一条主线——<b>「自动排产只出草案，锁定才算数」</b>。</p>
 
-    <h3 data-page-node-id="vBUqOuBcIx82ZBXNzrQcH0"><span class="ic" data-page-node-id="9hMOSTnq8SbzVVIVeyN9Qh">1️⃣</span> 处理需求列表（含批量删除）</h3>
-    <div class="card" data-page-node-id="KFax73wppHJq2mhCOii24K">
-      <ul class="list" data-page-node-id="DEcE3TSBL83iqSVRLsmPx5">
-        <li data-page-node-id="8cs5jrkgmjG5mpggrRmXcu">在 <span class="ui" data-page-node-id="FTbhpSOVNJihHilrTX5RnW">📋 需求录入</span> 勾选需求行左侧的复选框，表头全选框会跟着变（空 → 半选「—」→ 全选）；底部按钮 <span class="ui" data-page-node-id="jlbckug9UfPQ8AuSvIr5M8">🗑️ 删除选中（N）</span> 会实时显示已选数量，<b data-page-node-id="RgdGSOPCYbQKK9PUQlHOuv">没勾选时按钮是置灰禁用的</b>。</li>
-        <li data-page-node-id="jT1CEiljRqmY8iDS3qSn2J">批量删除的规则（重要）：<b data-page-node-id="FCNNmKlAEn72PiLCHQovSn">已完成的需求 → 只删需求记录，它对应的排产批次保留</b>；<b data-page-node-id="3tXOgywlbt2wv5P4PrCdg1">未完成的需求 → 连同它的排产批次一起删除</b>。系统会再次弹窗问你确认，看清楚再点。</li>
-        <li data-page-node-id="E5kyi5zns8CyHc9Fkuyama">删除是<b data-page-node-id="B7Y3CPpjeXOM4OIXPnwNtg">软删除</b>（v2.20.26 起）：记录不会真正从数据库消失，而是打上删除标记后同步给所有设备，因此删除后你在任何电脑上都看不到它了。界面上与真删除完全一样，无需特别操作（详见 <a href="#s8" data-page-node-id="NHTaOZvdEhCNFN4o0r2Fwm">Q22</a>）。</li>
-        <li data-page-node-id="Z9ClGB4Eov5KEZ6qMjvUt1">灰色且不可勾选的行 = 历史锁定批次，不允许批量操作（防止误删已锁定的计划）。</li>
+    <h3><span class="ic">1️⃣</span> 处理需求列表（含批量删除）</h3>
+    <div class="card">
+      <ul class="list">
+        <li>在 <span class="ui">📋 需求录入</span> 勾选需求行左侧的复选框，表头全选框会跟着变（空 → 半选「—」→ 全选）；底部按钮 <span class="ui">🗑️ 删除选中（N）</span> 会实时显示已选数量，<b>没勾选时按钮是置灰禁用的</b>。</li>
+        <li>批量删除的规则（重要）：<b>已完成的需求 → 只删需求记录，它对应的排产批次保留</b>；<b>未完成的需求 → 连同它的排产批次一起删除</b>。系统会再次弹窗问你确认，看清楚再点。</li>
+        <li>删除是<b>软删除</b>（v2.20.26 起）：记录不会真正从数据库消失，而是打上删除标记后同步给所有设备，因此删除后你在任何电脑上都看不到它了。界面上与真删除完全一样，无需特别操作（详见 <a href="#s8">Q22</a>）。</li>
+        <li>灰色且不可勾选的行 = 历史锁定批次，不允许批量操作（防止误删已锁定的计划）。</li>
       </ul>
     </div>
 
-    <h3 data-page-node-id="lLw5S6sVWzIDm50t8V5iVZ"><span class="ic" data-page-node-id="6S91tfYGWq4KePUw2Fis33">2️⃣</span> 排产五步：排 → 看 → 调 → 锁 → 改</h3>
-    <div class="card" data-page-node-id="wPMNLAEJYDORa3OigXddQH">
-      <ol class="steps" data-page-node-id="VuIA9YFxph2ec6BXddCsXT">
-        <li data-page-node-id="Fuejt9WIJlrkcDKnkPXtgV"><b data-page-node-id="TuxUxjqt5nQ1gMMp927ha0">排</b>：在「📋 需求录入」点需求列表上方的 <span class="ui" data-page-node-id="ar9b6VFzIKuQha1WCAu34b">🚀 自动排产</span>（收到他人新需求时，页面顶部横幅也会出现 <span class="ui" data-page-node-id="PEIBT1nir7abARv37AvogN">🚀 立即排产</span> 按钮）。系统按产能与规则生成<b data-page-node-id="zu3avTfvwldws8H6C5DYi1">草案批次</b>，对应需求变为「待确认」。若产生冲突（如交期不够），页面上方会出现<b data-page-node-id="rEeJYD4vEL7BP0b2FyKtpG">告警横幅</b>逐条说明。</li>
-        <li data-page-node-id="28S11z5oXDcDIKVB1Ffp01"><b data-page-node-id="SY7gEBPUgQrYVxDaYOXbuv">看</b>：上面甘特图看产线占用节奏，下面批次明细表看每一批的状态、产线、开始 / 下罐(灌装) / 完成等（见下方解释）。</li>
-        <li data-page-node-id="jeUPKQLCWETnNaXme8MyGW"><b data-page-node-id="SjKFRIdFN5w3t3O2mhAIgV">调</b>：甘特图上拖拽批次，或点行内 <span class="ui" data-page-node-id="woen2ZMlEQuAwaLrpdBDLD">调整</span> 打开弹窗改日期 / 产线 / 状态，人工调整冲突批次。把批次改成「中止 / 失败 / 取消」= 终态，该批次不再占产能，只留记录。</li>
-        <li data-page-node-id="9Db3t9HBUecHIMnW5WrZoI"><b data-page-node-id="EmkflKWWBjs1g4EQA5qfvy">锁</b>：没问题后逐条点 <span class="ui" data-page-node-id="S6IFiZbO2HTGNkNBpMRBtM">确认</span>，或直接 <span class="ui" data-page-node-id="pvdcV64yya8RvS2qo0UqQ7">🔒 排产锁定（确认全部待确认批次）</span>。锁定后这批计划成为<b data-page-node-id="u0cfeLkkuVDu2WGdcCbtpg">已占用产能</b>——以后再次自动排产会绕着它们排，不会被推翻。</li>
-        <li data-page-node-id="Dz6OYSJf2aOzZVp1V2XFEp"><b data-page-node-id="I2ouIiZ9AwcTtGGcYRMLmJ">改</b>：锁错了或需求变了，勾选批次点 <span class="ui" data-page-node-id="QHL08E1RRbTuFgSrr4mwNN">🔓 批量解锁（勾选批次）</span> 放开；再点 <span class="ui" data-page-node-id="iNlpA8pmpkbiYdxPhYu7FL">🔄 刷新自动排产（重排未锁定批次）</span> 按当前需求整体重排——<b data-page-node-id="cF4rbQK9EMTnF6WCBaKhqk">锁定批次与终态批次保持不变</b>。批次表也支持勾选后 <span class="ui" data-page-node-id="NKRJpDa0Xnh1K4AiUZrxwQ">🗑️ 删除选中（N）</span>。</li>
+    <h3><span class="ic">2️⃣</span> 排产五步：排 → 看 → 调 → 锁 → 改</h3>
+    <div class="card">
+      <ol class="steps">
+        <li><b>排</b>：在「📋 需求录入」点需求列表上方的 <span class="ui">🚀 自动排产</span>（收到他人新需求时，页面顶部横幅也会出现 <span class="ui">🚀 立即排产</span> 按钮）。系统按产能与规则生成<b>草案批次</b>，对应需求变为「待确认」。若产生冲突（如交期不够），页面上方会出现<b>告警横幅</b>逐条说明。</li>
+        <li><b>看</b>：上面甘特图看产线占用节奏，下面批次明细表看每一批的状态、产线、开始 / 下罐(灌装) / 完成等（见下方解释）。</li>
+        <li><b>调</b>：甘特图上拖拽批次，或点行内 <span class="ui">调整</span> 打开弹窗改日期 / 产线 / 状态，人工调整冲突批次。把批次改成「中止 / 失败 / 取消」= 终态，该批次不再占产能，只留记录。</li>
+        <li><b>锁</b>：没问题后逐条点 <span class="ui">确认</span>，或直接 <span class="ui">🔒 排产锁定（确认全部待确认批次）</span>。锁定后这批计划成为<b>已占用产能</b>——以后再次自动排产会绕着它们排，不会被推翻。</li>
+        <li><b>改</b>：锁错了或需求变了，勾选批次点 <span class="ui">🔓 批量解锁（勾选批次）</span> 放开；再点 <span class="ui">🔄 刷新自动排产（重排未锁定批次）</span> 按当前需求整体重排——<b>锁定批次与终态批次保持不变</b>。批次表也支持勾选后 <span class="ui">🗑️ 删除选中（N）</span>。</li>
       </ol>
-      <div class="tip tip-g" data-page-node-id="4E34aQpqXkLJMPCK3SOh42"><b data-page-node-id="DXFy8ysxd8HxwkAbj4U0fo">✅ 为什么要有「确认 / 锁定」这一步？</b>机器排出来的只是建议。确认锁定 = 人拍板：这些产线时段已经被占了，别动。这是系统「起草与确认解耦」的核心设计，避免自动重排反复推翻已定计划。</div>
+      <div class="tip tip-g"><b>✅ 为什么要有「确认 / 锁定」这一步？</b>机器排出来的只是建议。确认锁定 = 人拍板：这些产线时段已经被占了，别动。这是系统「起草与确认解耦」的核心设计，避免自动重排反复推翻已定计划。</div>
     </div>
 
-    <h3 data-page-node-id="0AWDYI2w3C0vpLA1hXNiNx"><span class="ic" data-page-node-id="OugBgYPCHSML8O3wyYEIBH">3️⃣</span> 批次表每列怎么看</h3>
-    <div class="card" data-page-node-id="paXLE0g5yBYO1ZfiB4SaOM">
-      <table class="tbl" data-page-node-id="YtM7ivsOGVGkPXRRaUvlmY">
-        <tr data-page-node-id="BEgQ4sPGBIOr0Dd5fVlfcc"><th data-page-node-id="utdebohegnFVbG9IgsyeMP">列</th><th data-page-node-id="uyVSRxdHMmO7OgMMXvF5pv">含义</th><th data-page-node-id="8L6VNhb0y60rqUQkiMnjgR">通俗解释</th></tr>
-        <tr data-page-node-id="88uNuOWxhzlASfZxdKk25G"><td data-page-node-id="4qfp2Ryjgk5Sjps4ErjtRH"><b data-page-node-id="TSxLkMIlqhA55AHUQJgkGa">状态</b></td><td data-page-node-id="P13y8C4ekv0U9E0peK90gh">锁定 / 自动 / 预警 / 人工 / 中止 / 失败 / 取消</td><td data-page-node-id="k37gOHNSwmO9DDEM8Uzkrd">这批现在是什么身份；后三种是终态</td></tr>
-        <tr data-page-node-id="p7lwehHVs5QQDjtCoW5Lkc"><td data-page-node-id="nMXiNbKFeZbOrhtZ17YFkd"><b data-page-node-id="VpDtpTLK91La4qmps9pZ5L">产线 / 批次号</b></td><td data-page-node-id="4Sn6ihAggqEyae5oLTyp3x">占用哪条产线、批次编号</td><td data-page-node-id="OGm66Y75DtdLmoi5kD1GyI">批次号人工可改</td></tr>
-        <tr data-page-node-id="7ipwRmHLVKOwjs6hs0xQxR"><td data-page-node-id="HvDK85T2kwVvMVagY77rYu"><b data-page-node-id="n8zxTk9Xxp4XAfEdh6BVuk">开始</b></td><td data-page-node-id="AgDhGWlDXgUb3qlz8clrWt">实际开始生产日期</td><td data-page-node-id="jEDdd55SwfW0Ri1R7TshRx">这一批什么时候开工</td></tr>
-        <tr data-page-node-id="LceYnQmkVuC8Wi00CAEInJ"><td data-page-node-id="ohFLeR6ZOfvqSCfmMZS0sl"><b data-page-node-id="nmrP9sbjUSzAKqfixcmKWr">下罐 / 灌装</b></td><td data-page-node-id="gk21Ia0qM9yrXRwIx4Qs6Y">Mab 类=「下罐」（收获）；DP/ADC 类=「灌装」</td><td data-page-node-id="TXiRTLwrMICJbzFaBh2oQj">单抗看下罐日，制剂看灌装日</td></tr>
-        <tr data-page-node-id="CwDo7acAIeUw6z6mspvXVL"><td data-page-node-id="wj8adFhsXJ7C5BL72Ef2mT"><b data-page-node-id="Hj1tlTT7aBUtV1r942uviL">完成</b></td><td data-page-node-id="ZnxirUO87quVHcHrD9jmHI">生产完成（不含目检包装）</td><td data-page-node-id="HWwGGuKHFYfNGLt9afhnYl">车间里生产工序全部干完的日子</td></tr>
-        <tr data-page-node-id="wgZx0F1oE3oFYNEd4Vr0ES"><td data-page-node-id="B2NtXv5OCZ5hNnK0dBcSez"><b data-page-node-id="uKkWdb9C5uZJOrXSOD3BFZ">包装完成</b></td><td data-page-node-id="OIQc40hHfH51yDlKwHUIHS">仅正式 DP 显示</td><td data-page-node-id="Wch8jGm0F40stNu0ZjjKA3">完成日期 + 包装天数（默认 10 天）</td></tr>
-        <tr data-page-node-id="C1vKIDOj77Ovi5gsivmQ6e"><td data-page-node-id="r6Yaitl1sxyOQM03ygWc7D"><b data-page-node-id="XO7Bm9CaGDekD4QYz0DFJT">实际完成</b></td><td data-page-node-id="Nx2svfyz6RqG93FLEDVzx8">生产计划在「调整」弹窗里填的真实完成日期（留空 = 还没完成）</td><td data-page-node-id="6kQApZq8hJLQADI7AJVKOF">绿色 = 已填；用来算「实际准不准」（详见 <a href="#s8" data-page-node-id="iAZm9STtrrDErgXoSlFkuB">Q18</a>）</td></tr>
-        <tr data-page-node-id="BtTmTFBT9eLgfyUWEvggWR"><td data-page-node-id="GlRSTo1P1oDKlyfzGfcALk"><b data-page-node-id="KsFCTQ4BuaP509SAVIeKBT">交期</b></td><td data-page-node-id="OtNkbUiAJeUEo1BSJlrTpH">对应需求的期望交期</td><td data-page-node-id="yJcAK5VGSkPOio74kWLH7G">拿「完成」和它比，晚了就是预警</td></tr>
-        <tr data-page-node-id="SNiyfWtE0FTmEmjNl5ktGx"><td data-page-node-id="WEsUrg6hDgiIgpiBaDmH7C"><b data-page-node-id="O6DHULJuIR2rdtTADyNMmX">GMP</b></td><td data-page-node-id="aLsOkKNKFQP1tKZuMIDnlH">这批是不是 GMP 生产批次</td><td data-page-node-id="k1Ik0AZcpc0FNCAwHPtQYf">看批次性质</td></tr>
+    <h3><span class="ic">3️⃣</span> 批次表每列怎么看</h3>
+    <div class="card">
+      <table class="tbl">
+        <tr><th>列</th><th>含义</th><th>通俗解释</th></tr>
+        <tr><td><b>状态</b></td><td>锁定 / 自动 / 预警 / 人工 / 中止 / 失败 / 取消</td><td>这批现在是什么身份；后三种是终态</td></tr>
+        <tr><td><b>产线 / 批次号</b></td><td>占用哪条产线、批次编号</td><td>批次号人工可改</td></tr>
+        <tr><td><b>开始</b></td><td>实际开始生产日期</td><td>这一批什么时候开工</td></tr>
+        <tr><td><b>下罐 / 灌装</b></td><td>Mab 类=「下罐」（收获）；DP/ADC 类=「灌装」</td><td>单抗看下罐日，制剂看灌装日</td></tr>
+        <tr><td><b>完成</b></td><td>生产完成（不含目检包装）</td><td>车间里生产工序全部干完的日子</td></tr>
+        <tr><td><b>包装完成</b></td><td>仅正式 DP 显示</td><td>完成日期 + 包装天数（默认 10 天）</td></tr>
+        <tr><td><b>实际完成</b></td><td>生产计划在「调整」弹窗里填的真实完成日期（留空 = 还没完成）</td><td>绿色 = 已填；用来算「实际准不准」（详见 <a href="#s8">Q18</a>）</td></tr>
+        <tr><td><b>交期</b></td><td>对应需求的期望交期</td><td>拿「完成」和它比，晚了就是预警</td></tr>
+        <tr><td><b>GMP</b></td><td>这批是不是 GMP 生产批次</td><td>看批次性质</td></tr>
       </table>
-      <p class="para" style="font-size:13.5px;color:var(--ink-2)" data-page-node-id="uh8hNfvHpJQ4773fkhoSL5">「完成」刻意不算包装：不同产线节奏可比、又单独看包装时间——这是对齐《排产逻辑.xlsx》的约定。</p>
-      <div class="tip tip-i" data-page-node-id="AdVPUCf8DMPzy7irfoZKwb"><b data-page-node-id="y9KlfNPJg4muQnkOysB4E2">💡 甘特图的几个调节项</b>：左上角可<b data-page-node-id="HWB0Im7R5BsFsBs8O66GuG">多选产线</b>过滤；时间范围支持 全部 / 近1月 / 近3月 / 近6月 / 自定义；<b data-page-node-id="GfxlWFFFqC2OLSSEEjr3hA">时间轴密度</b>可选紧凑(1.5px/天) / 标准(2.5px/天) / 宽松(4px/天)，批次挤在一起时调紧凑、想看清日期调宽松；<b data-page-node-id="tfkp24RQVusHexAdWFKNxW">刻度</b>可切月 / 周 / 天。这些设置保存在本机，下次打开保持不变。注意：<b data-page-node-id="xN3DIdDdzoX9RHYND0RjdW">产线筛选只影响甘特图</b>，下方批次明细表左侧那组「类型 / 产线 / 状态 / 时间」下拉是独立的筛选，两者互不影响。</div>
+      <p class="para" style="font-size:13.5px;color:var(--ink-2)">「完成」刻意不算包装：不同产线节奏可比、又单独看包装时间——这是对齐《排产逻辑.xlsx》的约定。</p>
+      <div class="tip tip-i"><b>💡 甘特图的几个调节项</b>：左上角可<b>多选产线</b>过滤；时间范围支持 全部 / 近1月 / 近3月 / 近6月 / 自定义；<b>时间轴密度</b>可选紧凑(1.5px/天) / 标准(2.5px/天) / 宽松(4px/天)，批次挤在一起时调紧凑、想看清日期调宽松；<b>刻度</b>可切月 / 周 / 天。这些设置保存在本机，下次打开保持不变。注意：<b>产线筛选只影响甘特图</b>，下方批次明细表左侧那组「类型 / 产线 / 状态 / 时间」下拉是独立的筛选，两者互不影响。</div>
     </div>
 
-    <h3 data-page-node-id="OPiLMPHV0FghzxnBSkjxb1"><span class="ic" data-page-node-id="SdvAEptYcK8Gvjk5iFdfNZ">4️⃣</span> APS 排产提醒怎么处理</h3>
-    <div class="card" data-page-node-id="4qb1R5fInffaz9vcmMBU6n">
-      <p class="para" data-page-node-id="OCIlt7ln0GNRAKFmkht8gh">「📋 需求录入」页<b data-page-node-id="yymfQ2ErJRLRiDTonAzvts">最底部</b>的 <b data-page-node-id="0G8L3TwDfGrFHfYL85pJyT">🔔 APS 排产提醒</b>横幅会列出：哪些产线组合的哪几个月还没有安排培养基模拟灌装批次。</p>
-      <ul class="list" data-page-node-id="GJ1OqoB4723ZIp86X4zzcA">
-        <li data-page-node-id="1ktFHcmziwVwpCL0kxrgUk">有<b data-page-node-id="liv5KKsojRzGG2X5WSVKG4">未安排的月份</b> → 要么提醒需求方去提交对应月份的 APS 需求，要么你确认该月确实不用排。</li>
-        <li data-page-node-id="6Bb5CvdG2fuEYHYa1XsRbW">提醒的月份范围可在 <span class="ui" data-page-node-id="kUDEs6cNcjDu8XybVr3yyT">⚙️ 规则参数</span> 里调整（比如 C7CM DP 默认提醒 3/8/12 月，可改）。</li>
+    <h3><span class="ic">4️⃣</span> APS 排产提醒怎么处理</h3>
+    <div class="card">
+      <p class="para">「📋 需求录入」页<b>最底部</b>的 <b>🔔 APS 排产提醒</b>横幅会列出：哪些产线组合的哪几个月还没有安排培养基模拟灌装批次。</p>
+      <ul class="list">
+        <li>有<b>未安排的月份</b> → 要么提醒需求方去提交对应月份的 APS 需求，要么你确认该月确实不用排。</li>
+        <li>提醒的月份范围可在 <span class="ui">⚙️ 规则参数</span> 里调整（比如 C7CM DP 默认提醒 3/8/12 月，可改）。</li>
       </ul>
     </div>
 
-    <h3 data-page-node-id="7q4xBeb6AHRk2HHXpOr850"><span class="ic" data-page-node-id="kYsmQx3e7DO6zHjpD8zynH">5️⃣</span> 快照与排产分析</h3>
-    <div class="card" data-page-node-id="lsy6DgycyOKrUkzWCSGNpj">
-      <ul class="list" data-page-node-id="vPBYnXlVpmJSG0POqxK5xh">
-        <li data-page-node-id="zQGeJ0FzHxEqUA0xTFxIE6">快照来源（<b data-page-node-id="jYjUOBRtygs49w1GBHHU4K">v2.20.9 起</b>每次排产不再自动存快照）：<b data-page-node-id="Lzxf79U2VhZpi8y2WIrYwK">每 2 周</b>自动存定期快照（含人工调整结果），加上你手动点 <span class="ui" data-page-node-id="iEMmhVtRxhEKJLx5cLRPF2">📸 保存人工快照</span> 存的关键节点快照（可在旁边填一句备注，如「3月排产会议确认版」）；历史自动排产快照仍保留可查。快照按来源限额保留（自动 10 / 定期 5 / 人工 4）。</li>
-        <li data-page-node-id="bqFqyk1awt60LB7lHyKQlq"><b data-page-node-id="7wDiFCZHlGYiS6a8wnWrTY">批次日期漂移分析</b>：默认对比最近两次快照，看批次<b data-page-node-id="MFs7BkeXqH0k5GYoT2v4Q4">日期漂移</b>、新增 / 取消，掌握计划稳定性；也可以用上方的两个下拉任选两次快照来对比。</li>
-        <li data-page-node-id="spxGwkAMFHL99OHLGJRwbr"><b data-page-node-id="aq3P61S4RRMzeRzNPOnnVs">月度批次趋势</b>：按批次开始日期的月份统计的堆叠柱状图，可按产线筛选、与甘特图时间窗口联动。</li>
-        <li data-page-node-id="gaPXjBx9Y5cLyVrHH7RKMI"><b data-page-node-id="ZGFx3qVf9LKm9OkADssLlG">排产历史记录（快照管理）</b>：页面下方列出全部快照（序号 / 时间 / 来源 / 需求数 / 批次数 / 预警数 / 准时率），勾选后可点 <span class="ui" data-page-node-id="IZJCMlH6P3eqm5Wmkk8kbg">🗑️ 删除选中（N）</span> 批量删除——<b data-page-node-id="lEv4sYj6wgxLuEgeEUWrjg">删除前系统会自动先下载一份备份</b>，删除后立即同步云端，不用怕刷新被旧快照回填；点 <span class="ui" data-page-node-id="sl6iPmjYLt0rm8brHMRK2A">🗑️ 清空快照</span> 则清空全部。要留存证据就点 <span class="ui" data-page-node-id="jGj5sN5LFpcJ9MRXLMpg5X">⬇ 下载快照</span> 导出 Excel（快照列表 + 批次明细两张工作表）。</li>
-        <li data-page-node-id="8XknniWqzAZQqEHQtkh19w">对比不满意可以回到「📅 排产计划」调整。</li>
+    <h3><span class="ic">5️⃣</span> 快照与排产分析</h3>
+    <div class="card">
+      <ul class="list">
+        <li>快照来源（<b>v2.20.9 起</b>每次排产不再自动存快照）：<b>每 2 周</b>自动存定期快照（含人工调整结果），加上你手动点 <span class="ui">📸 保存人工快照</span> 存的关键节点快照（可在旁边填一句备注，如「3月排产会议确认版」）；历史自动排产快照仍保留可查。快照按来源限额保留（自动 10 / 定期 5 / 人工 4）。</li>
+        <li><b>批次日期漂移分析</b>：默认对比最近两次快照，看批次<b>日期漂移</b>、新增 / 取消，掌握计划稳定性；也可以用上方的两个下拉任选两次快照来对比。</li>
+        <li><b>月度批次趋势</b>：按批次开始日期的月份统计的堆叠柱状图，可按产线筛选、与甘特图时间窗口联动。</li>
+        <li><b>排产历史记录（快照管理）</b>：页面下方列出全部快照（序号 / 时间 / 来源 / 需求数 / 批次数 / 预警数 / 准时率），勾选后可点 <span class="ui">🗑️ 删除选中（N）</span> 批量删除——<b>删除前系统会自动先下载一份备份</b>，删除后立即同步云端，不用怕刷新被旧快照回填；点 <span class="ui">🗑️ 清空快照</span> 则清空全部。要留存证据就点 <span class="ui">⬇ 下载快照</span> 导出 Excel（快照列表 + 批次明细两张工作表）。</li>
+        <li>对比不满意可以回到「📅 排产计划」调整。</li>
       </ul>
     </div>
 
-    <h3 data-page-node-id="b2t5skHIXHxQZ2BSQ3DEgL"><span class="ic" data-page-node-id="bPCzeEZ6pVDOOeHDJOPOEn">6️⃣</span> 产能上限与产能情况（v2.20.5 起）</h3>
-    <div class="card" data-page-node-id="6LLMtw2akUam6xvD9par9V">
-      <ol class="steps" data-page-node-id="hRhoJW7vfAdU5sJ0CiEQoo">
-        <li data-page-node-id="c6SpaanWSc5TDgijgnlqyM"><b data-page-node-id="6oxkv8KzkVvRwPoSNngocY">设上限</b>：在 <span class="ui" data-page-node-id="FTFbs4xzZaCE48Oe0bOyey">⚙️ 规则参数</span> 的「📊 各生产类型上限批次数」卡里，按 10 个类型行（CB / Mab / Mab DS：SJ1 / Mab DS：SJ2 / ADC DS / ADC DP / CM DP·C7 / CM DP·SJ2 / 参比品 / EQP）填写当年上限批次数，<b data-page-node-id="zDfLd6p29ERmXpuefX1Qto">留空 = 无上限</b>。上限<b data-page-node-id="WbflEWfiVq1uz27eE7TeIZ">按年份分开设置</b>（v2.20.11 起）：用「生效年份」下拉切换，默认当年，切换年份各自数值独立；切换时若当前年份有未保存修改会先弹确认（v2.20.12 起）。</li>
-        <li data-page-node-id="RrnPCHPnG4PpbB6FzK0LEk"><b data-page-node-id="n9uNo4zbNYQDQxKYsAkhte">复制上年 / 清空本年</b>（v2.20.13 起）：新年份排产约束通常沿用上年，点 <span class="ui" data-page-node-id="Ybxc0ZJbQZBMYmHaxHY6Jv">📋 复制上年</span> 一键带入上一年全部上限，再微调即可；点 <span class="ui" data-page-node-id="SFwRzio1y342nKKYztrYDx">🧹 清空本年</span> 恢复为不限。</li>
-        <li data-page-node-id="4pdr6L8oye7o8TfR9qlB8o"><b data-page-node-id="DuFESyUE88s5Y2zYoEhHXK">上限全员共享</b>（v2.20.9 起）：上限随计划数据云端同步，任一生产计划填写后其他同事刷新即可看到，不再只存在本机。</li>
-        <li data-page-node-id="dVdNqIzi6NZ1erGYjvdufl"><b data-page-node-id="xzwnmezj2EU9GbbfCEL6La">看产能</b>：在 <span class="ui" data-page-node-id="gteXo1o9TlyNI3WgYRy9NT">📈 排产分析</span> 的「产能情况」卡，选<b data-page-node-id="N72nDIaEALGTP038v0zp8W">年份</b>（默认当年）或<b data-page-node-id="2AGOVBAoIeNUAKb4E3geF1">自定义起止日期</b>后点「应用」，表格显示每类的<b data-page-node-id="QLO8YCsBzv5FOpDjqiDmfx">上限 / 已用 / 剩余 / 利用率</b>。</li>
-        <li data-page-node-id="rq9Z0nXnKEiGi3KTeuR7Ci"><b data-page-node-id="u6wMsNTKSeHedAk4kpBDBW">看颜色</b>：利用率 &lt;60% 绿、60–90% 黄、≥90% 红；<b data-page-node-id="W9XqHUVAtBotBZn66xi39i">超出上限的行整行变红</b>并标注「已超出 N 批」——这只是<b data-page-node-id="ITnY9EPapj5QD1O4WenTvc">警告，不会拦截排产</b>，由你判断要不要调整。</li>
+    <h3><span class="ic">6️⃣</span> 产能上限与产能情况（v2.20.5 起）</h3>
+    <div class="card">
+      <ol class="steps">
+        <li><b>设上限</b>：在 <span class="ui">⚙️ 规则参数</span> 的「📊 各生产类型上限批次数」卡里，按 10 个类型行（CB / Mab / Mab DS：SJ1 / Mab DS：SJ2 / ADC DS / ADC DP / CM DP·C7 / CM DP·SJ2 / 参比品 / EQP）填写当年上限批次数，<b>留空 = 无上限</b>。上限<b>按年份分开设置</b>（v2.20.11 起）：用「生效年份」下拉切换，默认当年，切换年份各自数值独立；切换时若当前年份有未保存修改会先弹确认（v2.20.12 起）。</li>
+        <li><b>复制上年 / 清空本年</b>（v2.20.13 起）：新年份排产约束通常沿用上年，点 <span class="ui">📋 复制上年</span> 一键带入上一年全部上限，再微调即可；点 <span class="ui">🧹 清空本年</span> 恢复为不限。</li>
+        <li><b>上限全员共享</b>（v2.20.9 起）：上限随计划数据云端同步，任一生产计划填写后其他同事刷新即可看到，不再只存在本机。</li>
+        <li><b>看产能</b>：在 <span class="ui">📈 排产分析</span> 的「产能情况」卡，选<b>年份</b>（默认当年）或<b>自定义起止日期</b>后点「应用」，表格显示每类的<b>上限 / 已用 / 剩余 / 利用率</b>。</li>
+        <li><b>看颜色</b>：利用率 &lt;60% 绿、60–90% 黄、≥90% 红；<b>超出上限的行整行变红</b>并标注「已超出 N 批」——这只是<b>警告，不会拦截排产</b>，由你判断要不要调整。</li>
       </ol>
-      <div class="tip tip-i" data-page-node-id="OjHN1GSgYuNWGL2Slm4Bt6"><b data-page-node-id="p8kuyzHBhE8l6jqKwTO94m">💡 口径说明</b>「已用」= 时段内所有批次的开始日期落在该区间（含未锁定）。冻干放大测试和 APS 不单独占一行，而是按 batch.line 归入对应产线（SJ2 ADC DP→ADC DP、C7CM DP→CM DP·C7、SJ2CM DP→CM DP·SJ2）；CB 行 = MCB+WCB 之和，EQP 行 = 设备维护+设备验证+贴签包装+包装 之和。</div>
+      <div class="tip tip-i"><b>💡 口径说明</b>「已用」= 时段内所有批次的开始日期落在该区间（含未锁定）。冻干放大测试和 APS 不单独占一行，而是按 batch.line 归入对应产线（SJ2 ADC DP→ADC DP、C7CM DP→CM DP·C7、SJ2CM DP→CM DP·SJ2）；CB 行 = MCB+WCB 之和，EQP 行 = 设备维护+设备验证+贴签包装+包装 之和。</div>
     </div>
 
-    <h3 data-page-node-id="ghbsMSyznaJJ0KlekatGTZ"><span class="ic" data-page-node-id="iJfDf8FPagx1SPSoWuy2vd">7️⃣</span> 项目优先级 P1–P5（v2.20.8 起）</h3>
-    <div class="card" data-page-node-id="nIXcKnAbxahAPvWg9EvGty">
-      <ol class="steps" data-page-node-id="i2H0oFGmUREh2Nk8LveylB">
-        <li data-page-node-id="eIOyLS70Z3pao1xB1bcCYc">在 <span class="ui" data-page-node-id="L5MEkfHrLkxk4SNVee3LLC">📋 需求录入</span> 的需求列表里找到「优先级」列。有项目号的需求行，生产计划可直接在<b data-page-node-id="6FRui4DsWk8rAtR2oUK0Yp">行内下拉</b>选择 P1–P5（<b data-page-node-id="3KsFsaGPkbhX7NEpAlXJEn">P1 最高、P5 最低</b>，默认 P3）。</li>
-        <li data-page-node-id="oeAQ6IbqZQwfQGGTLcoGRu">优先级是<b data-page-node-id="aZqDuekC8T2OHMtUAdj4bf">按项目设置</b>的：改一个，该项目<b data-page-node-id="8r1C8xJJHz8xPsVIOIgQHO">全部需求联动生效</b>，并云端同步——其他同事刷新后即可看到；需求方在此列只读。</li>
-        <li data-page-node-id="HOYEr2n158bcmkOHDNkpxA">设置后需<b data-page-node-id="ZLMUeHm0S50tDJqoDnmtQq">重新点「自动排产」</b>，新顺序才生效：系统按「<b data-page-node-id="bWFjcoYB6qaUx7O1Br6Nnm">优先级 → 交期 → 提交时间</b>」排序——优先级高的项目先排；同优先级里交期早的先排；没填交期的排最后。</li>
-        <li data-page-node-id="DZTKvuBQp4jrhqzB6F0B3s"><b data-page-node-id="EUZLDlNHcSQFM0xFpJphCv">集中管理</b>（v2.20.13 起）：<span class="ui" data-page-node-id="iPmeJuSsmzPG7spbn6Jchk">⚙️ 规则参数</span> 页新增「🎯 项目优先级」卡，自动汇总需求与批次中的<b data-page-node-id="kxi7Vqc7XG4aV9qNzX8ZTE">全部项目号</b>统一设置——某项目当前没有需求行时也能在这里改优先级。</li>
-        <li data-page-node-id="KOyHvTH1DFevh7U9pLWuyr"><b data-page-node-id="YRTaFfY7YL5MP7qXPIk6og">人工调整时顺手改</b>（v2.20.14 起）：点甘特图批次打开「人工调整」弹窗，里面也有「项目优先级」下拉（项目级生效），保存后会提示重新自动排产。</li>
+    <h3><span class="ic">7️⃣</span> 项目优先级 P1–P5（v2.20.8 起）</h3>
+    <div class="card">
+      <ol class="steps">
+        <li>在 <span class="ui">📋 需求录入</span> 的需求列表里找到「优先级」列。有项目号的需求行，生产计划可直接在<b>行内下拉</b>选择 P1–P5（<b>P1 最高、P5 最低</b>，默认 P3）。</li>
+        <li>优先级是<b>按项目设置</b>的：改一个，该项目<b>全部需求联动生效</b>，并云端同步——其他同事刷新后即可看到；需求方在此列只读。</li>
+        <li>设置后需<b>重新点「自动排产」</b>，新顺序才生效：系统按「<b>优先级 → 交期 → 提交时间</b>」排序——优先级高的项目先排；同优先级里交期早的先排；没填交期的排最后。</li>
+        <li><b>集中管理</b>（v2.20.13 起）：<span class="ui">⚙️ 规则参数</span> 页新增「🎯 项目优先级」卡，自动汇总需求与批次中的<b>全部项目号</b>统一设置——某项目当前没有需求行时也能在这里改优先级。</li>
+        <li><b>人工调整时顺手改</b>（v2.20.14 起）：点甘特图批次打开「人工调整」弹窗，里面也有「项目优先级」下拉（项目级生效），保存后会提示重新自动排产。</li>
       </ol>
-      <div class="tip tip-g" data-page-node-id="C5q4O9MTUPUjLu8lN3VGb2"><b data-page-node-id="eKv6TKp8aexLJHEuccKEJm">✅ 为什么这么设计？</b>优先级由生产计划统一按项目拍板（需求方不能自填），排产时高优先级项目自动插到前面——这是后续智能排产的基础：先用 P1–P5 定「谁重要」，再由交期和提交时间定「先后」。</div>
+      <div class="tip tip-g"><b>✅ 为什么这么设计？</b>优先级由生产计划统一按项目拍板（需求方不能自填），排产时高优先级项目自动插到前面——这是后续智能排产的基础：先用 P1–P5 定「谁重要」，再由交期和提交时间定「先后」。</div>
     </div>
   </section>
 
   <!-- 5 读者 -->
-  <section class="ch" id="s5" data-page-node-id="mn29aUtPJuxjfuAAwdAsuO">
-    <h2 class="sec" data-page-node-id="J7g2WBKqFtKbvwSrmUR7Hr">👀 我是读者：我能看什么</h2>
-    <div class="card" data-page-node-id="c0paBnUxAijpfaVczanofc">
-      <p class="para" data-page-node-id="e13WaGGcKGZYXi3P3XMtRV">读者通常是审计、领导或临时查看人员。v2.18.3 起，读者进入「📋 需求录入」看到的界面<b data-page-node-id="vET019nFTPv7PdDcaC84Vz">与需求方完全一致</b>（表单、按钮都在），但任何<b data-page-node-id="rCTndBBp2CaEoXT2CLdhQt">写操作</b>——提交、编辑、删除、排产——点击后都会弹提示「📖 读者权限仅可预览」并被拦下，不会产生任何数据变更。</p>
-      <ul class="list" data-page-node-id="N9qwQjHlxU5gEWrHhHoNDB">
-        <li data-page-node-id="ygFRq4K4bN26D3UTNLs2yt">✅ 可以看：需求列表、排产计划（只读）、排产分析、所有筛选和导出。</li>
-        <li data-page-node-id="XXdA0rzO2cAMP4NnFPoGRz">❌ 不可以：提交/改/删需求、排产、锁定、进参考数据/规则参数/数据管理/权限管理。</li>
+  <section class="ch" id="s5">
+    <h2 class="sec">👀 我是读者：我能看什么</h2>
+    <div class="card">
+      <p class="para">读者通常是审计、领导或临时查看人员。v2.18.3 起，读者进入「📋 需求录入」看到的界面<b>与需求方完全一致</b>（表单、按钮都在），但任何<b>写操作</b>——提交、编辑、删除、排产——点击后都会弹提示「📖 读者权限仅可预览」并被拦下，不会产生任何数据变更。</p>
+      <ul class="list">
+        <li>✅ 可以看：需求列表、排产计划（只读）、排产分析、所有筛选和导出。</li>
+        <li>❌ 不可以：提交/改/删需求、排产、锁定、进参考数据/规则参数/数据管理/权限管理。</li>
       </ul>
-      <div class="tip tip-w" data-page-node-id="MO1JoZZdlPaqIt3Mi9q6BQ"><b data-page-node-id="hg2HXsHjD6HauWkU1KFg6H">💡 想从「读者」变成「需求方」？</b>请联系生产计划管理员，在「🛡️ 权限管理」里把你的账号角色改为「需求方」——改完<b data-page-node-id="mPLE3IarHGmpgfBeDqg7pb">不用刷新页面</b>，你的界面会自动更新。</div>
+      <div class="tip tip-w"><b>💡 想从「读者」变成「需求方」？</b>请联系生产计划管理员，在「🛡️ 权限管理」里把你的账号角色改为「需求方」——改完<b>不用刷新页面</b>，你的界面会自动更新。</div>
     </div>
   </section>
 
   <!-- 6 权限管理 -->
-  <section class="ch" id="s6" data-page-node-id="0Xhv2zZFwHG8jPugtD2rfO">
-    <h2 class="sec" data-page-node-id="qOwSjrgdQORM2L7J6DMTWQ">🛡️ 权限管理（管理员 / 生产计划专用）</h2>
-    <div class="card" data-page-node-id="dclVOxGsuL9BWuf0Yl2fti">
-      <ol class="steps" data-page-node-id="YCI1nFU3ex1aRaZFId36DH">
-        <li data-page-node-id="qUgxR98I1DuymnFK6vYyXn">点顶部 <span class="ui" data-page-node-id="cAZp5INmUnOD7cw1EItjg0">🛡️ 权限管理</span> 打开账号列表。每行 = 一个云端账号 + 当前角色。</li>
-        <li data-page-node-id="0M63fCJgCjEHGXXa40gqty"><b data-page-node-id="BSZXwmGNZNS4t7pYOxlgDB">分配 / 调整角色</b>：行内下拉框选「读者 / 需求方 / 生产计划」，系统自动保存。对方在线时<b data-page-node-id="ZnesJUsTpODezrprgC2YLt">即时生效</b>，无需刷新。</li>
-        <li data-page-node-id="1tDh5uGoF4WJJzeVFqGbV8"><b data-page-node-id="OMyX9GTiIHOrfi1ZuKMYvC">删除账号的角色</b>（v2.18.5 起）：点行右侧 <span class="ui" data-page-node-id="QaCDcfLOB5PGzDgbnt3y5q">🗑️ 删除</span>，确认后该账号恢复为「读者」——只收回填报/排产等权限，<b data-page-node-id="TKRJNvGq8hs3hgAy7PeMse">不会删除云端账号本身</b>，之后可随时重新分配。</li>
-        <li data-page-node-id="RItJ1gNXA0P4jm8V7Hj4O8">两个保护，注意看提示：
-          <ul class="list" data-page-node-id="YPwTqZCsyyVl4VG8zivzT9">
-            <li data-page-node-id="HvtjxDTc4C9MGeE1ewonOH"><b data-page-node-id="eTtDGBhM8lRaTQFjtl0ewi">白名单管理员</b>行（如主管理员账号）没有删除按钮——系统保证至少留一个管理员，防锁死。</li>
-            <li data-page-node-id="4b6eRWENAqTMzEnDmF7p3f"><b data-page-node-id="Mhv3nY2OsLAdrWjUFwHG2H">当前登录账号</b>的删除按钮是置灰的——你不能删除自己。</li>
+  <section class="ch" id="s6">
+    <h2 class="sec">🛡️ 权限管理（管理员 / 生产计划专用）</h2>
+    <div class="card">
+      <ol class="steps">
+        <li>点顶部 <span class="ui">🛡️ 权限管理</span> 打开账号列表。每行 = 一个云端账号 + 当前角色。</li>
+        <li><b>分配 / 调整角色</b>：行内下拉框选「读者 / 需求方 / 生产计划」，系统自动保存。对方在线时<b>即时生效</b>，无需刷新。</li>
+        <li><b>删除账号的角色</b>（v2.18.5 起）：点行右侧 <span class="ui">🗑️ 删除</span>，确认后该账号恢复为「读者」——只收回填报/排产等权限，<b>不会删除云端账号本身</b>，之后可随时重新分配。</li>
+        <li>两个保护，注意看提示：
+          <ul class="list">
+            <li><b>白名单管理员</b>行（如主管理员账号）没有删除按钮——系统保证至少留一个管理员，防锁死。</li>
+            <li><b>当前登录账号</b>的删除按钮是置灰的——你不能删除自己。</li>
           </ul>
         </li>
-        <li data-page-node-id="INjGJfFj4XFrclE6gFzZur">底部提示：账号需先在腾讯云控制台「身份验证 → 用户管理」里创建，才能在这里分配角色。</li>
-        <li data-page-node-id="tltx34e56Yw9s3TKexR1Jv"><b data-page-node-id="IDuNX1H7lpK4wx5vJQUgm0">未分配的账号会被挡在门外</b>（v2.20.27 起）：账号建好但还没在这里分配角色时，对方登录后只会看到「🔒 账号尚未开通权限」页，<b data-page-node-id="p6DIFa64xuqgwkDDYae2uC">不会</b>被默认当成读者放进来。所以给新同事建完账号，记得顺手在这里分配角色——分配完对方页面会自动生效，不用刷新。</li>
+        <li>底部提示：账号需先在腾讯云控制台「身份验证 → 用户管理」里创建，才能在这里分配角色。</li>
+        <li><b>未分配的账号会被挡在门外</b>（v2.20.27 起）：账号建好但还没在这里分配角色时，对方登录后只会看到「🔒 账号尚未开通权限」页，<b>不会</b>被默认当成读者放进来。所以给新同事建完账号，记得顺手在这里分配角色——分配完对方页面会自动生效，不用刷新。</li>
       </ol>
     </div>
   </section>
 
   <!-- 7 导出备份 -->
-  <section class="ch" id="s7" data-page-node-id="C1GR8fvIABwNdo0ngyHSWi">
-    <h2 class="sec" data-page-node-id="ztEsgtwaUnj4aXrmFTvXei">📤 导出与备份：数据不丢</h2>
-    <table class="tbl" data-page-node-id="t2Dr8SKx76qnkUGmklFIg2">
-      <tr data-page-node-id="A4CJnNGYMiWyaHL70BXiJx"><th data-page-node-id="dXAZdO3AB6F2dbd75QfvqR">在哪点</th><th data-page-node-id="iNuuILbjn1WeoKRjrtM55s">按钮</th><th data-page-node-id="G4Suhaxsd4IPNtiROIH0tB">导出内容</th></tr>
-      <tr data-page-node-id="dM1ilea1q0JoIV11WVrAxx"><td data-page-node-id="YDokWBjXpxh5lazOl5IZ4j">📋 需求录入</td><td data-page-node-id="MDYmmnyRcZmyWYKzQt7DCz"><span class="ui" data-page-node-id="ToTeA2DcpInVqncg1DhQlw">⬇️ 导出需求清单 (Excel)</span></td><td data-page-node-id="pfZZVKPOR1Hq4wwkVMe07y">需求清单（23 列，含筛选条件摘要）</td></tr>
-      <tr data-page-node-id="DZ4K4NaPkWeEiHRJ3kISEQ"><td data-page-node-id="wfuYqH6e2u23l1lTp7Ab2i">📅 排产计划</td><td data-page-node-id="XTgl2GszKE3fFIU0bWHAFl"><span class="ui" data-page-node-id="nas0Ixx8FEiGTXIq3HWSEl">导出Excel(.xlsx)</span></td><td data-page-node-id="YgxTqXqt5feHJw4f3Mc4RQ">排产批次明细（14 列，含实际完成 / GMP）</td></tr>
-      <tr data-page-node-id="TBAze8ycrB54f1m6Vl5dMt"><td data-page-node-id="8warSTwTNErGvOSCDuCcuB">📈 排产分析</td><td data-page-node-id="AqHxECVy3EknO1fD2wMQBc"><span class="ui" data-page-node-id="myUIZV7oLVhqLnIUGhpebG">⬇ 下载快照</span></td><td data-page-node-id="MNEtu72Gku5OVLhPJKWGnu">全部快照：列表 + 批次明细</td></tr>
-      <tr data-page-node-id="0STzcFCRNaW2ceLdS0sZOI"><td data-page-node-id="yVbHzwzwjH7Ru8QKMecO0C">💾 数据管理</td><td data-page-node-id="ccCKShYAaHuurdkKKralvF"><span class="ui" data-page-node-id="T9sz4g3OXgKZOuABz4FCBs">⬇️ 导出全部数据 (Excel)</span></td><td data-page-node-id="JTFRMIdysHZb3RjwjKSYtZ">一整套：需求 / 批次 / 快照 / 配置，最全备份</td></tr>
+  <section class="ch" id="s7">
+    <h2 class="sec">📤 导出与备份：数据不丢</h2>
+    <table class="tbl">
+      <tr><th>在哪点</th><th>按钮</th><th>导出内容</th></tr>
+      <tr><td>📋 需求录入</td><td><span class="ui">⬇️ 导出需求清单 (Excel)</span></td><td>需求清单（23 列，含筛选条件摘要）</td></tr>
+      <tr><td>📅 排产计划</td><td><span class="ui">导出Excel(.xlsx)</span></td><td>排产批次明细（14 列，含实际完成 / GMP）</td></tr>
+      <tr><td>📈 排产分析</td><td><span class="ui">⬇ 下载快照</span></td><td>全部快照：列表 + 批次明细</td></tr>
+      <tr><td>💾 数据管理</td><td><span class="ui">⬇️ 导出全部数据 (Excel)</span></td><td>一整套：需求 / 批次 / 快照 / 配置，最全备份</td></tr>
     </table>
-    <div class="card" data-page-node-id="i4341QxHpqHbBMza21X99a">
-      <p class="para" data-page-node-id="kM6nxEJM5NSeonxzp3CbPM">每份导出的 Excel 都自带一张「导出信息」表：导出时间、系统版本、当前角色、当时用的筛选条件——拿着导出文件能说清"这是哪一版、按什么口径导的"。</p>
-      <div class="tip tip-w" data-page-node-id="dgOLlLB1XmMrBOmIKMfD8E"><b data-page-node-id="tcmKUdZqYgTDzFAJCrqcb0">⚠️ 数据管理页还有两个按钮，看清再点</b>：<span class="ui" data-page-node-id="WVo0iOB3uDPkZ1epD9zm4y">📥 重新导入历史计划（锁定产能）</span> 会从内置的历史计划文件重建全部历史锁定批次，<b data-page-node-id="J4GR7wd2IiVH3nWPszhojd">现有批次会被替换</b>；<span class="ui" data-page-node-id="ILKwmUB72naZYG5JCmhuYm">🗑 清空全部数据</span> 会清空需求与批次。两者执行前系统都会先自动备份。</div>
-      <div class="tip tip-g" data-page-node-id="F8ZEEibif1deSfxXnnVdP1"><b data-page-node-id="M7yuDchoAG08c8heIrUOBA">🛡️ 自动备份机制</b>：在「💾 数据管理」执行危险操作（如清空数据、导入覆盖）前，系统会<b data-page-node-id="AHoPEasGnPxRqTH0dbu6sw">自动先生成一份</b>「排产系统自动备份_时间戳.xlsx」推到云端，再让你确认执行。误操作也有后悔药。</div>
-      <div class="tip tip-i" data-page-node-id="vJ1IbkOVF8LtD3SoDNoBD1"><b data-page-node-id="Fzkdi5l1JacmvWvloCcCge">💡 操作日志</b>：同一页底部有 <b data-page-node-id="L3J78XZ4NlL1dOmjJBPNpk">操作日志</b> 表，记录最近 100 条关键操作（排产 / 锁定 / 调整 / 删除 / 导入 / 清空）的时间、用户与详情。注意它<b data-page-node-id="3ayrWG61FAmbuQ8n69GjKJ">只保存在本机浏览器、不上传云端</b>，换台电脑就看不到——需要留痕请及时导出。</div>
-      <div class="tip tip-i" data-page-node-id="XycgYoq1pUmpOP9VDxMb7m"><b data-page-node-id="dO5mbXtYsA28bJR2xUgZJU">💡 云端空间还够用吗？</b>（v2.20.13 起）「💾 数据管理」页新增<b data-page-node-id="CzHnw32ycuZ1WEOYWbZcF4">云端体积估算面板</b>：进度条直观显示排产数据离单文档 1MB 上限还有多远（绿色安全 / 橙色留意 / <b data-page-node-id="veUMbUrMaAbzJnW65fCFZL">超 800KB 红色预警</b>），并列出批次、快照、规则各占多少。变红了就去「📈 排产分析 → 快照管理」删旧快照。</div>
-      <div class="tip tip-i" data-page-node-id="Q7OcSYV0qstwGvnHOZgQ58"><b data-page-node-id="e9RRcSfyaJaKucg3WzOXtp">💡 数据存在哪？</b>在线模式数据存云端（腾讯云 CloudBase）+ 本机浏览器各一份，自动双向同步；未登录或网络不可用时降级为本地模式，只影响这台电脑。多台电脑使用请登录同一云端账号。</div>
+    <div class="card">
+      <p class="para">每份导出的 Excel 都自带一张「导出信息」表：导出时间、系统版本、当前角色、当时用的筛选条件——拿着导出文件能说清"这是哪一版、按什么口径导的"。</p>
+      <div class="tip tip-w"><b>⚠️ 数据管理页还有两个按钮，看清再点</b>：<span class="ui">📥 重新导入历史计划（锁定产能）</span> 会从内置的历史计划文件重建全部历史锁定批次，<b>现有批次会被替换</b>；<span class="ui">🗑 清空全部数据</span> 会清空需求与批次。两者执行前系统都会先自动备份。</div>
+      <div class="tip tip-g"><b>🛡️ 自动备份机制</b>：在「💾 数据管理」执行危险操作（如清空数据、导入覆盖）前，系统会<b>自动先生成一份</b>「排产系统自动备份_时间戳.xlsx」推到云端，再让你确认执行。误操作也有后悔药。</div>
+      <div class="tip tip-i"><b>💡 操作日志</b>：同一页底部有 <b>操作日志</b> 表，记录最近 100 条关键操作（排产 / 锁定 / 调整 / 删除 / 导入 / 清空）的时间、用户与详情。注意它<b>只保存在本机浏览器、不上传云端</b>，换台电脑就看不到——需要留痕请及时导出。</div>
+      <div class="tip tip-i"><b>💡 云端空间还够用吗？</b>（v2.20.13 起）「💾 数据管理」页新增<b>云端体积估算面板</b>：进度条直观显示排产数据离单文档 1MB 上限还有多远（绿色安全 / 橙色留意 / <b>超 800KB 红色预警</b>），并列出批次、快照、规则各占多少。变红了就去「📈 排产分析 → 快照管理」删旧快照。</div>
+      <div class="tip tip-i"><b>💡 数据存在哪？</b>在线模式数据存云端（腾讯云 CloudBase）+ 本机浏览器各一份，自动双向同步；未登录或网络不可用时降级为本地模式，只影响这台电脑。多台电脑使用请登录同一云端账号。</div>
     </div>
   </section>
 
   <!-- 7m 可视化分析 -->
-  <section class="ch" id="s7m" data-page-node-id="TywkTr6opZgxAGyFQ2JO9U">
-    <h2 class="sec" data-page-node-id="Vkc1AroaIlaOwGBEcQmhda">📊 可视化分析：三分钟看懂产能与交付（v2.20.20 起）</h2>
-    <p class="sub" data-page-node-id="fyF9k6pSCQpRHRENnG4PRd">「📈 排产分析」页集中了下面这五块看板，另配日期漂移对比、月度批次趋势与快照管理（见 <a href="#s4" data-page-node-id="sm0Famvvr3k52Uw7NHL6eW">第 4 章 5️⃣</a>）。数据全部来自现有需求、批次与上限配置——不需要额外录入任何东西。</p>
-    <table class="tbl" data-page-node-id="XwUov38Uqm1tHALvucpfiD">
-      <tr data-page-node-id="b4H6j2oNttbSGbOOrqrsLG"><th data-page-node-id="cbXFM1DDUmWO9JPICQ0XDs">看板</th><th data-page-node-id="Ht8WCQq61pUkAstDxlvuUm">怎么看</th><th data-page-node-id="W8jV5yR1pr9TEFVFULso84">能回答的问题</th></tr>
-      <tr data-page-node-id="hJAy9g7QFdaLD5ln6HWV7H"><td data-page-node-id="O6b8LcJNVlyrnXO6XQfJ54">产能负载总览</td><td data-page-node-id="D7dAfikCyCsQiGPAObcfL1">左侧柱状图 = 每月已排批次，虚线 = 月均上限（年度上限 ÷ 12）；右侧热力图 = 10 类产线的逐月利用率（颜色越深越满，<b data-page-node-id="DjDNv5ihTfgIcoB667IBvB">红色 = 超月均上限</b>）</td><td data-page-node-id="IDl7oV1DkAh0HVliFtp346">哪几个月会超产能？哪条产线最挤？</td></tr>
-      <tr data-page-node-id="3U1qm9Vr645dVCDmEO2o5i"><td data-page-node-id="1nBybUnUuEmpMI8igGXDTv">交期风险</td><td data-page-node-id="L3yzth6KMQbVfHUKCPrSFG">列出计划完成日期晚于需求交期的批次，按超期天数从多到少排列；上方三张卡给出风险批次数、平均交期余量、超期最严重的项目</td><td data-page-node-id="32Sjzv8XgCGOLeFSr7eJx5">哪些批次会延误？哪个项目最吃紧？</td></tr>
-      <tr data-page-node-id="tT6BmOXmzwddlPrfSiKvZk"><td data-page-node-id="aEA1izYedvVtHFDgdIIOqc">项目组合视图</td><td data-page-node-id="G99uNxUTxowsCFUZvWHokO">按项目汇总批次数（横条越长批次越多）、锁定量、时间跨度与主要批次类型；上方<b data-page-node-id="e5getcv7GAEhB6eknKk8hT">时段</b>可筛「全部年份 / 指定年份 / 自定义起止」（v2.20.24 起）</td><td data-page-node-id="fth5G6R25ESivf6iHoh1CC">各项目占了多少产能？排期跨多长？某一年内各项目排了多少？</td></tr>
-      <tr data-page-node-id="eQmt1z4LCiARp6U8kvvNQ3"><td data-page-node-id="y6ZiAZS0TSDZrjxjDseHeL">排产调整统计</td><td data-page-node-id="H1GasCiTzaGpnb36GGLxFL">严格口径统计「人工调整」弹窗保存成功的次数（v2.20.25 起）：四张指标卡 = 调整次数 / 涉及批次 / 平均每批次 / 零调整批次占比；下方依次是<b data-page-node-id="dXZUutrDzWF3cbrgEy0dLh">反复调整批次排行</b>、<b data-page-node-id="R5Be2Sgnux5FqI7FhTpwhr">按项目聚合</b>、<b data-page-node-id="o0dsZExa1bjrRHG0Nkv0PH">按操作人</b>（累计）与<b data-page-node-id="FY3stZTekK62OtA8owhCOT">近 14 天频次趋势</b>；上方<b data-page-node-id="8DIQrvGNI3uDSNBWOfqIiE">时段</b>可筛近 7 / 30 / 90 天或全部</td><td data-page-node-id="TXV9njBbNQbNFwnhmHIBw4">排产计划被改了多少次？哪些批次被反复调整？谁在改？</td></tr>
-      <tr data-page-node-id="yJOrJHqSerUnBZSvOVfgrk"><td data-page-node-id="jjt0o75GzMiYOhT5ihLHgH">需求漏斗</td><td data-page-node-id="CANogJaUbXWTQWLfh9tgT5">需求提交 → 已排产 → 已锁定 → 已完成 四阶段的条数与阶段转化率；<b data-page-node-id="BwFBD0FVtW5wQauF7tn2kT">已完成 = 该需求下所有批次均已完成</b>（锁定/终态且结束日期已过，与需求页「已完成」一致，v2.20.23 修正——此前误按「全部批次中止/失败/取消」统计）</td><td data-page-node-id="nC8vAO7MnurLtfNJU2geY2">需求卡在哪一环？有多少提交了却还没排产？</td></tr>
+  <section class="ch" id="s7m">
+    <h2 class="sec">📊 可视化分析：三分钟看懂产能与交付（v2.20.20 起）</h2>
+    <p class="sub">「📈 排产分析」页集中了下面这五块看板，另配日期漂移对比、月度批次趋势与快照管理（见 <a href="#s4">第 4 章 5️⃣</a>）。数据全部来自现有需求、批次与上限配置——不需要额外录入任何东西。</p>
+    <table class="tbl">
+      <tr><th>看板</th><th>怎么看</th><th>能回答的问题</th></tr>
+      <tr><td>产能负载总览</td><td>左侧柱状图 = 每月占用批次（<b>v2.20.30 起跨月批次按覆盖月数均摊</b>，如 1/20–2/25 的批次 1 月、2 月各计 0.5 批），虚线 = 月均上限（年度上限 ÷ 12）；右侧热力图 = 10 类产线的逐月利用率（颜色越深越满，<b>红色 = 超月均上限</b>）</td><td>哪几个月会超产能？哪条产线最挤？</td></tr>
+      <tr><td>交期风险</td><td>列出计划完成日期晚于需求交期的批次，按超期天数从多到少排列；上方三张卡给出风险批次数、平均交期余量、超期最严重的项目</td><td>哪些批次会延误？哪个项目最吃紧？</td></tr>
+      <tr><td>项目组合视图</td><td>按项目汇总批次数（横条越长批次越多）、锁定量、时间跨度与主要批次类型；上方<b>时段</b>可筛「全部年份 / 指定年份 / 自定义起止」（v2.20.24 起）</td><td>各项目占了多少产能？排期跨多长？某一年内各项目排了多少？</td></tr>
+      <tr><td>排产调整统计</td><td>严格口径统计「人工调整」弹窗保存成功的次数（v2.20.25 起）：四张指标卡 = 调整次数 / 涉及批次 / 平均每批次 / 零调整批次占比；下方依次是<b>反复调整批次排行</b>、<b>按项目聚合</b>、<b>按操作人</b>（累计）与<b>近 14 天频次趋势</b>；上方<b>时段</b>可筛近 7 / 30 / 90 天或全部</td><td>排产计划被改了多少次？哪些批次被反复调整？谁在改？</td></tr>
+      <tr><td>需求漏斗</td><td>需求提交 → 已排产 → 已锁定 → 已完成 四阶段的条数与阶段转化率；<b>已完成 = 该需求下所有批次均已锁定且结束日期已过</b>（v2.20.30 起：中止/失败/取消不再计入完成，全终态需求在需求页显示「已终止」）</td><td>需求卡在哪一环？有多少提交了却还没排产？</td></tr>
     </table>
-    <div class="card" data-page-node-id="FiiiCQTTDF24LuA8TqOLL3">
-      <ul class="list" data-page-node-id="FpPjryk6oHpQk8mX4NASer">
-        <li data-page-node-id="VRhEEFbcpWuFFGNRYIfs3w">产能负载支持按<b data-page-node-id="N4Df4l7clOc1atHrftEhv2">年份</b>与<b data-page-node-id="gP2UyyekkIpjzJaUXTE3zq">生产类型</b>切换：选具体类型时，上限线取该类型当年的<b data-page-node-id="byroWEll5CGORNVr1AGj8Y">年度上限</b>；选「全部类型」时，上限线为各类型已配置年度上限之和。<b data-page-node-id="kvVQvsUHZHSzIlMpRUS8df">因本卡是月度图，上限线统一折算为「月均上限 = 年度上限 ÷ 12」</b>（v2.20.22 起），例如年度合计 169 批 → 图上显示「月均上限 14.1 批/月（各类型年度上限合计 169 批）」；热力图分档与超标标红同样按<b data-page-node-id="rP2DNRAk8p2dAums6k48aw">月度值 vs 月均上限</b>判定，悬停提示里同时给出年度原值。</li>
-        <li data-page-node-id="DGeRuvNvZ3cFKmKFJrMQUH">上限批次数在「⚙️ 规则参数 → 📊 各生产类型上限批次数」配置（仅生产计划可改），留空表示无上限。注意这里填的是<b data-page-node-id="rsGpBtVipsiFLJkE8bbPNf">全年</b>批次数，不是每月。</li>
-        <li data-page-node-id="Xiy5G5uNpRrjijvxWIxnXD">鼠标悬停在柱子或热力格上会显示具体批次数与上限（柱：月均上限与该类型年度上限；热力格：该类型月均上限与年度上限）。</li>
-        <li data-page-node-id="ND4E4XlBWkfh1Q25rDmDVr">项目组合视图支持<b data-page-node-id="8PrYBfuXgO03Kxr0TR1g2H">时段筛选</b>（v2.20.24 起）：下拉可选「全部年份」或某个具体年份，选「自定义…」后展开起止日期框（留空一端 = 该端不限）。<b data-page-node-id="xQwMMmthcC4jaNWCPG9Alf">口径按批次开始日期 <code data-page-node-id="3V3SRIMrT2FhCCgg7wV2dR">b.start</code> 归属</b>，与「产能情况」表、甘特图时间窗口一致；切换后卡片右上角显示当前时段与「项目数 / 批次数」，每行右侧的批数与时间跨度同步刷新。</li>
-        <li data-page-node-id="BRK3u17Hmc4DE0kQASJwCT"><b data-page-node-id="fW2lUZDeL4ghaezUNqrHsk">交期风险支持双口径</b>（v2.20.21 起）：<i data-page-node-id="4FbEtotLsuaNsLEJqIeDZ4">计划口径</i>用批次的计划完成日期与需求交期比较，用于提前预警；<i data-page-node-id="JOoj1VWZuDh9r8SLQOXb2y">实际口径</i>仅统计已在「调整」弹窗填写「实际完成日期」的批次，顶部给出<b data-page-node-id="lB6y6CnaUvWDChgkydozK8">实际准时率</b>与<b data-page-node-id="gzilp0M0qhBpsioLGAsdxI">平均实际偏差</b>——偏差统一为「正 = 超期、负 = 提前」，与「计划超期」列对称。未填实际完成日期的批次不参与实际口径。</li>
-        <li data-page-node-id="t8QJ5t6V3BDlkFBBcKeWF2">需求漏斗里的「未排产」= 需求已提交但没有对应批次（尚未排产或批次已被删除）；「已完成」（v2.20.23 起）= 该需求下<b data-page-node-id="arOmEm6Y5wyHASDqqjYOJC">所有批次均已完成</b>——锁定/终态且结束日期已过，与需求页「已完成」标记一致；中止/失败/取消的需求不计入「已完成」。</li>
-        <li data-page-node-id="GhLGuQwhS2k9ucRI6bh7BF"><b data-page-node-id="VcdcLzqvFnOwAehEIcg3lb">排产调整统计</b>（v2.20.25 起）口径是<b data-page-node-id="mRD3Kvo8ExEmXByz8zEJ2w">严格</b>的：只在「人工调整」弹窗点「保存」<b data-page-node-id="sz3dqYrTHmE2CP8x9BxJxY">成功一次</b>才 +1（改日期 / 改产线 / 改批次号 / 改备注 / 填实际完成日期都算一次）。<b data-page-node-id="7qMtG0yN9HfICF6k0RvyRo">不计入</b>锁定与解锁、批量锁定、标记中止/失败/取消、重新「自动排产」，也不含需求侧的新增 / 编辑 / 删除。计数记录在批次上并随云端计划同步；「按操作人」一栏与累计值不受时段筛选影响；时段筛选与趋势依赖按天明细，只保留<b data-page-node-id="QQeSy9PusR0WVcT4PxIfF2">近 180 天</b>，更早的调整仅计入累计值。</li>
+    <div class="card">
+      <ul class="list">
+        <li>产能负载支持按<b>年份</b>与<b>生产类型</b>切换：选具体类型时，上限线取该类型当年的<b>年度上限</b>；选「全部类型」时，上限线为各类型已配置年度上限之和。<b>因本卡是月度图，上限线统一折算为「月均上限 = 年度上限 ÷ 12」</b>（v2.20.22 起），例如年度合计 169 批 → 图上显示「月均上限 14.1 批/月（各类型年度上限合计 169 批）」；热力图分档与超标标红同样按<b>月度值 vs 月均上限</b>判定，悬停提示里同时给出年度原值。</li>
+        <li><b>跨月批次按覆盖月数均摊</b>（v2.20.30 起）：例如 1/20–2/25 的批次，在 1 月与 2 月各计 0.5 批，全年合计仍为 1 批（此前只计入开始月，结束月产能被系统性低估）。「月度批次趋势」图仍按开始日期统计（趋势 = 开工批次数）。</li>
+        <li>上限批次数在「⚙️ 规则参数 → 📊 各生产类型上限批次数」配置（仅生产计划可改），留空表示无上限。注意这里填的是<b>全年</b>批次数，不是每月。</li>
+        <li>鼠标悬停在柱子或热力格上会显示具体批次数与上限（柱：月均上限与该类型年度上限；热力格：该类型月均上限与年度上限）。</li>
+        <li>项目组合视图支持<b>时段筛选</b>（v2.20.24 起）：下拉可选「全部年份」或某个具体年份，选「自定义…」后展开起止日期框（留空一端 = 该端不限）。<b>口径按批次开始日期 <code>b.start</code> 归属</b>，与「产能情况」表、甘特图时间窗口一致；切换后卡片右上角显示当前时段与「项目数 / 批次数」，每行右侧的批数与时间跨度同步刷新。</li>
+        <li><b>交期风险支持双口径</b>（v2.20.21 起）：<i>计划口径</i>用批次的计划完成日期与需求交期比较，用于提前预警；<i>实际口径</i>仅统计已在「调整」弹窗填写「实际完成日期」的批次，顶部给出<b>实际准时率</b>与<b>平均实际偏差</b>——偏差统一为「正 = 超期、负 = 提前」，与「计划超期」列对称。未填实际完成日期的批次不参与实际口径。</li>
+        <li>需求漏斗里的「未排产」= 需求已提交但没有对应批次（尚未排产或批次已被删除）；「已完成」（v2.20.23 起）= 该需求下<b>所有批次均已完成</b>——锁定/终态且结束日期已过，与需求页「已完成」标记一致；中止/失败/取消的需求不计入「已完成」。</li>
+        <li><b>排产调整统计</b>（v2.20.25 起）口径是<b>严格</b>的：只在「人工调整」弹窗点「保存」<b>成功一次</b>才 +1（改日期 / 改产线 / 改批次号 / 改备注 / 填实际完成日期都算一次）。<b>不计入</b>锁定与解锁、批量锁定、标记中止/失败/取消、重新「自动排产」，也不含需求侧的新增 / 编辑 / 删除。计数记录在批次上并随云端计划同步；「按操作人」一栏与累计值不受时段筛选影响；时段筛选与趋势依赖按天明细，只保留<b>近 180 天</b>，更早的调整仅计入累计值。</li>
       </ul>
-      <div class="tip tip-i" data-page-node-id="w7Mm0AFSquOFAfNZWxWPf8"><b data-page-node-id="FzEyNAlfu65TyQwQ0YsdBY">💡 全角色可看</b>：四块看板对<b data-page-node-id="CCRFHdVr4gsM1RneiSEIn3">全部角色</b>（含读者）开放，适合日常对齐与汇报截图。</div>
+      <div class="tip tip-i"><b>💡 全角色可看</b>：四块看板对<b>全部角色</b>（含读者）开放，适合日常对齐与汇报截图。</div>
     </div>
   </section>
 
   <!-- 7n 钉钉通知 -->
-  <section class="ch" id="s7n" data-page-node-id="v4TQRzdvOjLKoRhUucySLs">
-    <h2 class="sec" data-page-node-id="6i8QWbBNBM7MAMlrd8kkNQ">🔔 钉钉群通知：系统会自动帮你喊人（v2.19.0 起）</h2>
-    <p class="sub" data-page-node-id="EkzXoKsYJh65BRrXPTgdMg">系统与钉钉「排产通知群」机器人打通，关键变动自动推送，谁该看就会被@到——不用挨个打电话。</p>
-    <table class="tbl" data-page-node-id="9KEE5y2hXIhU0yLhz9CJmF">
-      <tr data-page-node-id="f8NZHdjWi2tpIpBexwn4Ei"><th data-page-node-id="pLGvtQQI1EfLV7m8a9Yrep">发生了什么</th><th data-page-node-id="A543YGmhPyKaU8D1q4PDGP">谁被提醒</th><th data-page-node-id="hZG5TQ6WCow8BB72pdMc3H">怎么发</th></tr>
-      <tr data-page-node-id="oX9b6GGDuTXpqcozcMTsea"><td data-page-node-id="R8SUSrdszmTD3RaUOOjv1i">需求方<b data-page-node-id="B8M953QtOghTrtenXTpaJj">提交新需求</b></td><td data-page-node-id="gZU0gdEvUuoAWH5J3JqNkY">生产计划（@手机号）</td><td data-page-node-id="d23LozwbzXjTAJIaQPIIeZ"><b data-page-node-id="i7a7hNa2dCSGFqX5GJWDLs">立即发送</b>，生产计划第一时间看到新需求</td></tr>
-      <tr data-page-node-id="75K3S4H1qgTBHLhDhmAD9t"><td data-page-node-id="wR9m7bDe1NY38tYzZuEttL">批次<b data-page-node-id="lxDvYCx42xRpzkVNWbAm9E">锁定 / 人工调整 / 删除 / 终态</b>（中止/失败/取消）</td><td data-page-node-id="7RS8fthwEkuYGfb6OBWxOR">该需求的需求方</td><td data-page-node-id="UdLT5SdQlqIgbGKcBMNy3Z">1 小时合并窗：同一批次 1h 内多次变动合并成一封汇总，不刷屏</td></tr>
-      <tr data-page-node-id="aiTSIigf1Z8IUHAYw4kG0L"><td data-page-node-id="NBOr7AQzAMufHFH1rAtRkC"><b data-page-node-id="Eq2jfbMoKXs76mKqtzAfDQ">历史计划导入</b></td><td data-page-node-id="Ovaujq2b97K06CQydjtr3L">群摘要</td><td data-page-node-id="oTD68VGfKoy6XWyjL69xeL">导入完成后发摘要</td></tr>
+  <section class="ch" id="s7n">
+    <h2 class="sec">🔔 钉钉群通知：系统会自动帮你喊人（v2.19.0 起）</h2>
+    <p class="sub">系统与钉钉「排产通知群」机器人打通，关键变动自动推送，谁该看就会被@到——不用挨个打电话。</p>
+    <table class="tbl">
+      <tr><th>发生了什么</th><th>谁被提醒</th><th>怎么发</th></tr>
+      <tr><td>需求方<b>提交新需求</b></td><td>生产计划（@手机号）</td><td><b>立即发送</b>，生产计划第一时间看到新需求</td></tr>
+      <tr><td>批次<b>锁定 / 人工调整 / 删除 / 终态</b>（中止/失败/取消）</td><td>该需求的需求方</td><td>1 小时合并窗：同一批次 1h 内多次变动合并成一封汇总，不刷屏</td></tr>
+      <tr><td><b>历史计划导入</b></td><td>群摘要</td><td>导入完成后发摘要</td></tr>
     </table>
-    <div class="card" data-page-node-id="5pvfeuOyKHrJV9nJr1hjHW">
-      <ul class="list" data-page-node-id="qlCKuj7iusnR9EVFamGm4V">
-        <li data-page-node-id="Ky6SZiTZervEU30BhHRyFs">时间显示均为<b data-page-node-id="92eTg0STgREFrOeJhqTlgx">北京时间</b>（v2.20.2 起）。</li>
-        <li data-page-node-id="VOOiEnbHadFQc0vWOCvK9r">需求方不用做任何事：如果你的需求被锁定或调整，钉钉群里自然会提醒你；查不到手机号的账号消息照发、只是不@。</li>
-        <li data-page-node-id="kQPwuDVGRYRNu3iJkoNvje">通知是「锦上添花」而非「依赖」——所有信息页面上都有，钉钉只是让你不用一直盯着系统。</li>
+    <div class="card">
+      <ul class="list">
+        <li>时间显示均为<b>北京时间</b>（v2.20.2 起）。</li>
+        <li>需求方不用做任何事：如果你的需求被锁定或调整，钉钉群里自然会提醒你；查不到手机号的账号消息照发、只是不@。</li>
+        <li>通知是「锦上添花」而非「依赖」——所有信息页面上都有，钉钉只是让你不用一直盯着系统。</li>
       </ul>
     </div>
   </section>
 
   <!-- 8 FAQ -->
-  <section class="ch" id="s8" data-page-node-id="ubE5eyqQEtcyUtcNP4HvIc">
-    <h2 class="sec" data-page-node-id="yHdQt1RGe342YXGJPZCW56">❓ 常见问题</h2>
+  <section class="ch" id="s8">
+    <h2 class="sec">❓ 常见问题</h2>
 
-    <div class="q" data-page-node-id="nPyab2EBnWXbFQbOiOMzBn"><b data-page-node-id="qtPVovYxEBn7bHR5k9kPwy">Q1：页面看起来和同事的不一样 / 功能点了没反应？</b>
-      <p data-page-node-id="FU04ES3XspeYqfuiTSGCSh">多半是浏览器缓存了旧版本。请按 <span class="kbd" data-page-node-id="TdJqRH2PXEvmp8tKkaXpet">Ctrl+F5</span>（Mac 为 <span class="kbd" data-page-node-id="YqO6oPH3Niz0amCRN1D8UB">Cmd+Shift+R</span>）强制刷新，然后看页面右上角版本标签是否显示 <b data-page-node-id="hl5pjdF3lQ4LLmTWSRv9yg">v2.20.29</b>。版本标签消失了 = 还在跑旧缓存。</p></div>
+    <div class="q"><b>Q1：页面看起来和同事的不一样 / 功能点了没反应？</b>
+      <p>多半是浏览器缓存了旧版本。请按 <span class="kbd">Ctrl+F5</span>（Mac 为 <span class="kbd">Cmd+Shift+R</span>）强制刷新，然后看页面右上角版本标签是否显示 <b>v2.20.30</b>。版本标签消失了 = 还在跑旧缓存。</p></div>
 
-    <div class="q" data-page-node-id="FdJk5p1sydSSth03LDaW3O"><b data-page-node-id="qG1h4B9jSUVltBKLBYznL7">Q2：我看到「提交 / 排产」按钮，但点了弹提示不让用？</b>
-      <p data-page-node-id="xVyoYMMAi49FRpVVrgkw6d">你是「读者」角色。按钮故意显示但点不了，是让你知道系统有哪些功能。联系生产计划管理员提升角色即可。</p></div>
+    <div class="q"><b>Q2：我看到「提交 / 排产」按钮，但点了弹提示不让用？</b>
+      <p>你是「读者」角色。按钮故意显示但点不了，是让你知道系统有哪些功能。联系生产计划管理员提升角色即可。</p></div>
 
-    <div class="q" data-page-node-id="rP2ye0sKhCDqDmGvdyUPts"><b data-page-node-id="1Q7I1B9qmrZE8q82iXZ6CE">Q3：删除选中按钮是灰的，点不了？</b>
-      <p data-page-node-id="IzZxX9vsxByjhEfFC3mDgs">说明当前没有勾选任何可操作行（0 勾选时按钮真正禁用，这是 v2.18.4 起的安全设计）。先去行首勾选；灰色禁勾的行是历史锁定批次，不能批量操作。</p></div>
+    <div class="q"><b>Q3：删除选中按钮是灰的，点不了？</b>
+      <p>说明当前没有勾选任何可操作行（0 勾选时按钮真正禁用，这是 v2.18.4 起的安全设计）。先去行首勾选；灰色禁勾的行是历史锁定批次，不能批量操作。</p></div>
 
-    <div class="q" data-page-node-id="RKYLiRANhwhAeXcoisnK4H"><b data-page-node-id="6vFBag4tmXERJtvlIvMCyz">Q4：删除选中的需求会连带删掉排产批次吗？</b>
-      <p data-page-node-id="ErQB8UKwV4YGorg5UVBba4">看需求状态：<b data-page-node-id="aArEI5mCL1JExnPLyNOoUQ">已完成</b>的需求只删需求记录、对应批次保留（历史数据不动）；<b data-page-node-id="C5IgOEhXN0vkBem0nJZUAn">未完成</b>的需求会连同它的排产批次一起删除。弹窗确认时会有说明。</p></div>
+    <div class="q"><b>Q4：删除选中的需求会连带删掉排产批次吗？</b>
+      <p>看需求状态：<b>已完成</b>的需求只删需求记录、对应批次保留（历史数据不动）；<b>未完成</b>的需求会连同它的排产批次一起删除。弹窗确认时会有说明。</p></div>
 
-    <div class="q" data-page-node-id="GPcCYXRRWnS9to5unX6X7I"><b data-page-node-id="7nKTTlGmlTC5H8Brt6YpTo">Q5：橙色 / 红色横幅是什么意思？</b>
-      <p data-page-node-id="bZOZPz0EcC21nUyzTS19Qu">橙色「交期差异」：某些批次的完成日期晚于需求交期，点进去看差几天，找计划员协调；排产告警横幅则说明自动排产时有冲突（如产线被占），需要人工调整。</p></div>
+    <div class="q"><b>Q5：橙色 / 红色横幅是什么意思？</b>
+      <p>橙色「交期差异」：某些批次的完成日期晚于需求交期，点进去看差几天，找计划员协调；排产告警横幅则说明自动排产时有冲突（如产线被占），需要人工调整。</p></div>
 
-    <div class="q" data-page-node-id="KVUZd93wcT4TSl5RSgIc75"><b data-page-node-id="qwdC0Tija0cXkGAAseEJTC">Q6：APS 排产提醒（页面底部蓝色横幅）要我做什么？</b>
-      <p data-page-node-id="kzLPVeZYkZjhOEFTGJWKBI">它只是提示"哪些产线组合的哪几个月还没安排培养基模拟灌装"——不是报错。需求方按提醒提交对应月份的 APS 需求，或计划员确认该月不排即可。月份规则可在「⚙️ 规则参数」调整。</p></div>
+    <div class="q"><b>Q6：APS 排产提醒（页面底部蓝色横幅）要我做什么？</b>
+      <p>它只是提示"哪些产线组合的哪几个月还没安排培养基模拟灌装"——不是报错。需求方按提醒提交对应月份的 APS 需求，或计划员确认该月不排即可。月份规则可在「⚙️ 规则参数」调整。</p></div>
 
-    <div class="q" data-page-node-id="ZMVFxSwvTrBqGz2EJCaICa"><b data-page-node-id="VQuz9U62OYsiJJKmnzlIMY">Q7：为什么我改了需求/批次，同事那边没变化？</b>
-      <p data-page-node-id="U0q9d56E4qGErphfl2N3Rb">确认已登录云端账号并处于在线状态；权限管理改角色是即时下发的，但需求/批次数据走云端同步，正常是自动的，偶尔需要等几秒或刷新一次。若长期不同步，检查网络与账号登录。</p></div>
+    <div class="q"><b>Q7：为什么我改了需求/批次，同事那边没变化？</b>
+      <p>确认已登录云端账号并处于在线状态；权限管理改角色是即时下发的，但需求/批次数据走云端同步，正常是自动的，偶尔需要等几秒或刷新一次。若长期不同步，检查网络与账号登录。</p></div>
 
-    <div class="q" data-page-node-id="1BIbe0xvebFZv7Y2Q3EG8T"><b data-page-node-id="4ZideHWkGtfWaq4CComYNx">Q8：排产结果和我预期不一样，能手动改吗？</b>
-      <p data-page-node-id="Tl4sjNwZXqppUjD7TCCIFC">能。自动排产只是草案：在「📅 排产计划」的甘特图上拖拽批次、或点批次弹窗改日期/状态即可；改成「中止/失败/取消」终态的批次不再占产能。改完记得对受影响的批次「确认 / 锁定」。</p></div>
+    <div class="q"><b>Q8：排产结果和我预期不一样，能手动改吗？</b>
+      <p>能。自动排产只是草案：在「📅 排产计划」的甘特图上拖拽批次、或点批次弹窗改日期/状态即可；改成「中止/失败/取消」终态的批次不再占产能。改完记得对受影响的批次「确认 / 锁定」。</p></div>
 
-    <div class="q" data-page-node-id="N74rsl8F3zwgaRDrtFZMbx"><b data-page-node-id="sZ4TVFZrpYBbQX1d7B4EDH">Q9：会不会有人误删全部数据？</b>
-      <p data-page-node-id="7KbbP7CJ31jqOc7kcdDSmD">三道保险：① 危险操作前自动备份 Excel 到云端；② 批量删除有二次确认弹窗；③ 历史锁定批次勾选被禁用。加上云端数据在，最大风险也就是删了草稿级记录，可用备份恢复。</p></div>
+    <div class="q"><b>Q9：会不会有人误删全部数据？</b>
+      <p>三道保险：① 危险操作前自动备份 Excel 到云端；② 批量删除有二次确认弹窗；③ 历史锁定批次勾选被禁用。加上云端数据在，最大风险也就是删了草稿级记录，可用备份恢复。</p></div>
 
-    <div class="q" data-page-node-id="tH89RZd7bnd8uXyl5AkvEJ"><b data-page-node-id="ABvSC2etqUpBrCHFrYcdci">Q10：需求列表的「优先级」列我改不了 / 显示灰色标签？</b>
-      <p data-page-node-id="UkVvzEl98ys8WjHaeCY67l">这是设计如此（v2.20.8 起）：优先级由生产计划按<b data-page-node-id="HFIfSfygE36k3QXjiNvv4P">项目</b>统一设定（P1–P5 行内下拉），需求方和读者只读。想让你的项目优先排产，请联系生产计划把该项目设为更高优先级（如 P1）。</p></div>
+    <div class="q"><b>Q10：需求列表的「优先级」列我改不了 / 显示灰色标签？</b>
+      <p>这是设计如此（v2.20.8 起）：优先级由生产计划按<b>项目</b>统一设定（P1–P5 行内下拉），需求方和读者只读。想让你的项目优先排产，请联系生产计划把该项目设为更高优先级（如 P1）。</p></div>
 
-    <div class="q" data-page-node-id="YAfaI3XZL8kztBqE3zv2lz"><b data-page-node-id="JlIJvz2fZvporTEHygWOIv">Q11：产能情况表里整行变红、写着「已超出 N 批」，排产是不是被拦住了？</b>
-      <p data-page-node-id="iwyIb9FA5Tkc55iGWSpzMa">没有拦截——超限只是<b data-page-node-id="ndJKOAHohkhLH5zQBMqcPn">警告</b>，提醒你该类型在所选时段内的批次已超过「规则参数」里设的上限，由生产计划自行判断：调整排产、提高上限，或确认超额合理后照常执行。</p></div>
+    <div class="q"><b>Q11：产能情况表里整行变红、写着「已超出 N 批」，排产是不是被拦住了？</b>
+      <p>没有拦截——超限只是<b>警告</b>，提醒你该类型在所选时段内的批次已超过「规则参数」里设的上限，由生产计划自行判断：调整排产、提高上限，或确认超额合理后照常执行。</p></div>
 
-    <div class="q" data-page-node-id="ZXfpl0VzAhC7YrET3BhnLV"><b data-page-node-id="keZPQ5vf7nUf5DyvOFLlsE">Q12：保存规则 / 保存计划时弹出「云端同步失败」还带一串错误码，怎么办？</b>
-      <p data-page-node-id="3q10md3y4CCvlqP8dFsUsH">（v2.20.9 起）失败提示会<b data-page-node-id="jxWBq94SF3xQkUm2OjGLjj">透传具体错误原因</b>，不再是空白提示。先把本地修改保住（别关页面，可稍后重试或先导出备份），然后把错误码截图发给系统维护人员定位；若提示与体积相关（如文档过大），去「📈 排产分析 → 快照管理」删除旧快照后再试。</p></div>
+    <div class="q"><b>Q12：保存规则 / 保存计划时弹出「云端同步失败」还带一串错误码，怎么办？</b>
+      <p>（v2.20.9 起）失败提示会<b>透传具体错误原因</b>，不再是空白提示。先把本地修改保住（别关页面，可稍后重试或先导出备份），然后把错误码截图发给系统维护人员定位；若提示与体积相关（如文档过大），去「📈 排产分析 → 快照管理」删除旧快照后再试。</p></div>
 
-    <div class="q" data-page-node-id="Z3C1LfmqrHtoCARosJelGk"><b data-page-node-id="9W9BHQFYeEWLIrP33hWk59">Q13：需求填一半关了页面，内容还在吗？</b>
-      <p data-page-node-id="rC7Fxs2n266meYzAy8U4fG">（v2.20.14 起）在。填写过程自动暂存草稿，误关 / 误刷新时浏览器会先弹确认；下次打开页面自动恢复上次未提交的内容并提示。提交成功后草稿自动清除。</p></div>
+    <div class="q"><b>Q13：需求填一半关了页面，内容还在吗？</b>
+      <p>（v2.20.14 起）在。填写过程自动暂存草稿，误关 / 误刷新时浏览器会先弹确认；下次打开页面自动恢复上次未提交的内容并提示。提交成功后草稿自动清除。</p></div>
 
-    <div class="q" data-page-node-id="LSkb0Qm3BNKGHhRq2bzBXW"><b data-page-node-id="j997HJfEopTRSWIHvSYYH7">Q14：页面太刺眼，有没有暗色模式？</b>
-      <p data-page-node-id="mEWRgYbZeunKKgS8noDnNH">（v2.20.16 起）有。点顶栏的 <span class="ui" data-page-node-id="pwp4QGLNesenBzsbJo6Q8y">🌙 暗色</span> 按钮一键切换全站深色配色（表格 / 弹窗 / 甘特图都会跟着变），偏好保存在本机、刷新后保持；想切回亮色点 <span class="ui" data-page-node-id="yHDn0CKywhDGafKiM9HkFe">☀️ 亮色</span> 即可。另外打开「📅 排产计划」时甘特图会自动滚动到今天的位置，不用再手动找（v2.20.18 起）。</p></div>
+    <div class="q"><b>Q14：页面太刺眼，有没有暗色模式？</b>
+      <p>（v2.20.16 起）有。点顶栏的 <span class="ui">🌙 暗色</span> 按钮一键切换全站深色配色（表格 / 弹窗 / 甘特图都会跟着变），偏好保存在本机、刷新后保持；想切回亮色点 <span class="ui">☀️ 亮色</span> 即可。另外打开「📅 排产计划」时甘特图会自动滚动到今天的位置，不用再手动找（v2.20.18 起）。</p></div>
 
-    <div class="q" data-page-node-id="3R7PdbOO0z2Cgy0SlKcXTC"><b data-page-node-id="99kHqXThA3sHpBpfZ00n40">Q15：每月都要提交差不多的需求，能不重新填一遍吗？</b>
-      <p data-page-node-id="Oh8lfdNUusgaz1pI3g6wzK">（v2.20.16 起）能。需求列表每行新增 <span class="ui" data-page-node-id="6xGrEoQhvCdqF0Ax71EoEk">📋 复制</span> 按钮：点击把该条需求的全部信息回填到上方表单，改一改日期 / 批次数量后点「➕ 添加需求」就提交为一条新需求，重复录入不用从头填。</p></div>
+    <div class="q"><b>Q15：每月都要提交差不多的需求，能不重新填一遍吗？</b>
+      <p>（v2.20.16 起）能。需求列表每行新增 <span class="ui">📋 复制</span> 按钮：点击把该条需求的全部信息回填到上方表单，改一改日期 / 批次数量后点「➕ 添加需求」就提交为一条新需求，重复录入不用从头填。</p></div>
 
-    <div class="q" data-page-node-id="EABepO08IoFnWZSoiQUAfL"><b data-page-node-id="bmypiP31LTAmzRx5T0Yldj">Q16：想看「哪几个月产能会爆」，系统能直接给图吗？</b>
-      <p data-page-node-id="Su44EI2PewrNIBMaBDo0RF">（v2.20.20 起）能。「📈 排产分析」页最上方新增<b data-page-node-id="Ewv8URJpauQwsj8moVCbiK">产能负载总览</b>：左边柱状图按月显示已排批次并叠加<b data-page-node-id="O5zqFDpLyJxbe64KtUNVo2">月均上限</b>虚线（超限月份标红，v2.20.22 起口径为「年度上限 ÷ 12」，见 Q19），右边是 10 类产线的逐月利用率热力图，一眼看出高峰月份与最挤产线。同页还有交期风险清单、项目组合视图、排产调整统计和需求漏斗。</p></div>
+    <div class="q"><b>Q16：想看「哪几个月产能会爆」，系统能直接给图吗？</b>
+      <p>（v2.20.20 起）能。「📈 排产分析」页最上方新增<b>产能负载总览</b>：左边柱状图按月显示已排批次并叠加<b>月均上限</b>虚线（超限月份标红，v2.20.22 起口径为「年度上限 ÷ 12」，见 Q19），右边是 10 类产线的逐月利用率热力图，一眼看出高峰月份与最挤产线。同页还有交期风险清单、项目组合视图、排产调整统计和需求漏斗。</p></div>
 
-    <div class="q" data-page-node-id="0oiSLBOLFXlzAQPZHT4gMF"><b data-page-node-id="quenCy9qpOfieJcP4E5R6z">Q17：交期风险里报的「超期天数」是实际延误吗？</b>
-      <p data-page-node-id="fdPOFPZZRttnEzFl2DmTO1">（v2.20.21 前的）默认口径不是。系统原本只记录批次的<b data-page-node-id="HNA1WOEX1xbe9Z9RDBhZN1">计划</b>起止日期，所以交期风险用的是「计划完成日期 vs 需求交期」，属于<b data-page-node-id="ERnBu64SB8JaE2Z9xrCqa6">计划口径</b>的预警，用于提前干预。v2.20.21 起批次可以填<b data-page-node-id="tVDAw4XB5aMn7Xpw5Of3Tj">实际完成日期</b>（见 Q18），填了之后交期风险清单会同步显示实际偏差，并新增「实际准时率」汇总卡，真实交付情况一眼可见。</p></div>
+    <div class="q"><b>Q17：交期风险里报的「超期天数」是实际延误吗？</b>
+      <p>（v2.20.21 前的）默认口径不是。系统原本只记录批次的<b>计划</b>起止日期，所以交期风险用的是「计划完成日期 vs 需求交期」，属于<b>计划口径</b>的预警，用于提前干预。v2.20.21 起批次可以填<b>实际完成日期</b>（见 Q18），填了之后交期风险清单会同步显示实际偏差，并新增「实际准时率」汇总卡，真实交付情况一眼可见。</p></div>
 
-    <div class="q" data-page-node-id="lDxPsmrBExwQ310qGkUDAQ"><b data-page-node-id="S5uR7ESRSq2vtaFKy1yTLL">Q18：实际完成日期怎么填？有什么用？（v2.20.21 起）</b>
-      <p data-page-node-id="BaShHC9gAjKn0zjBMF2MuC">生产做完后，由<b data-page-node-id="FRRR9N7v8DEKA01Mu8gSUp">生产计划</b>在「📅 批次总览」行内点「✏️ 调整」打开人工调整弹窗，在「实际完成日期」一栏选填实际生产完成的日期（留空 = 还没完成）。填写时有实时校验与提示：不能早于开始日期；填了计划完成日期后，下方会即时显示「比计划早/晚几天」。</p>
-      <p data-page-node-id="YS6MuHiMPTunydzFeDXiJW">它的作用：①「📅 批次总览」新增「实际完成」列，绿色高亮已完成的批次；②导出台账同步带出这一列，交付记录有据可查；③「📈 排产分析」交期风险清单升级为双口径——已填实际完成日期的批次额外显示<b data-page-node-id="YAP77mKzyc1ZIpTHF6ccq0">实际超期天数 / 实际偏差</b>，顶部新增<b data-page-node-id="wnqKW7ExCZJGixvnppwjw6">实际准时率</b>与<b data-page-node-id="X13Uim2Ip2SzCO3DxGAM17">平均实际偏差</b>两张汇总卡，从「计划准不准」升级为「实际准不准」。批次进入中止/失败/取消等终态时同样可以记录实际完成日期。</p></div>
+    <div class="q"><b>Q18：实际完成日期怎么填？有什么用？（v2.20.21 起）</b>
+      <p>生产做完后，由<b>生产计划</b>在「📅 批次总览」行内点「✏️ 调整」打开人工调整弹窗，在「实际完成日期」一栏选填实际生产完成的日期（留空 = 还没完成）。填写时有实时校验与提示：不能早于开始日期；填了计划完成日期后，下方会即时显示「比计划早/晚几天」。</p>
+      <p>它的作用：①「📅 批次总览」新增「实际完成」列，绿色高亮已完成的批次；②导出台账同步带出这一列，交付记录有据可查；③「📈 排产分析」交期风险清单升级为双口径——已填实际完成日期的批次额外显示<b>实际超期天数 / 实际偏差</b>，顶部新增<b>实际准时率</b>与<b>平均实际偏差</b>两张汇总卡，从「计划准不准」升级为「实际准不准」。批次进入中止/失败/取消等终态时同样可以记录实际完成日期。</p></div>
 
-    <div class="q" data-page-node-id="lMkN6lPppHOL2bFj765Jvc"><b data-page-node-id="2WX9oUBDWJeXeCOIdWm5u1">Q19：产能负载图上的上限线怎么变成十几批了？和我填的上限对不上。（v2.20.22 起）</b>
-      <p data-page-node-id="393AlFOmGTggQk9CExRIwf">因为你填的是<b data-page-node-id="5Nbt1aiZuXxBn3uJPtQg04">全年</b>上限，而这张图是<b data-page-node-id="YXmoaxzER0KuiKooPYEf9Y">月度</b>图。v2.20.22 前图表直接把年度值当月度阈值画线，「全部类型」时还把 10 类相加——例如各类型年度上限合计 169 批，图上线就标成「上限 169」，比任何单月实际值都高得多，柱子被压扁、也永远不会触发超标红色，预警形同失效。</p>
-      <p data-page-node-id="s0VIiKBnA83qi1SNDGTepD">v2.20.22 起统一折算：<b data-page-node-id="GbeqTkOHJYDIAu5dCojFke">图上的上限线 = 年度上限 ÷ 12 = 月均上限</b>（如 169 → 14.1 批/月），线尾标注「月均上限 14.1（各类型年度上限合计 169 批）」，热力图分档与红色超标判定同样按月均口径，悬停提示与卡片摘要都会同时给出年度原值，方便和「产能情况」表对照。<b data-page-node-id="vTdPLQHqtXNi2pUeTlRMWf">「产能情况」表与规则参数里的数值口径未变，仍是年度值</b>，不需要重填。</p></div>
+    <div class="q"><b>Q19：产能负载图上的上限线怎么变成十几批了？和我填的上限对不上。（v2.20.22 起）</b>
+      <p>因为你填的是<b>全年</b>上限，而这张图是<b>月度</b>图。v2.20.22 前图表直接把年度值当月度阈值画线，「全部类型」时还把 10 类相加——例如各类型年度上限合计 169 批，图上线就标成「上限 169」，比任何单月实际值都高得多，柱子被压扁、也永远不会触发超标红色，预警形同失效。</p>
+      <p>v2.20.22 起统一折算：<b>图上的上限线 = 年度上限 ÷ 12 = 月均上限</b>（如 169 → 14.1 批/月），线尾标注「月均上限 14.1（各类型年度上限合计 169 批）」，热力图分档与红色超标判定同样按月均口径，悬停提示与卡片摘要都会同时给出年度原值，方便和「产能情况」表对照。<b>「产能情况」表与规则参数里的数值口径未变，仍是年度值</b>，不需要重填。</p></div>
 
-    <div class="q" data-page-node-id="2r7j3un5eKeIEQBTaZL8BG"><b data-page-node-id="wNa7YpAlMkhqTwDKI5tINr">Q20：项目组合视图选了一年，为什么某个项目的时间跨度会跨到别的年份？（v2.20.24 起）</b>
-      <p data-page-node-id="oE7lt6cZLNFoDLrVQQ6Ko8">因为筛选口径是<b data-page-node-id="7M73zxQR2TkUSh1dIaKzjN">批次开始日期落在所选时段内</b>（与「产能情况」表、甘特图时间窗口一致），而每行显示的「时间跨度」是该项目的这些批次<b data-page-node-id="mjKCDZ8Sd2xRzZLNHDG3TF">最早开始 ~ 最晚完成</b>。所以一个 2026 年才开始、但要到 2027 年才完成的批次，会整体计入「2026 年」，跨度自然显示到 2027 年。</p>
-      <p data-page-node-id="O4JUOuFKD3cudi6Tnzi8tT">这样设计是为了让「一个批次只归属一个时段」，避免跨年长批次在两年里被重复计数。如果你更想看「某段时间里在做的项目」（允许跨年批次同时出现在两年），说一声可以换成按时间重叠的口径。</p></div>
+    <div class="q"><b>Q20：项目组合视图选了一年，为什么某个项目的时间跨度会跨到别的年份？（v2.20.24 起）</b>
+      <p>因为筛选口径是<b>批次开始日期落在所选时段内</b>（与「产能情况」表、甘特图时间窗口一致），而每行显示的「时间跨度」是该项目的这些批次<b>最早开始 ~ 最晚完成</b>。所以一个 2026 年才开始、但要到 2027 年才完成的批次，会整体计入「2026 年」，跨度自然显示到 2027 年。</p>
+      <p>这样设计是为了让「一个批次只归属一个时段」，避免跨年长批次在两年里被重复计数。如果你更想看「某段时间里在做的项目」（允许跨年批次同时出现在两年），说一声可以换成按时间重叠的口径。</p></div>
 
-    <div class="q" data-page-node-id="9rKFIuwoGVQuzuE6rdnXaP"><b data-page-node-id="tWzMdekwAGd3dGHDIFuHwW">Q21：排产调整统计里的「调整次数」是怎么算的？为什么比我印象中少？（v2.20.25 起）</b>
-      <p data-page-node-id="KYzLzH2FDiCikgfcwjT1Lx">它是<b data-page-node-id="EamxR2LkrhxKaL3sJ7QBEc">严格口径</b>：只有在「人工调整」弹窗里点「保存」<b data-page-node-id="WZoI10Yu1RI0XU34W6aWwp">成功一次</b>才 +1——无论改的是日期、产线、批次号、备注还是实际完成日期。<b data-page-node-id="tuwJpiDzWv1oPbUY2gbPl7">不算</b>的包括：锁定 / 解锁 / 批量锁定、把批次标为中止 / 失败 / 取消、重新「自动排产」、需求侧的新增与编辑；这些属于状态流转或计划整体重算，不是针对某个批次的调整工作量。</p>
-      <p data-page-node-id="LYVblWJsAD32GFAF9ufNBG">数字偏少的两个原因：① 计数<b data-page-node-id="MOEZY9aVaevnHsJHuSriYC">从 v2.20.25 上线那一刻开始逐次记录</b>，升级时系统按审计日志（最近 100 条）尽力回填了历史，日志窗口之外的旧调整无法追溯，所以历史数字应理解为<b data-page-node-id="6i2pQ59pjYIVtrtHTH4Prv">下限</b>；② 多人同时改同一批次时会互相覆盖，理论上可能少记 1 次（本项目协作频率下基本不会遇到）。</p>
-      <p data-page-node-id="vHuEQA4Vs7G1Xt5BQtuACS">另一个容易困惑的点：上方<b data-page-node-id="bEmnisv5Y6FuWZkuf3t5Pd">时段</b>选「近 30 天」时，统计用的是按天明细，而明细只保留近 180 天；选「全部」则读累计值，不受此限制。「按操作人」一栏始终是<b data-page-node-id="UBh0ldAvNnBVTV6MKtIiDQ">累计</b>口径，不随上方时段变化。</p></div>
+    <div class="q"><b>Q21：排产调整统计里的「调整次数」是怎么算的？为什么比我印象中少？（v2.20.25 起）</b>
+      <p>它是<b>严格口径</b>：只有在「人工调整」弹窗里点「保存」<b>成功一次</b>才 +1——无论改的是日期、产线、批次号、备注还是实际完成日期。<b>不算</b>的包括：锁定 / 解锁 / 批量锁定、把批次标为中止 / 失败 / 取消、重新「自动排产」、需求侧的新增与编辑；这些属于状态流转或计划整体重算，不是针对某个批次的调整工作量。</p>
+      <p>数字偏少的两个原因：① 计数<b>从 v2.20.25 上线那一刻开始逐次记录</b>，升级时系统按审计日志（最近 100 条）尽力回填了历史，日志窗口之外的旧调整无法追溯，所以历史数字应理解为<b>下限</b>；② 多人同时改同一批次时会互相覆盖，理论上可能少记 1 次（本项目协作频率下基本不会遇到）。</p>
+      <p>另一个容易困惑的点：上方<b>时段</b>选「近 30 天」时，统计用的是按天明细，而明细只保留近 180 天；选「全部」则读累计值，不受此限制。「按操作人」一栏始终是<b>累计</b>口径，不随上方时段变化。</p></div>
 
-    <div class="q" data-page-node-id="QMGsLyRM4MzeCtsZtFzefY"><b data-page-node-id="vTkw4nl1fs7ZGfQQ7bcvCG">Q22：为什么我删掉的需求，在别的电脑上又出现了？（v2.20.26 起根治）</b>
-      <p data-page-node-id="2dLMB8FmbC6JR1HsEikQav"><b data-page-node-id="1efK1GcplA2iSdX80EFjt7">原因</b>：删除需求后，如果另一台电脑 / 浏览器当时没打开页面，它本机还留着这条旧记录。它下次打开系统时会执行「首次同步」，看到「本机有、云端没有」，就误判成「上次没同步成功的新增需求」，<b data-page-node-id="AUlU1YPMFxgrEmsSSZYAVj">把它重新补传回云端</b>——于是所有人又看到了，状态还回到了「待确认」。</p>
-      <p data-page-node-id="uO5LcUUSGBtYJHzGUgiUeW"><b data-page-node-id="RFtkDofAjrYZk5A1CPHnv2">现在的做法</b>：删除改为<b data-page-node-id="2cf7wCPmn83enPilYGi2kS">软删除</b>——记录不会真的从系统里消失，而是打上删除标记并随云端一起同步。本机条目始终存在，就不会再被误判成「新增」补传回去，这条复活链路从根上断掉了。需求列表、条数统计、需求人筛选、自动排产、需求漏斗与全部导出<b data-page-node-id="sG89LNytfzz2o2zzqFUiEM">都只统计未删除的需求</b>，删除后的记录不会再出现在任何界面上。</p>
-      <p data-page-node-id="49n0tiSLvwnI81WAUBh7gG"><b data-page-node-id="PxS5xG3Vn04OfPpRi43bp2">升级后还要做一次</b>：v2.20.26 之前已经复活的那批旧需求，因为当初是真的被删掉了，系统无法自动追溯，需要在<b data-page-node-id="d1kfwdJXy9eGkFxCxnj7v7">任意一台电脑上再删一次</b>——这次删除会带上标记同步到所有设备，之后就不会再出现。用生产计划账号操作一次即可。</p>
-      <p data-page-node-id="GZjE1pnGdVJaAoq7EFSmIN"><b data-page-node-id="CncDz0y5s6r8fF39D4HdxA">补充</b>：软删除的记录会一直留在云端数据库里，不影响任何界面与统计，只占一点存储。如需彻底清空，可联系系统维护人员做一次性清理。</p></div>
+    <div class="q"><b>Q22：为什么我删掉的需求，在别的电脑上又出现了？（v2.20.26 起根治）</b>
+      <p><b>原因</b>：删除需求后，如果另一台电脑 / 浏览器当时没打开页面，它本机还留着这条旧记录。它下次打开系统时会执行「首次同步」，看到「本机有、云端没有」，就误判成「上次没同步成功的新增需求」，<b>把它重新补传回云端</b>——于是所有人又看到了，状态还回到了「待确认」。</p>
+      <p><b>现在的做法</b>：删除改为<b>软删除</b>——记录不会真的从系统里消失，而是打上删除标记并随云端一起同步。本机条目始终存在，就不会再被误判成「新增」补传回去，这条复活链路从根上断掉了。需求列表、条数统计、需求人筛选、自动排产、需求漏斗与全部导出<b>都只统计未删除的需求</b>，删除后的记录不会再出现在任何界面上。</p>
+      <p><b>升级后还要做一次</b>：v2.20.26 之前已经复活的那批旧需求，因为当初是真的被删掉了，系统无法自动追溯，需要在<b>任意一台电脑上再删一次</b>——这次删除会带上标记同步到所有设备，之后就不会再出现。用生产计划账号操作一次即可。</p>
+      <p><b>补充</b>：软删除的记录会一直留在云端数据库里，不影响任何界面与统计，只占一点存储。如需彻底清空，可联系系统维护人员做一次性清理。</p></div>
 
-    <div class="q" data-page-node-id="chc1m2xmyoSpjEpClRwNgG"><b data-page-node-id="4B4qC9A379GQAtuExJt7iD">Q23：打开系统只看到一个登录页，里面的内容都看不到了？（v2.20.27 起）</b>
-      <p data-page-node-id="uF2KqLbWttv81g8PFCrBSQ">这是<b data-page-node-id="hnfeIVGxUyKVP0WHKA2ASH">刻意的强制登录</b>。此前未登录时，页面会先把自己渲染出来、再盖一层半透明登录框，背后的需求与排产计划其实是能被看到的；现在改为<b data-page-node-id="5AjALUyOm5eLkKX49VWnNz">登录前不显示系统任何内容</b>。同时移除了原来的「暂不登录，匿名继续」按钮——那个入口早就失效了，云端控制台的匿名登录一直是关闭状态，点它只会报错。</p>
-      <p data-page-node-id="jCiLz29PgUVGJ7fqPRVimc"><b data-page-node-id="PWqBXQfyquMRpkq1ATajND">正常使用流程</b>：用管理员分配的邮箱与密码登录一次即可。浏览器会记住登录状态，刷新页面、第二天再打开都免登录，不会每次都弹。需要换人使用时，点顶栏「☁️」→「🚪 退出并切换账号」。</p>
-      <p data-page-node-id="lt6te77358pY77ZMa8C9Eg"><b data-page-node-id="BvEspeervnwmGDv8AJZOxL">补充</b>：角色完全由登录账号决定，因此云端模式下顶栏的「当前角色」切换器已整体隐藏，不会再出现「为什么切不动」的困惑。</p></div>
+    <div class="q"><b>Q23：打开系统只看到一个登录页，里面的内容都看不到了？（v2.20.27 起）</b>
+      <p>这是<b>刻意的强制登录</b>。此前未登录时，页面会先把自己渲染出来、再盖一层半透明登录框，背后的需求与排产计划其实是能被看到的；现在改为<b>登录前不显示系统任何内容</b>。同时移除了原来的「暂不登录，匿名继续」按钮——那个入口早就失效了，云端控制台的匿名登录一直是关闭状态，点它只会报错。</p>
+      <p><b>正常使用流程</b>：用管理员分配的邮箱与密码登录一次即可。浏览器会记住登录状态，刷新页面、第二天再打开都免登录，不会每次都弹。需要换人使用时，点顶栏「☁️」→「🚪 退出并切换账号」。</p>
+      <p><b>补充</b>：角色完全由登录账号决定，因此云端模式下顶栏的「当前角色」切换器已整体隐藏，不会再出现「为什么切不动」的困惑。</p></div>
 
-    <div class="q" data-page-node-id="F9M0OgQEYOwc9a0FdHeArz"><b data-page-node-id="5cialLicUiY6xmIuBwPcnh">Q24：同事要用这个系统，账号怎么开通？忘记密码了怎么办？（v2.20.27 起）</b>
-      <p data-page-node-id="DPKEE0fnGKVbTP1mEfc1Je"><b data-page-node-id="dsMOqJYowRoI6X7EG3VWkc">开通流程</b>：① 请系统维护人员为单位内的云开发控制台创建该同事的邮箱账号；② 同事用该账号登录后，若看到 <b data-page-node-id="DDlCnT3EKryew19baVeaGz">🔒 账号尚未开通权限</b> 页面，说明账号已建好但还没分配角色；③ 由生产计划角色的人在顶栏「🛡️ 权限管理」中给这个邮箱分配 <b data-page-node-id="VMGoyAIR0aw8jGz7MQDdWR">读者 / 需求方 / 生产计划</b> 之一——分配后对方页面会<b data-page-node-id="VFJvycFCXaQtl7Ks9X7neI">自动生效</b>，不需要刷新。</p>
-      <p data-page-node-id="FlIb9JowJ2QeuOUk0deLdy"><b data-page-node-id="K6pnQR6stFTGTlb7ByWJmD">为什么要有「等待开通」这一页</b>：以前未登记的账号会被默认当成「读者」直接放进去，等于任何能登录的人都能看到全部数据。现在改为必须先由管理员明确分配角色才能进入系统。</p>
-      <p data-page-node-id="sHEWKdehnSVz9wixUOZm5Z"><b data-page-node-id="3dOosyWNIFlsYcsBh3y1L4">忘记密码</b>：系统不提供自助找回。请先在仍能登录时点顶栏「☁️」→ 修改密码自助更换；若密码已完全想不起来，需联系系统维护人员在控制台重置。</p></div>
+    <div class="q"><b>Q24：同事要用这个系统，账号怎么开通？忘记密码了怎么办？（v2.20.27 起）</b>
+      <p><b>开通流程</b>：① 请系统维护人员为单位内的云开发控制台创建该同事的邮箱账号；② 同事用该账号登录后，若看到 <b>🔒 账号尚未开通权限</b> 页面，说明账号已建好但还没分配角色；③ 由生产计划角色的人在顶栏「🛡️ 权限管理」中给这个邮箱分配 <b>读者 / 需求方 / 生产计划</b> 之一——分配后对方页面会<b>自动生效</b>，不需要刷新。</p>
+      <p><b>为什么要有「等待开通」这一页</b>：以前未登记的账号会被默认当成「读者」直接放进去，等于任何能登录的人都能看到全部数据。现在改为必须先由管理员明确分配角色才能进入系统。</p>
+      <p><b>忘记密码</b>：系统不提供自助找回。请先在仍能登录时点顶栏「☁️」→ 修改密码自助更换；若密码已完全想不起来，需联系系统维护人员在控制台重置。</p></div>
 
-    <div class="q" data-page-node-id="FFfpIWrPamUsBAlAlRSjsy"><b data-page-node-id="p32skcw2TJ6sEkUK4vdcV5">Q25：页面底部突然冒出一条「页面遇到问题」的提示，是不是坏了？（v2.20.28 起）</b>
-      <p data-page-node-id="AESsNRCASWrOYPn1WtkACL">这是 v2.20.28 新增的<b data-page-node-id="BXzwpUJ3UHY6CFPiegbSyf">错误提示条</b>，不是中毒也不是系统崩溃。以前页面出错时只会「一片空白」或按钮点了没反应，使用者没法描述、维护人员也拿不到任何线索；现在系统会把出错现场收集起来，显示成页面底部这一条。</p>
-      <p data-page-node-id="9BDzZMfywiDpeoTYvt49Pe"><b data-page-node-id="TLBDfm9YrVXYTcGdxKjRBJ">怎么处理</b>：点提示条上的「复制诊断信息」，把复制到的内容（页面版本、运行环境、错误位置、浏览器种类等）<b data-page-node-id="5AYbQVDu7m6VWQPLnoZHDr">粘贴发给系统维护人员</b>即可，不需要自己分析。点「查看详情」可以看到完整错误内容，点「关闭」收起提示条。很多时候只是偶发的小问题，<b data-page-node-id="jwqD58X7MqeyQbXKw46ftZ">刷新页面</b>后就能正常使用。</p>
-      <p data-page-node-id="CFQVMzGPNpUKjJXhtJcsGp">如果提示的是「<b data-page-node-id="7oO2NFwhSwgPm14AGnPKoy">云同步组件加载失败</b>」，说明浏览器没能加载到云同步模块（通常是网络、公司代理或防火墙拦截）。此时界面仍可打开，但<b data-page-node-id="CioRF8YEC0EcNymOmwBlet">数据只保存在你这台电脑上，不会与其他同事同步</b>——请务必按提示刷新重试，确认恢复正常后再录入数据。</p></div>
+    <div class="q"><b>Q25：页面底部突然冒出一条「页面遇到问题」的提示，是不是坏了？（v2.20.28 起）</b>
+      <p>这是 v2.20.28 新增的<b>错误提示条</b>，不是中毒也不是系统崩溃。以前页面出错时只会「一片空白」或按钮点了没反应，使用者没法描述、维护人员也拿不到任何线索；现在系统会把出错现场收集起来，显示成页面底部这一条。</p>
+      <p><b>怎么处理</b>：点提示条上的「复制诊断信息」，把复制到的内容（页面版本、运行环境、错误位置、浏览器种类等）<b>粘贴发给系统维护人员</b>即可，不需要自己分析。点「查看详情」可以看到完整错误内容，点「关闭」收起提示条。很多时候只是偶发的小问题，<b>刷新页面</b>后就能正常使用。</p>
+      <p>如果提示的是「<b>云同步组件加载失败</b>」，说明浏览器没能加载到云同步模块（通常是网络、公司代理或防火墙拦截）。此时界面仍可打开，但<b>数据只保存在你这台电脑上，不会与其他同事同步</b>——请务必按提示刷新重试，确认恢复正常后再录入数据。</p></div>
   </section>
 
   <!-- 9 词典 -->
-  <section class="ch" id="s9" data-page-node-id="tJ1Fv8RgdEqVmzI1KsxMcG">
-    <h2 class="sec" data-page-node-id="SHZRTWW7rn4tKBXifRaHT3">📖 小词典</h2>
-    <div class="card" data-page-node-id="kU7ktxrSnuCnyVSxoSBYhw">
-      <dl class="terms" data-page-node-id="9hToU3YRSgobAKCNvFFNqP">
-        <dt data-page-node-id="jYgdKRcjDHXJnUDQdZlhVD">需求（req）</dt><dd data-page-node-id="34DIvt9KH6y5WOpNOPpHm2">上游提出的一个生产任务，如「做一批 DP 制剂」。</dd>
-        <dt data-page-node-id="JVDs1umd5fi0Y7zMbV2HbA">批次（batch）</dt><dd data-page-node-id="jBrMRcKRoNWEVOqgNPNJmH">排产后把需求落到具体产线 + 时间段的产物，一个需求可能拆成多个批次。</dd>
-        <dt data-page-node-id="pdJfSZB4eNP0Xyoa0QmCYM">草案 / 待确认</dt><dd data-page-node-id="2yXJHRuKlYXLmIb3BIwbDU">自动排产生成的批次，还没人拍板，可被下次重排改变。</dd>
-        <dt data-page-node-id="rDRbCvfHQXXuGJEcNGnwQN">锁定</dt><dd data-page-node-id="TOyjoSfHZfIh00FmeOsruD">生产计划确认后的批次，作为已占用产能保护起来。</dd>
-        <dt data-page-node-id="yO8BdPfuTgrbwBl0QfCnuS">CB / DP / Mab / ADC</dt><dd data-page-node-id="uGWUBRpSv13sgZbI57G7wv">四种产品类型：细胞库、制剂、单抗、ADC 偶联药。</dd>
-        <dt data-page-node-id="UhFKZF4Y5OW7Lzm5MBSB2l">APS / EQP</dt><dd data-page-node-id="uykHtHarq3z1SAYTqrtGIu">培养基模拟灌装（按月提报）、设备维护（计划员专用）。</dd>
-        <dt data-page-node-id="fPSor0z3zHMDNSCKoZ6GVr">下罐（harvest）</dt><dd data-page-node-id="OEUi2tFmCGjTzFH8XRtNnQ">Mab 类培养结束收获上清的关键节点。</dd>
-        <dt data-page-node-id="nfDEcT1EXqvOLAJHaam6uj">灌装（fill）</dt><dd data-page-node-id="axGnLJfVkHfCaFRXOy9ZpI">DP / ADC 制剂装入瓶/器皿的工序节点。</dd>
-        <dt data-page-node-id="c61XpA3DrBqOeYBWdgpr4i">甘特图</dt><dd data-page-node-id="NvKiLSzEI5Z8fdCMb6QXEz">横轴时间、纵轴产线的排产总览图，可拖拽调整。</dd>
-        <dt data-page-node-id="rmIiCFAWDVUX232DGVaLHE">快照</dt><dd data-page-node-id="9l3hiGwhAWCEXRaHgVBjvV">某一时刻排产计划的完整"照片"，用于对比漂移和留档。</dd>
-        <dt data-page-node-id="VlN8neQOGVZMm7XNqjqycd">预警 / 交期差异</dt><dd data-page-node-id="us8d1Q7did1VT6JzsnbFlF">排产完成时间晚于需求交期的风险提示。</dd>
-        <dt data-page-node-id="A6UImBxSIz7axrVtEGDBgN">软删除</dt><dd data-page-node-id="IKWF92KknAxShOdaK2jLFB">删除需求时只打「已删除」标记、不真正移除记录（v2.20.26 起）。这样删除能随云端同步传播到所有设备，不会再被其他电脑的旧数据补传回来；界面与统计上的表现和真删除完全一致。</dd>
-        <dt data-page-node-id="AVEocYIRgo7CvZeDkxfjbD">项目优先级（P1–P5）</dt><dd data-page-node-id="Q9blMRlG4TF0bjonUlicp2">生产计划按项目设定的优先档位，P1 最高、默认 P3；自动排产按「优先级→交期→提交时间」排序。</dd>
-        <dt data-page-node-id="hlK6yYoorFF5sTNONM8olq">产能上限 / 利用率</dt><dd data-page-node-id="HD0F7AfMsymQxwRSKIo1Mp">规则参数里按类型设的<b data-page-node-id="CKunjnnjQzEYDpxvweUaub">全年</b>批次数上限；「产能情况」表显示时段内已用 / 剩余 / 利用率，超限整行红（仅警告不拦截）；「产能负载总览」为月度图，上限线按<b data-page-node-id="hlDPi5oKkKWB1a1rkKSHWp">月均上限（年度÷12）</b>显示。</dd>
-        <dt data-page-node-id="1pYGYkmkIVZxRh0AJSXCpL">账号与角色</dt><dd data-page-node-id="xlszBlNGaI3RnMV3EQhyfq">系统必须先登录才能使用（v2.20.27 起强制登录）。每个账号由生产计划在「🛡️ 权限管理」中分配一档角色：<b data-page-node-id="q1oUtNbx6RmCczTo6XI6sR">读者</b>仅预览、<b data-page-node-id="au71VZviostiIxluH0QkD5">需求方</b>可提交并维护本人需求、<b data-page-node-id="4Km5oCupTZfinM3Rq4zUYD">生产计划</b>可排产与数据管理。未分配角色的账号登录后只显示「等待开通」提示页。</dd>
+  <section class="ch" id="s9">
+    <h2 class="sec">📖 小词典</h2>
+    <div class="card">
+      <dl class="terms">
+        <dt>需求（req）</dt><dd>上游提出的一个生产任务，如「做一批 DP 制剂」。</dd>
+        <dt>批次（batch）</dt><dd>排产后把需求落到具体产线 + 时间段的产物，一个需求可能拆成多个批次。</dd>
+        <dt>草案 / 待确认</dt><dd>自动排产生成的批次，还没人拍板，可被下次重排改变。</dd>
+        <dt>锁定</dt><dd>生产计划确认后的批次，作为已占用产能保护起来。</dd>
+        <dt>CB / DP / Mab / ADC</dt><dd>四种产品类型：细胞库、制剂、单抗、ADC 偶联药。</dd>
+        <dt>APS / EQP</dt><dd>培养基模拟灌装（按月提报）、设备维护（计划员专用）。</dd>
+        <dt>下罐（harvest）</dt><dd>Mab 类培养结束收获上清的关键节点。</dd>
+        <dt>灌装（fill）</dt><dd>DP / ADC 制剂装入瓶/器皿的工序节点。</dd>
+        <dt>甘特图</dt><dd>横轴时间、纵轴产线的排产总览图，可拖拽调整。</dd>
+        <dt>快照</dt><dd>某一时刻排产计划的完整"照片"，用于对比漂移和留档。</dd>
+        <dt>预警 / 交期差异</dt><dd>排产完成时间晚于需求交期的风险提示。</dd>
+        <dt>软删除</dt><dd>删除需求时只打「已删除」标记、不真正移除记录（v2.20.26 起）。这样删除能随云端同步传播到所有设备，不会再被其他电脑的旧数据补传回来；界面与统计上的表现和真删除完全一致。</dd>
+        <dt>项目优先级（P1–P5）</dt><dd>生产计划按项目设定的优先档位，P1 最高、默认 P3；自动排产按「优先级→交期→提交时间」排序。</dd>
+        <dt>产能上限 / 利用率</dt><dd>规则参数里按类型设的<b>全年</b>批次数上限；「产能情况」表显示时段内已用 / 剩余 / 利用率，超限整行红（仅警告不拦截）；「产能负载总览」为月度图，上限线按<b>月均上限（年度÷12）</b>显示。</dd>
+        <dt>账号与角色</dt><dd>系统必须先登录才能使用（v2.20.27 起强制登录）。每个账号由生产计划在「🛡️ 权限管理」中分配一档角色：<b>读者</b>仅预览、<b>需求方</b>可提交并维护本人需求、<b>生产计划</b>可排产与数据管理。未分配角色的账号登录后只显示「等待开通」提示页。</dd>
       </dl>
     </div>
   </section>
 
-  <footer class="foot" data-page-node-id="Ibp8YH93C6ew2veZFCEZqq">
-    排产系统使用者操作手册 · 配套 v2.20.29（2026-10-19）· 术语与按钮名称与线上系统保持一致 ·
+  <footer class="foot">
+    排产系统使用者操作手册 · 配套 v2.20.30（2026-10-19）· 术语与按钮名称与线上系统保持一致 ·
     如界面与本文不符，先 Ctrl+F5 确认版本，再联系系统维护人员
   </footer>
 </div>
